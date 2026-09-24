@@ -1,0 +1,32 @@
+import React from 'react';
+import { Metadata } from 'next';
+import { redirect } from 'next/navigation';
+import { BlindsLanding } from '@/components/blinds/BlindsLanding';
+import { getBlindTypeBySlug } from '@/lib/data/blinds';
+import { PRODUCTS } from '@/lib/data/products';
+
+export const metadata: Metadata = {
+  title: 'Window Blinds & Shades | Architectural Window Solutions | Zaira Furnishing',
+  description:
+    'Explore our collection of precision roller blinds, zebra day & night shades, roman shades, wooden louvers, cellular shades, and motorized smart window treatments.',
+};
+
+interface BlindsPageProps {
+  searchParams: Promise<{ type?: string }>;
+}
+
+export default async function BlindsCategoryPage({ searchParams }: BlindsPageProps) {
+  const resolved = await searchParams;
+  if (resolved?.type && resolved.type !== 'all') {
+    const matched = getBlindTypeBySlug(resolved.type);
+    if (matched) {
+      redirect(`/categories/blinds/${matched.slug}`);
+    }
+  }
+
+  const blindProducts = PRODUCTS.filter(
+    (product) => product.categorySlug === 'window-blinds-shades'
+  );
+
+  return <BlindsLanding products={blindProducts} />;
+}
