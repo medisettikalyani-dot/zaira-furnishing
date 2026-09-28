@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { PRODUCTS } from '@/lib/data/products';
+import { getDynamicProducts } from '@/lib/db/catalog';
 import { BLIND_TYPES, getBlindTypeBySlug } from '@/lib/data/blinds';
 import { BlindTypePage } from '@/components/blinds/BlindTypePage';
 
@@ -39,10 +39,8 @@ export default async function BlindTypeRoute({ params }: BlindTypeRouteProps) {
     notFound();
   }
 
-  // Filter only window blinds products
-  const blindProducts = PRODUCTS.filter(
-    (product) => product.categorySlug === 'window-blinds-shades'
-  );
+  // Filter only window blinds products from Cloudflare D1
+  const blindProducts = await getDynamicProducts({ categorySlug: 'window-blinds-shades' });
 
   return <BlindTypePage blindType={blindType} products={blindProducts} />;
 }

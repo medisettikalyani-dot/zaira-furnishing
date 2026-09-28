@@ -40,7 +40,9 @@ export default function ContactPage() {
                     <span className="block font-semibold text-[#1C1917] mb-0.5 uppercase tracking-wider text-[11px]">
                       Location & Experience Center
                     </span>
-                    <p className="text-[#9A7B56] font-medium">[Showroom Address Placeholder]</p>
+                    <p className="text-[#1C1917] font-medium leading-relaxed">
+                      Rd Number 5, Kyetian Goud Nilayam, Alkapur Twp, Puppalguda, Hyderabad, Telangana 500089
+                    </p>
                     <p className="text-[#78716C] text-[12px] mt-0.5">
                       Complimentary visitor parking & concierge assistance.
                     </p>
@@ -53,9 +55,11 @@ export default function ContactPage() {
                     <span className="block font-semibold text-[#1C1917] mb-0.5 uppercase tracking-wider text-[11px]">
                       Client Inquiries & Bookings
                     </span>
-                    <p className="text-[#9A7B56] font-medium">[Phone Number Placeholder]</p>
+                    <a href="tel:+916300145763" className="text-[#1E3A2F] font-semibold hover:underline">
+                      +91 63001 45763
+                    </a>
                     <p className="text-[#78716C] text-[12px] mt-0.5">
-                      Mon – Sat from 10:00 AM to 8:30 PM
+                      Mon – Sat from 10:30 AM to 8:30 PM
                     </p>
                   </div>
                 </div>
@@ -66,7 +70,9 @@ export default function ContactPage() {
                     <span className="block font-semibold text-[#1C1917] mb-0.5 uppercase tracking-wider text-[11px]">
                       Written Inquiries & Architect RFPs
                     </span>
-                    <p className="text-[#9A7B56] font-medium">[Email Placeholder]</p>
+                    <a href="mailto:concierge@zairafurnishing.com" className="text-[#1E3A2F] font-medium hover:underline">
+                      concierge@zairafurnishing.com
+                    </a>
                   </div>
                 </div>
 
@@ -77,7 +83,7 @@ export default function ContactPage() {
                       Showroom Operating Hours
                     </span>
                     <p className="text-[#1C1917]">
-                      [Showroom Hours Placeholder: Mon - Sat 10:30 AM - 8:30 PM]
+                      Mon – Sat: 10:30 AM – 8:30 PM
                     </p>
                     <p className="text-[#78716C] text-[12px] mt-0.5">
                       Sunday: By private appointment only

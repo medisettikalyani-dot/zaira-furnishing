@@ -3,7 +3,6 @@ import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { CarpetsLanding } from '@/components/carpets/CarpetsLanding';
 import { getCarpetTypeBySlug } from '@/lib/data/carpets';
-import { PRODUCTS } from '@/lib/data/products';
 
 export const metadata: Metadata = {
   title: 'Carpets & Rugs | Hand-Tufted Wool, Silk Blends & Area Rugs | Zaira Furnishing',
@@ -24,9 +23,5 @@ export default async function CarpetsCategoryPage({ searchParams }: CarpetsPageP
     }
   }
 
-  const carpetProducts = PRODUCTS.filter(
-    (product) => product.categorySlug === 'carpets-rugs'
-  );
-
-  return <CarpetsLanding products={carpetProducts} />;
+  return <CarpetsLanding />;
 }

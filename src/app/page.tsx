@@ -2,50 +2,47 @@ import React from 'react';
 import { HeroSection } from '@/components/home/HeroSection';
 import { CategoryShowcase } from '@/components/home/CategoryShowcase';
 import { FeaturedCollection } from '@/components/home/FeaturedCollection';
-import { TrustHighlights } from '@/components/home/TrustHighlights';
-import { ShopBySpace } from '@/components/home/ShopBySpace';
 import { ServicesSection } from '@/components/home/ServicesSection';
 import { BrandStorySection } from '@/components/home/BrandStorySection';
-import { CustomerReviewsSection } from '@/components/home/CustomerReviewsSection';
-import { FaqSection } from '@/components/home/FaqSection';
 import { ContactVisitSection } from '@/components/home/ContactVisitSection';
-import { FinalCtaSection } from '@/components/home/FinalCtaSection';
+import {
+  getDynamicCmsSection,
+  getDynamicProducts,
+} from '@/lib/db/catalog';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [heroCms, featuredCms, featuredProducts, brandStoryCms, showroomCms] =
+    await Promise.all([
+      getDynamicCmsSection('home_hero'),
+      getDynamicCmsSection('home_featured_furnishings'),
+      getDynamicProducts({ featured: true }),
+      getDynamicCmsSection('home_brand_story'),
+      getDynamicCmsSection('home_showroom_contact'),
+    ]);
+
   return (
     <div className="flex flex-col w-full">
-      {/* 1. Hero Section */}
-      <HeroSection />
+      {/* 1. Hero Section (Driven by D1 CMS) */}
+      <HeroSection cmsContent={heroCms} />
 
-      {/* 2. Shop by Category */}
+      {/* 2. Shop by Category (All 14 Catalog Categories) */}
       <CategoryShowcase />
 
-      {/* 3. Best Sellers (Featured Collection) */}
-      <FeaturedCollection />
+      {/* 3. Featured Products & Collections (Driven by D1 Products + CMS) */}
+      <FeaturedCollection
+        products={featuredProducts}
+        title={featuredCms?.title || undefined}
+        subtitle={featuredCms?.subtitle || undefined}
+      />
 
-      {/* 4. Trust / Service Highlights */}
-      <TrustHighlights />
-
-      {/* 5. Shop by Space */}
-      <ShopBySpace />
-
-      {/* 6. Services Section */}
+      {/* 4. Atelier Furnishing & Value-Added Services Highlight */}
       <ServicesSection />
 
-      {/* 7. Why Zaira Furnishing (About) */}
-      <BrandStorySection />
+      {/* 5. Short Brand / Atelier Section (Driven by D1 CMS) */}
+      <BrandStorySection cmsContent={brandStoryCms} />
 
-      {/* 8. Customer Reviews */}
-      <CustomerReviewsSection />
-
-      {/* 9. Frequently Asked Questions */}
-      <FaqSection />
-
-      {/* 10. Contact Us + Visit Us */}
-      <ContactVisitSection />
-
-      {/* 11. Final Call to Action */}
-      <FinalCtaSection />
+      {/* 6. Clear Shopping & Showroom Contact CTA (Driven by D1 CMS) */}
+      <ContactVisitSection cmsContent={showroomCms} />
     </div>
   );
 }

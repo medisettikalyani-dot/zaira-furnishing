@@ -1,0 +1,925 @@
+'use client';
+
+import React, { useState, useEffect, use } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import {
+  ArrowLeft,
+  Save,
+  Upload,
+  Plus,
+  Trash2,
+  Check,
+  Star,
+  ExternalLink,
+  Sparkles,
+  Layers,
+  Settings,
+} from 'lucide-react';
+import {
+  DbProduct,
+  DbCategory,
+  DbSubcategory,
+  DbProductImage,
+  DbProductVariant,
+  DbProductSpecification,
+  DbCustomizationConfig,
+} from '@/lib/db/types';
+
+interface FullProductData extends DbProduct {
+  images: DbProductImage[];
+  variants: DbProductVariant[];
+  specifications: DbProductSpecification[];
+  customization_configs: DbCustomizationConfig[];
+}
+
+export default function AdminProductEditPage({ params }: { params: Promise<{ id: string }> }) {
+  const router = useRouter();
+  const { id } = use(params);
+  const isNew = id === 'new';
+
+  const [product, setProduct] = useState<Partial<FullProductData>>({
+    name: '',
+    display_name: '',
+    slug: '',
+    category_id: '',
+    subcategory_id: null,
+    description: '',
+    short_description: '',
+    product_type: 'standard',
+    pricing_type: 'fixed',
+    base_price: 1000,
+    starting_price: 0,
+    unit: 'piece',
+    custom_made: 0,
+    featured: 0,
+    custom_measurement_available: 0,
+    active: 1,
+    display_order: 0,
+    currency: '₹',
+    images: [],
+    variants: [],
+    specifications: [],
+    customization_configs: [],
+  });
+
+  const [categories, setCategories] = useState<DbCategory[]>([]);
+  const [subcategories, setSubcategories] = useState<DbSubcategory[]>([]);
+  const [loading, setLoading] = useState(!isNew);
+  const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [activeTab, setActiveTab] = useState<'details' | 'images' | 'variants' | 'specs' | 'customization'>('details');
+
+  useEffect(() => {
+    // Load categories
+    fetch('/api/admin/categories')
+      .then((res) => res.json())
+      .then((data) => {
+        setCategories(data.data || []);
+        if (isNew && data.data?.length > 0) {
+          setProduct((prev) => ({ ...prev, category_id: data.data[0].id }));
+        }
+      });
+
+    // If editing existing product, fetch from API
+    if (!isNew) {
+      fetch(`/api/admin/products/${id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.data) {
+            setProduct(data.data);
+          }
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [id, isNew]);
+
+  // Load subcategories when category changes
+  useEffect(() => {
+    if (product.category_id) {
+      fetch(`/api/admin/subcategories?categoryId=${product.category_id}`)
+        .then((res) => res.json())
+        .then((data) => setSubcategories(data.data || []));
+    } else {
+      setSubcategories([]);
+    }
+  }, [product.category_id]);
+
+  // Image Upload via R2
+  const handleUploadProductImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', 'products');
+
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+
+      const isFirst = (product.images || []).length === 0;
+      const newImg: DbProductImage = {
+        id: `img-${Date.now()}`,
+        product_id: product.id || '',
+        image_url: data.url,
+        alt_text: product.name || 'Product Image',
+        display_order: (product.images || []).length,
+        is_main: isFirst ? 1 : 0,
+        active: 1,
+        created_at: new Date().toISOString(),
+      };
+
+      setProduct((prev) => ({
+        ...prev,
+        images: [...(prev.images || []), newImg],
+      }));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Image upload failed');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleSetMainImage = (index: number) => {
+    setProduct((prev) => ({
+      ...prev,
+      images: (prev.images || []).map((img, i) => ({
+        ...img,
+        is_main: i === index ? 1 : 0,
+      })),
+    }));
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setProduct((prev) => {
+      const filtered = (prev.images || []).filter((_, i) => i !== index);
+      // Ensure at least one is main if available
+      if (filtered.length > 0 && !filtered.some((img) => img.is_main === 1)) {
+        filtered[0].is_main = 1;
+      }
+      return { ...prev, images: filtered };
+    });
+  };
+
+  // Variant operations
+  const handleAddVariant = () => {
+    const newVar: DbProductVariant = {
+      id: `var-${Date.now()}`,
+      product_id: product.id || '',
+      name: 'New Color/Finish',
+      variant_type: 'color',
+      sku: `${product.slug || 'item'}-${(product.variants || []).length + 1}`,
+      color_hex: '#D6D3D1',
+      price_adjustment: 0,
+      in_stock: 1,
+      attributes: '{}',
+      display_order: (product.variants || []).length,
+      active: 1,
+      created_at: new Date().toISOString(),
+    };
+    setProduct((prev) => ({
+      ...prev,
+      variants: [...(prev.variants || []), newVar],
+    }));
+  };
+
+  const handleRemoveVariant = (index: number) => {
+    setProduct((prev) => ({
+      ...prev,
+      variants: (prev.variants || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  // Specification operations
+  const handleAddSpec = () => {
+    const newSpec: DbProductSpecification = {
+      id: `spec-${Date.now()}`,
+      product_id: product.id || '',
+      label: 'Specification Label',
+      value: 'Specification Value',
+      display_order: (product.specifications || []).length,
+    };
+    setProduct((prev) => ({
+      ...prev,
+      specifications: [...(prev.specifications || []), newSpec],
+    }));
+  };
+
+  const handleRemoveSpec = (index: number) => {
+    setProduct((prev) => ({
+      ...prev,
+      specifications: (prev.specifications || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  // Customization rules operations
+  const handleAddCustomConfig = () => {
+    const newCfg: DbCustomizationConfig = {
+      id: `cfg-${Date.now()}`,
+      product_id: product.id || '',
+      field_key: 'custom_field',
+      field_label: 'Custom Option',
+      field_type: 'select',
+      options: JSON.stringify(['Option 1', 'Option 2']),
+      default_value: 'Option 1',
+      unit: null,
+      is_required: 1,
+      display_order: (product.customization_configs || []).length,
+    };
+    setProduct((prev) => ({
+      ...prev,
+      customization_configs: [...(prev.customization_configs || []), newCfg],
+    }));
+  };
+
+  const handleRemoveCustomConfig = (index: number) => {
+    setProduct((prev) => ({
+      ...prev,
+      customization_configs: (prev.customization_configs || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  // Save product
+  const handleSaveProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!product.name || !product.slug || !product.category_id) {
+      alert('Please fill in product name, slug, and category');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const endpoint = isNew ? '/api/admin/products' : `/api/admin/products/${product.id}`;
+      const method = isNew ? 'POST' : 'PUT';
+
+      const mainImg = product.images?.find((img) => img.is_main === 1)?.image_url || product.images?.[0]?.image_url;
+
+      const payload = {
+        ...product,
+        main_image: mainImg,
+        gallery_images: product.images?.map((img) => img.image_url),
+      };
+
+      const res = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save product');
+
+      alert('Product saved successfully to Cloudflare D1!');
+      router.push('/admin/products');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error saving product');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-12 text-center text-[#78716C]">
+        <div className="w-8 h-8 border-2 border-[#1E3A2F] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-[13px]">Loading product data from Cloudflare D1...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 max-w-6xl mx-auto pb-16">
+      {/* ─── Breadcrumb & Save Action ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#EDE8DE] shadow-2xs">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/products"
+            className="p-2 rounded-xl border border-[#EDE8DE] text-[#78716C] hover:text-[#1C1917] hover:bg-[#FAF7F2]"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div>
+            <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#9A7B56] block">
+              {isNew ? 'New Catalog Item' : `Edit: ${product.name}`}
+            </span>
+            <h1 className="font-serif text-[20px] sm:text-[24px] text-[#1C1917] font-medium truncate max-w-lg">
+              {product.name || 'Untitled Product'}
+            </h1>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {!isNew && product.slug && (
+            <Link
+              href={`/products/${product.slug}`}
+              target="_blank"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[#1C1917] text-[12px] font-medium hover:border-[#1C1917]"
+            >
+              <span>View Live</span>
+              <ExternalLink className="w-3.5 h-3.5 text-[#9A7B56]" />
+            </Link>
+          )}
+
+          <button
+            onClick={handleSaveProduct}
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12.5px] font-semibold transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+          >
+            <Save className="w-4 h-4" />
+            <span>{saving ? 'Saving to D1...' : 'Save Product'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ─── Tab Navigation ─── */}
+      <div className="flex items-center gap-2 border-b border-[#EDE8DE] pb-2 overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('details')}
+          className={`px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer ${
+            activeTab === 'details'
+              ? 'bg-[#1E3A2F] text-white'
+              : 'text-[#57534E] hover:bg-[#FAF7F2]'
+          }`}
+        >
+          General Details
+        </button>
+
+        <button
+          onClick={() => setActiveTab('images')}
+          className={`px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer ${
+            activeTab === 'images'
+              ? 'bg-[#1E3A2F] text-white'
+              : 'text-[#57534E] hover:bg-[#FAF7F2]'
+          }`}
+        >
+          Product Images ({product.images?.length || 0})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('variants')}
+          className={`px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer ${
+            activeTab === 'variants'
+              ? 'bg-[#1E3A2F] text-white'
+              : 'text-[#57534E] hover:bg-[#FAF7F2]'
+          }`}
+        >
+          Variants & Colors ({product.variants?.length || 0})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('specs')}
+          className={`px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer ${
+            activeTab === 'specs'
+              ? 'bg-[#1E3A2F] text-white'
+              : 'text-[#57534E] hover:bg-[#FAF7F2]'
+          }`}
+        >
+          Specifications ({product.specifications?.length || 0})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('customization')}
+          className={`px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer ${
+            activeTab === 'customization'
+              ? 'bg-[#1E3A2F] text-white'
+              : 'text-[#57534E] hover:bg-[#FAF7F2]'
+          }`}
+        >
+          Customization Rules ({product.customization_configs?.length || 0})
+        </button>
+      </div>
+
+      {/* ─── TAB 1: General Details ─── */}
+      {activeTab === 'details' && (
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#EDE8DE] shadow-2xs space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1.5">
+                Product Title / Name
+              </label>
+              <input
+                type="text"
+                value={product.name || ''}
+                onChange={(e) => setProduct({ ...product, name: e.target.value })}
+                required
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1.5">
+                Display Name (Short)
+              </label>
+              <input
+                type="text"
+                value={product.display_name || ''}
+                onChange={(e) => setProduct({ ...product, display_name: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1.5">
+                URL Slug
+              </label>
+              <input
+                type="text"
+                value={product.slug || ''}
+                onChange={(e) => setProduct({ ...product, slug: e.target.value })}
+                required
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] font-mono focus:outline-hidden focus:border-[#1E3A2F]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1.5">
+                Category
+              </label>
+              <select
+                value={product.category_id || ''}
+                onChange={(e) => setProduct({ ...product, category_id: e.target.value, subcategory_id: null })}
+                required
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] bg-white focus:outline-hidden focus:border-[#1E3A2F]"
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {subcategories.length > 0 && (
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1.5">
+                  Subcategory Type
+                </label>
+                <select
+                  value={product.subcategory_id || ''}
+                  onChange={(e) => setProduct({ ...product, subcategory_id: e.target.value || null })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] bg-white focus:outline-hidden focus:border-[#1E3A2F]"
+                >
+                  <option value="">None (Top-Level Category Only)</option>
+                  {subcategories.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1.5">
+                Product Type
+              </label>
+              <select
+                value={product.product_type || 'standard'}
+                onChange={(e) =>
+                  setProduct({
+                    ...product,
+                    product_type: e.target.value as 'standard' | 'custom_made',
+                    custom_made: e.target.value === 'custom_made' ? 1 : 0,
+                  })
+                }
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] bg-white focus:outline-hidden focus:border-[#1E3A2F]"
+              >
+                <option value="standard">Standard E-Commerce (Add to Cart directly)</option>
+                <option value="custom_made">Custom Made / Atelier (Enquire / Custom Dimensions)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1.5">
+                Base Price (₹)
+              </label>
+              <input
+                type="number"
+                value={product.base_price ?? 0}
+                onChange={(e) => setProduct({ ...product, base_price: Number(e.target.value) })}
+                required
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1.5">
+                Unit Label
+              </label>
+              <input
+                type="text"
+                placeholder="piece, panel, metre, roll, sqft..."
+                value={product.unit || ''}
+                onChange={(e) => setProduct({ ...product, unit: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <label className="flex items-center gap-2 p-3 rounded-xl border border-[#EDE8DE] bg-[#FAF7F2] cursor-pointer text-[12.5px]">
+              <input
+                type="checkbox"
+                checked={product.starting_price === 1}
+                onChange={(e) => setProduct({ ...product, starting_price: e.target.checked ? 1 : 0 })}
+                className="rounded text-[#1E3A2F]"
+              />
+              <span>Display as &quot;From ₹...&quot;</span>
+            </label>
+
+            <label className="flex items-center gap-2 p-3 rounded-xl border border-[#EDE8DE] bg-[#FAF7F2] cursor-pointer text-[12.5px]">
+              <input
+                type="checkbox"
+                checked={product.featured === 1}
+                onChange={(e) => setProduct({ ...product, featured: e.target.checked ? 1 : 0 })}
+                className="rounded text-[#1E3A2F]"
+              />
+              <span>Homepage Featured</span>
+            </label>
+
+            <label className="flex items-center gap-2 p-3 rounded-xl border border-[#EDE8DE] bg-[#FAF7F2] cursor-pointer text-[12.5px]">
+              <input
+                type="checkbox"
+                checked={product.active === 1}
+                onChange={(e) => setProduct({ ...product, active: e.target.checked ? 1 : 0 })}
+                className="rounded text-[#1E3A2F]"
+              />
+              <span>Active Status</span>
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1.5">
+              Short Description (Card Summary)
+            </label>
+            <input
+              type="text"
+              value={product.short_description || ''}
+              onChange={(e) => setProduct({ ...product, short_description: e.target.value })}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1.5">
+              Full Product Description
+            </label>
+            <textarea
+              rows={4}
+              value={product.description || ''}
+              onChange={(e) => setProduct({ ...product, description: e.target.value })}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 2: Images & R2 Upload ─── */}
+      {activeTab === 'images' && (
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#EDE8DE] shadow-2xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EDE8DE]">
+            <div>
+              <h2 className="font-serif text-[18px] text-[#1C1917] font-medium">Product Photography</h2>
+              <p className="text-[12.5px] text-[#78716C]">
+                Upload high-resolution images to Cloudflare R2. First image marked as &quot;Main&quot; is used on catalog cards.
+              </p>
+            </div>
+
+            <label className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12.5px] font-semibold transition-all shadow-2xs cursor-pointer shrink-0">
+              <Upload className="w-4 h-4" />
+              <span>{uploadingImage ? 'Uploading to R2...' : 'Upload Image to R2'}</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleUploadProductImage}
+                disabled={uploadingImage}
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {(product.images || []).map((img, idx) => (
+              <div
+                key={img.id || idx}
+                className={`relative rounded-2xl border overflow-hidden bg-[#FAF7F2] p-2 flex flex-col justify-between ${
+                  img.is_main === 1 ? 'border-[#1E3A2F] ring-2 ring-[#1E3A2F]' : 'border-[#EDE8DE]'
+                }`}
+              >
+                <div className="aspect-[4/3] rounded-xl overflow-hidden relative bg-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.image_url}
+                    alt={img.alt_text || 'Product image'}
+                    className="w-full h-full object-cover"
+                  />
+                  {img.is_main === 1 && (
+                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-[#1E3A2F] text-white text-[9.5px] font-bold uppercase tracking-wider shadow-xs">
+                      Main
+                    </span>
+                  )}
+                </div>
+
+                <div className="pt-2 flex items-center justify-between text-[11.5px]">
+                  {img.is_main !== 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSetMainImage(idx)}
+                      className="text-[#1E3A2F] hover:underline font-medium cursor-pointer"
+                    >
+                      Set Main
+                    </button>
+                  ) : (
+                    <span className="text-[#15803D] font-bold flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Primary
+                    </span>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(idx)}
+                    className="text-rose-600 hover:text-rose-800 p-1 cursor-pointer"
+                    title="Remove image"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 3: Variants & Colors ─── */}
+      {activeTab === 'variants' && (
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#EDE8DE] shadow-2xs space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-[#EDE8DE]">
+            <div>
+              <h2 className="font-serif text-[18px] text-[#1C1917] font-medium">Color & Material Variations</h2>
+              <p className="text-[12.5px] text-[#78716C]">
+                Variants rendered on the product detail page with custom color swatches and SKUs.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleAddVariant}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FAF7F2] border border-[#D5CDBF] text-[12.5px] font-semibold text-[#1C1917] hover:border-[#1C1917] cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Variant</span>
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {(product.variants || []).map((v, idx) => (
+              <div
+                key={v.id || idx}
+                className="p-4 rounded-xl border border-[#EDE8DE] bg-[#FAF7F2]/50 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center"
+              >
+                {/* Color Hex & Preview */}
+                <div className="sm:col-span-3 flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={v.color_hex || '#D6D3D1'}
+                    onChange={(e) => {
+                      const updated = [...(product.variants || [])];
+                      updated[idx].color_hex = e.target.value;
+                      setProduct({ ...product, variants: updated });
+                    }}
+                    className="w-8 h-8 rounded-lg border border-black/10 cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Variant Name"
+                    value={v.name || ''}
+                    onChange={(e) => {
+                      const updated = [...(product.variants || [])];
+                      updated[idx].name = e.target.value;
+                      setProduct({ ...product, variants: updated });
+                    }}
+                    className="flex-1 px-3 py-1.5 rounded-lg border border-[#D5CDBF] text-[13px] bg-white"
+                  />
+                </div>
+
+                {/* SKU */}
+                <div className="sm:col-span-3">
+                  <input
+                    type="text"
+                    placeholder="SKU Code"
+                    value={v.sku || ''}
+                    onChange={(e) => {
+                      const updated = [...(product.variants || [])];
+                      updated[idx].sku = e.target.value;
+                      setProduct({ ...product, variants: updated });
+                    }}
+                    className="w-full px-3 py-1.5 rounded-lg border border-[#D5CDBF] text-[12.5px] font-mono bg-white"
+                  />
+                </div>
+
+                {/* Price Adjustment */}
+                <div className="sm:col-span-2">
+                  <input
+                    type="number"
+                    placeholder="Price Adj (₹)"
+                    value={v.price_adjustment ?? 0}
+                    onChange={(e) => {
+                      const updated = [...(product.variants || [])];
+                      updated[idx].price_adjustment = Number(e.target.value);
+                      setProduct({ ...product, variants: updated });
+                    }}
+                    className="w-full px-3 py-1.5 rounded-lg border border-[#D5CDBF] text-[12.5px] bg-white"
+                  />
+                </div>
+
+                {/* In Stock Toggle */}
+                <div className="sm:col-span-3 flex items-center gap-3">
+                  <label className="flex items-center gap-1.5 text-[12px] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={v.in_stock === 1}
+                      onChange={(e) => {
+                        const updated = [...(product.variants || [])];
+                        updated[idx].in_stock = e.target.checked ? 1 : 0;
+                        setProduct({ ...product, variants: updated });
+                      }}
+                      className="rounded text-[#1E3A2F]"
+                    />
+                    <span>In Stock</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveVariant(idx)}
+                    className="text-rose-600 hover:text-rose-800 p-1 ml-auto cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 4: Specifications ─── */}
+      {activeTab === 'specs' && (
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#EDE8DE] shadow-2xs space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-[#EDE8DE]">
+            <div>
+              <h2 className="font-serif text-[18px] text-[#1C1917] font-medium">Technical Specifications</h2>
+              <p className="text-[12.5px] text-[#78716C]">
+                Key material, weave, opacity, weight, and care specifications displayed in the specifications table.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleAddSpec}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FAF7F2] border border-[#D5CDBF] text-[12.5px] font-semibold text-[#1C1917] hover:border-[#1C1917] cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Specification</span>
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {(product.specifications || []).map((s, idx) => (
+              <div key={s.id || idx} className="flex items-center gap-3">
+                <input
+                  type="text"
+                  placeholder="Label (e.g. Composition, Opacity, Width)"
+                  value={s.label || ''}
+                  onChange={(e) => {
+                    const updated = [...(product.specifications || [])];
+                    updated[idx].label = e.target.value;
+                    setProduct({ ...product, specifications: updated });
+                  }}
+                  className="w-1/3 px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] bg-white"
+                />
+                <input
+                  type="text"
+                  placeholder="Value (e.g. 100% Belgian Flax Linen, 100% Blackout)"
+                  value={s.value || ''}
+                  onChange={(e) => {
+                    const updated = [...(product.specifications || [])];
+                    updated[idx].value = e.target.value;
+                    setProduct({ ...product, specifications: updated });
+                  }}
+                  className="flex-1 px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveSpec(idx)}
+                  className="text-rose-600 hover:text-rose-800 p-2 cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 5: Customization Rules ─── */}
+      {activeTab === 'customization' && (
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#EDE8DE] shadow-2xs space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-[#EDE8DE]">
+            <div>
+              <h2 className="font-serif text-[18px] text-[#1C1917] font-medium">Bespoke Customization Rules</h2>
+              <p className="text-[12.5px] text-[#78716C]">
+                Configure customizable inputs for this specific product without forcing curtain-specific fields onto other goods.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleAddCustomConfig}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FAF7F2] border border-[#D5CDBF] text-[12.5px] font-semibold text-[#1C1917] hover:border-[#1C1917] cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Customization Rule</span>
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {(product.customization_configs || []).map((cfg, idx) => (
+              <div key={cfg.id || idx} className="p-4 rounded-xl border border-[#EDE8DE] bg-[#FAF7F2]/50 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
+                    <input
+                      type="text"
+                      placeholder="Field Key (e.g. dimensions, heading_style)"
+                      value={cfg.field_key || ''}
+                      onChange={(e) => {
+                        const updated = [...(product.customization_configs || [])];
+                        updated[idx].field_key = e.target.value;
+                        setProduct({ ...product, customization_configs: updated });
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-[#D5CDBF] text-[12.5px] font-mono bg-white"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Field Label (e.g. Pleat Style, Width & Drop)"
+                      value={cfg.field_label || ''}
+                      onChange={(e) => {
+                        const updated = [...(product.customization_configs || [])];
+                        updated[idx].field_label = e.target.value;
+                        setProduct({ ...product, customization_configs: updated });
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-[#D5CDBF] text-[12.5px] bg-white"
+                    />
+                    <select
+                      value={cfg.field_type || 'select'}
+                      onChange={(e) => {
+                        const updated = [...(product.customization_configs || [])];
+                        updated[idx].field_type = e.target.value as 'dimension_pair' | 'select' | 'number' | 'text' | 'boolean';
+                        setProduct({ ...product, customization_configs: updated });
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-[#D5CDBF] text-[12.5px] bg-white"
+                    >
+                      <option value="select">Dropdown Select</option>
+                      <option value="dimension_pair">Dimension Pair (Width & Drop)</option>
+                      <option value="number">Number (Quantity / Metres)</option>
+                      <option value="text">Custom Text</option>
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveCustomConfig(idx)}
+                    className="text-rose-600 hover:text-rose-800 p-1 cursor-pointer shrink-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {cfg.field_type === 'select' && (
+                  <div>
+                    <label className="block text-[10.5px] font-semibold uppercase tracking-wider text-[#8C827A] mb-1">
+                      Options (comma-separated):
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Eyelet, Pinch Pleat, American Pleat, Ripple Fold..."
+                      value={cfg.options || ''}
+                      onChange={(e) => {
+                        const updated = [...(product.customization_configs || [])];
+                        const items = e.target.value.split(',').map((s) => s.trim()).filter(Boolean);
+                        updated[idx].options = JSON.stringify(items);
+                        setProduct({ ...product, customization_configs: updated });
+                      }}
+                      className="w-full px-3 py-1.5 rounded-lg border border-[#D5CDBF] text-[12.5px] bg-white"
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

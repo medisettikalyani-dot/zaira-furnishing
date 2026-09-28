@@ -19,7 +19,7 @@ export const SPACES: Space[] = [
     id: 'space-3',
     slug: 'dining',
     name: 'Dining Room',
-    tagline: 'Table linen, dining decor and dinnerware',
+    tagline: 'Curtains, dining chair upholstery fabrics and textured wall coverings',
     image: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80',
   },
   {
@@ -33,7 +33,7 @@ export const SPACES: Space[] = [
     id: 'space-5',
     slug: 'outdoor',
     name: 'Outdoor',
-    tagline: 'Artificial grass, green walls and outdoor cushions',
+    tagline: 'Balcony blinds, weather-resistant upholstery and cushions',
     image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
   },
   {

@@ -2,38 +2,35 @@
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
-import { CloudflareImage } from '@/components/ui/CloudflareImage';
 
 interface ServiceItem {
   id: string;
-  label: string;
   heading: string;
   description: string;
   image: string;
   href: string;
 }
 
+// ─── 8 Verified Zaira Services Accessible Through Carousel ───
 const SERVICES_DATA: ServiceItem[] = [
   {
     id: 'free-home-measurement',
-    label: 'FREE VISIT',
-    heading: 'Free In-Home Measurement / Site Visit',
+    heading: 'Free In-Home Measurement & Site Visit',
     description: 'We visit your home and take the right measurements for your furnishings.',
     image: '/images/services/free-home-measurement.jpg',
     href: '/services#free-in-home-measurement',
   },
   {
     id: 'fabric-samples-at-home',
-    label: 'AT HOME',
-    heading: 'Doorstep Fabric / Sample Demo',
+    heading: 'Doorstep Fabric & Sample Demo',
     description: 'See and compare fabric and furnishing samples at your home.',
     image: '/images/services/fabric-samples-at-home.jpg',
     href: '/services#doorstep-fabric-demo',
   },
   {
     id: 'custom-stitching',
-    label: 'CUSTOM FIT',
     heading: 'Custom Tailoring & Stitching',
     description: 'Get curtains and other furnishings made to your required size.',
     image: '/images/services/custom-stitching.jpg',
@@ -41,7 +38,6 @@ const SERVICES_DATA: ServiceItem[] = [
   },
   {
     id: 'professional-installation',
-    label: 'EXPERT FITTING',
     heading: 'Professional Installation',
     description: 'Our team installs curtains, blinds and other furnishings neatly.',
     image: '/images/services/professional-installation.jpg',
@@ -49,15 +45,13 @@ const SERVICES_DATA: ServiceItem[] = [
   },
   {
     id: 'smart-blinds-setup',
-    label: 'SMART HOME',
-    heading: 'Motorization / Smart Home Setup',
+    heading: 'Motorization & Smart Home Setup',
     description: 'Set up motorized blinds and simple smart controls for your home.',
     image: '/images/services/smart-blinds-setup.jpg',
     href: '/services#motorization-smart-home',
   },
   {
     id: 'remote-home-styling',
-    label: 'REMOTE SERVICE',
     heading: 'NRI Remote Home Styling',
     description: 'Get furnishing guidance even when you are not at home.',
     image: '/images/services/remote-home-styling.jpg',
@@ -65,16 +59,14 @@ const SERVICES_DATA: ServiceItem[] = [
   },
   {
     id: 'office-commercial-furnishing',
-    label: 'FOR BUSINESS',
-    heading: 'Corporate / Institutional Furnishings',
+    heading: 'Corporate & Institutional Furnishings',
     description: 'Furnishing support for offices and other commercial spaces.',
     image: '/images/services/office-commercial-furnishing.jpg',
     href: '/services#corporate-institutional-furnishings',
   },
   {
     id: 'warranty-and-support',
-    label: 'AFTER SALES',
-    heading: 'Warranty & After-Sales Support',
+    heading: 'Warranty & After-Sales',
     description: 'We provide support after your furnishing work is completed.',
     image: '/images/services/warranty-and-support.jpg',
     href: '/services#warranty-after-sales',
@@ -190,8 +182,8 @@ export function ServicesSection() {
 
   return (
     <section className="relative bg-[#F4EDE2] overflow-hidden">
-      {/* ─── Organic Torn / Deckled Paper Top Edge (Matching Reference) ─── */}
-      <div className="w-full overflow-hidden leading-none select-none pointer-events-none -mt-px text-[#FAF7F2]">
+      {/* ─── Organic Deckled Paper Top Edge ─── */}
+      <div className="w-full overflow-hidden leading-none select-none pointer-events-none -mt-px text-white">
         <svg
           viewBox="0 0 1440 32"
           fill="none"
@@ -207,17 +199,18 @@ export function ServicesSection() {
       </div>
 
       <div className="pt-10 sm:pt-14 pb-16 sm:pb-20 lg:pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* ─── Centered Section Header (Matching Reference Image) ─── */}
-        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+        
+        {/* ─── Centered Section Header ─── */}
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
           <h2 className="font-serif text-[32px] sm:text-[40px] lg:text-[46px] text-[#1C1917] font-medium tracking-tight mb-2.5">
             Our Services
           </h2>
           <p className="text-[14px] sm:text-[15px] text-[#78716C] leading-relaxed">
-            We help you choose, measure and install your furnishings.
+            From choosing the right materials to installation, we help bring your furnishing vision together.
           </p>
         </div>
 
-        {/* ─── Carousel Controls (Prev/Next Header & Mobile) ─── */}
+        {/* ─── 4-Card Carousel Controls & Track ─── */}
         <div className="relative">
           {/* Subtle Left Arrow Button */}
           <button
@@ -227,7 +220,7 @@ export function ServicesSection() {
             aria-label="Previous service"
             className={`hidden md:flex absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full items-center justify-center border transition-all duration-300 shadow-md ${
               canScrollLeft
-                ? 'border-[#EAE0D0] bg-white text-[#1C1917] hover:bg-[#7D5E38] hover:text-white hover:border-[#7D5E38]'
+                ? 'border-[#EAE0D0] bg-white text-[#1C1917] hover:bg-[#7D5E38] hover:text-white hover:border-[#7D5E38] cursor-pointer'
                 : 'border-[#EAE0D0] bg-white/70 text-[#C4B9A1] opacity-40 cursor-not-allowed'
             }`}
           >
@@ -242,14 +235,14 @@ export function ServicesSection() {
             aria-label="Next service"
             className={`hidden md:flex absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full items-center justify-center border transition-all duration-300 shadow-md ${
               canScrollRight
-                ? 'border-[#EAE0D0] bg-white text-[#1C1917] hover:bg-[#7D5E38] hover:text-white hover:border-[#7D5E38]'
+                ? 'border-[#EAE0D0] bg-white text-[#1C1917] hover:bg-[#7D5E38] hover:text-white hover:border-[#7D5E38] cursor-pointer'
                 : 'border-[#EAE0D0] bg-white/70 text-[#C4B9A1] opacity-40 cursor-not-allowed'
             }`}
           >
             <ChevronRight className="w-5 h-5" />
           </button>
 
-          {/* ─── Horizontal Carousel Track ─── */}
+          {/* ─── Horizontal Carousel Track (4 Cards Visible on Desktop) ─── */}
           <div
             ref={scrollRef}
             onMouseDown={handleMouseDown}
@@ -265,38 +258,32 @@ export function ServicesSection() {
                 key={service.id}
                 className="w-[82vw] sm:w-[calc(50%-12px)] lg:w-[calc((100%-72px)/4)] shrink-0 snap-start"
               >
-                {/* ─── Rounded Squircle White Card (Matching Reference Image) ─── */}
+                {/* ─── Rounded White Card ─── */}
                 <div className="group relative h-full rounded-[30px] sm:rounded-[34px] overflow-hidden bg-white border border-[#EDE4D6] shadow-[0_10px_28px_rgba(50,38,25,0.06)] hover:shadow-[0_20px_42px_rgba(50,38,25,0.12)] hover:-translate-y-1 transition-all duration-400 p-4 sm:p-5 flex flex-col justify-between text-center">
                   <div>
-                    {/* Top Image Container */}
+                    {/* Top Image Container (Clean, no badges) */}
                     <div className="relative w-full aspect-[4/3] rounded-[22px] sm:rounded-[24px] overflow-hidden bg-[#FAF7F2] mb-4">
-                      <CloudflareImage
+                      <Image
                         src={service.image}
                         alt={service.heading}
                         fill
-                        sizes="(max-width: 640px) 80vw, (max-width: 1024px) 45vw, 25vw"
+                        sizes="(max-width: 640px) 82vw, (max-width: 1024px) 45vw, 25vw"
                         className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                       />
-                      {/* Pill Badge on Image */}
-                      <div className="absolute top-2.5 right-2.5 z-10">
-                        <span className="px-2.5 py-0.5 text-[9.5px] uppercase tracking-wider font-bold bg-white/95 text-[#7D5E38] rounded-full shadow-2xs backdrop-blur-xs">
-                          {service.label}
-                        </span>
-                      </div>
                     </div>
 
                     {/* Card Heading */}
-                    <h3 className="font-serif text-[17px] sm:text-[18px] text-[#1C1917] font-medium leading-snug tracking-tight mb-1.5 px-1">
+                    <h3 className="font-serif text-[17px] sm:text-[18px] text-[#1C1917] font-medium leading-snug tracking-tight mb-2 px-1">
                       {service.heading}
                     </h3>
 
                     {/* Card Description */}
-                    <p className="text-[12px] sm:text-[12.5px] text-[#78716C] leading-relaxed line-clamp-2 px-2 mb-4">
+                    <p className="text-[12.5px] sm:text-[13px] text-[#78716C] leading-relaxed line-clamp-2 px-2 mb-4">
                       {service.description}
                     </p>
                   </div>
 
-                  {/* ─── Subtle "Learn More →" Text Link ─── */}
+                  {/* ─── Subtle "Learn More →" Link ─── */}
                   <div className="pt-2">
                     <Link
                       href={service.href}
@@ -340,7 +327,7 @@ export function ServicesSection() {
                 type="button"
                 onClick={() => scrollToCard(idx)}
                 aria-label={`Go to service ${idx + 1}`}
-                className={`transition-all duration-300 rounded-full h-1.5 ${
+                className={`transition-all duration-300 rounded-full h-1.5 cursor-pointer ${
                   activeIndex === idx
                     ? 'w-6 bg-[#7D5E38]'
                     : 'w-1.5 bg-[#D8CFBF] hover:bg-[#A89D89]'
@@ -364,6 +351,7 @@ export function ServicesSection() {
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
+
       </div>
     </section>
   );

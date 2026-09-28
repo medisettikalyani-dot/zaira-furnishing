@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ChevronRight, ArrowRight, X, Sparkles } from 'lucide-react';
+import { ChevronRight, ArrowRight, X } from 'lucide-react';
 import { Product } from '@/lib/data/types';
 import { CURTAIN_TYPES } from '@/lib/data/curtains';
 
@@ -18,19 +18,11 @@ export function CurtainsExperience({ products, initialType }: CurtainsExperience
   const searchParams = useSearchParams();
   const productsSectionRef = useRef<HTMLDivElement>(null);
 
-  // Active filter state from query param or initial prop
-  const urlType = searchParams.get('type') || initialType || 'all';
-  const [selectedType, setSelectedType] = useState<string>(urlType);
-
-  useEffect(() => {
-    const current = searchParams.get('type') || 'all';
-    setSelectedType(current);
-  }, [searchParams]);
+  // Derive active filter state directly from query param or initial prop
+  const selectedType = searchParams.get('type') || initialType || 'all';
 
   // Click handler: select style, filter products, scroll down to products, update URL
   const handleSelectType = (slug: string, scroll = true) => {
-    setSelectedType(slug);
-
     const params = new URLSearchParams(searchParams.toString());
     if (slug === 'all') {
       params.delete('type');

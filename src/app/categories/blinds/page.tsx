@@ -3,7 +3,6 @@ import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { BlindsLanding } from '@/components/blinds/BlindsLanding';
 import { getBlindTypeBySlug } from '@/lib/data/blinds';
-import { PRODUCTS } from '@/lib/data/products';
 
 export const metadata: Metadata = {
   title: 'Window Blinds & Shades | Architectural Window Solutions | Zaira Furnishing',
@@ -24,9 +23,5 @@ export default async function BlindsCategoryPage({ searchParams }: BlindsPagePro
     }
   }
 
-  const blindProducts = PRODUCTS.filter(
-    (product) => product.categorySlug === 'window-blinds-shades'
-  );
-
-  return <BlindsLanding products={blindProducts} />;
+  return <BlindsLanding />;
 }

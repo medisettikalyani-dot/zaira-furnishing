@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { PRODUCTS } from '@/lib/data/products';
+import { getDynamicProducts } from '@/lib/db/catalog';
 import { CURTAIN_TYPES, getCurtainTypeBySlug } from '@/lib/data/curtains';
 import { CurtainTypePage } from '@/components/curtains/CurtainTypePage';
 
@@ -39,10 +39,8 @@ export default async function CurtainTypeRoute({ params }: CurtainTypeRouteProps
     notFound();
   }
 
-  // Filter only curtain products
-  const curtainProducts = PRODUCTS.filter(
-    (product) => product.categorySlug === 'curtains-drapes'
-  );
+  // Filter only curtain products from Cloudflare D1
+  const curtainProducts = await getDynamicProducts({ categorySlug: 'curtains-drapes' });
 
   return <CurtainTypePage curtainType={curtainType} products={curtainProducts} />;
 }

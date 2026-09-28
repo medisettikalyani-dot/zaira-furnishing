@@ -1,8 +1,8 @@
 import { Category } from './types';
 
 /**
- * Official Zaira Furnishing Product Categories (All 14 catalog sections)
- * Slugs match the official 14 categories exactly.
+ * Official Zaira Furnishing Product Categories (All 9 active catalog sections)
+ * Slugs match the official 9 categories exactly.
  */
 export const CATEGORIES: Category[] = [
   {
@@ -55,7 +55,7 @@ export const CATEGORIES: Category[] = [
     name: 'Mattresses & Sleep Systems',
     tagline: 'Orthopedic comfort, natural latex & zero-motion pocket springs',
     description: 'Engineered ergonomic mattresses, contouring natural latex, hybrid pocket springs, and custom bases.',
-    image: '/images/hero/bedroom.jpg',
+    image: '/images/categories/mattress.jpg',
     featured: true,
     isCustomizable: true,
     itemCountText: 'Mattresses & Bases',
@@ -83,17 +83,6 @@ export const CATEGORIES: Category[] = [
     itemCountText: 'Flooring & Parquet',
   },
   {
-    id: 'cat-8',
-    slug: 'artificial-turf-green-walls',
-    name: 'Artificial Turf & Green Walls',
-    tagline: 'UV-stabilized lush landscape grass & botanical vertical panels',
-    description: 'High-density landscape turf for balconies and terraces, and maintenance-free biophilic foliage walls.',
-    image: '/images/categories/artificial-turf.jpg',
-    featured: true,
-    isCustomizable: true,
-    itemCountText: 'Turf & Green Walls',
-  },
-  {
     id: 'cat-9',
     slug: 'bed-linen-bath',
     name: 'Bed Linen & Bath',
@@ -114,50 +103,6 @@ export const CATEGORIES: Category[] = [
     featured: true,
     isCustomizable: false,
     itemCountText: 'Cushions & Pillows',
-  },
-  {
-    id: 'cat-11',
-    slug: 'table-linen-dining-decor',
-    name: 'Table Linen & Dining Decor',
-    tagline: 'Pure Belgian linen runners, placemats & napkin rings',
-    description: 'Tailored dining table runners, organic linen napkins, braided placemats, and tabletop accents.',
-    image: '/images/categories/table-linen.jpg',
-    featured: true,
-    isCustomizable: false,
-    itemCountText: 'Table Linen & Decor',
-  },
-  {
-    id: 'cat-12',
-    slug: 'crockery-glassware',
-    name: 'Crockery & Glassware',
-    tagline: 'Hand-glazed stoneware, fine porcelain & lead-free crystal',
-    description: 'Minimalist dinnerware sets, matte ceramic serving bowls, crystal goblets, and artisan glassware.',
-    image: '/images/categories/crockery.jpg',
-    featured: true,
-    isCustomizable: false,
-    itemCountText: 'Crockery & Glassware',
-  },
-  {
-    id: 'cat-13',
-    slug: 'artefacts-home-decor',
-    name: 'Artefacts & Home Decor',
-    tagline: 'Sculptural stone vessels, bronze accents & curated ceramics',
-    description: 'Curated architectural sculptures, fluted ceramic urns, and organic travertine statement pieces.',
-    image: '/images/categories/artefacts.jpg',
-    featured: true,
-    isCustomizable: false,
-    itemCountText: 'Artefacts & Decor',
-  },
-  {
-    id: 'cat-14',
-    slug: 'decorative-wall-clocks',
-    name: 'Decorative Wall Clocks',
-    tagline: 'Silent Japanese sweep movements, marble dials & minimalist frames',
-    description: 'Modern statement wall clocks featuring natural marble dials, champagne metallic rings, and walnut details.',
-    image: '/images/categories/wall-clocks.jpg',
-    featured: true,
-    isCustomizable: false,
-    itemCountText: 'Wall Clocks',
   },
 ];
 
@@ -185,19 +130,19 @@ export function normalizeCategorySlug(rawSlug: string): string {
     'carpets-rugs': 'carpets-rugs',
     'wooden-flooring-and-sports-floor': 'wooden-flooring-sports-floor',
     'wooden-flooring-sports-floor': 'wooden-flooring-sports-floor',
-    'artificial-turf-and-green-walls': 'artificial-turf-green-walls',
-    'artificial-turf-green-walls': 'artificial-turf-green-walls',
     'bed-linen-and-bath': 'bed-linen-bath',
     'bed-linen-bath': 'bed-linen-bath',
     'cushions-and-pillows': 'cushions-pillows',
     'cushions-pillows': 'cushions-pillows',
-    'table-linen-and-dining-decor': 'table-linen-dining-decor',
-    'table-linen-dining-decor': 'table-linen-dining-decor',
-    'crockery-and-glassware': 'crockery-glassware',
-    'crockery-glassware': 'crockery-glassware',
-    'artefacts-and-home-decor': 'artefacts-home-decor',
-    'artefacts-home-decor': 'artefacts-home-decor',
-    'decorative-wall-clocks': 'decorative-wall-clocks',
+    'cat-1': 'curtains-drapes',
+    'cat-2': 'window-blinds-shades',
+    'cat-3': 'sofa-fabrics-upholstery',
+    'cat-4': 'wallpapers-wall-coverings',
+    'cat-5': 'mattresses-sleep-systems',
+    'cat-6': 'carpets-rugs',
+    'cat-7': 'wooden-flooring-sports-floor',
+    'cat-9': 'bed-linen-bath',
+    'cat-10': 'cushions-pillows',
   };
 
   if (slugMap[trimmed]) {
@@ -216,4 +161,45 @@ export function getCategoryBySlug(slug: string): Category | undefined {
   const normalized = normalizeCategorySlug(slug);
   return CATEGORIES.find((c) => c.slug === normalized || c.slug === slug);
 }
+
+/**
+ * Returns the canonical clean route URL for any category.
+ */
+export function getCategoryHref(slug: string): string {
+  const normalized = normalizeCategorySlug(slug);
+  switch (normalized) {
+    case 'curtains-drapes':
+      return '/categories/curtains';
+    case 'window-blinds-shades':
+      return '/categories/blinds';
+    case 'sofa-fabrics-upholstery':
+      return '/categories/sofa-fabrics';
+    case 'wallpapers-wall-coverings':
+      return '/categories/wallpapers';
+    case 'carpets-rugs':
+      return '/categories/carpets';
+    default:
+      return `/categories/${normalized}`;
+  }
+}
+
+/**
+ * Returns the short, e-commerce action callout text for any category card.
+ */
+export function getCategoryActionText(slug: string): string {
+  const normalized = normalizeCategorySlug(slug);
+  const actionMap: Record<string, string> = {
+    'curtains-drapes': 'Explore Curtains',
+    'window-blinds-shades': 'Explore Blinds',
+    'sofa-fabrics-upholstery': 'Explore Fabrics',
+    'wallpapers-wall-coverings': 'Explore Wallpapers',
+    'mattresses-sleep-systems': 'Explore Mattresses',
+    'carpets-rugs': 'Explore Rugs',
+    'wooden-flooring-sports-floor': 'Explore Flooring',
+    'bed-linen-bath': 'Explore Bed Linen',
+    'cushions-pillows': 'Explore Cushions',
+  };
+  return actionMap[normalized] || 'Explore Collection';
+}
+
 

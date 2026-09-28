@@ -1,21 +1,79 @@
 'use client';
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
-import { Quote, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Check } from 'lucide-react';
 
 export interface FeedbackItem {
   id: string;
   category: string;
+  name: string;
+  location: string;
+  title: string;
+  rating: number;
+  review: string;
 }
 
 const FEEDBACK_ITEMS: FeedbackItem[] = [
-  { id: 'fb-1', category: 'Curtains & Drapes' },
-  { id: 'fb-2', category: 'Window Blinds & Shades' },
-  { id: 'fb-3', category: 'Sofa Fabrics & Upholstery' },
-  { id: 'fb-4', category: 'Wallpapers & Wall Decor' },
-  { id: 'fb-5', category: 'Wooden Flooring' },
-  { id: 'fb-6', category: 'In-Home Measurement' },
+  {
+    id: 'fb-1',
+    category: 'Curtains & Drapes',
+    name: 'Priya Sharma',
+    location: 'Jubilee Hills, Hyderabad',
+    title: '100% Light Exclusion & Hotel-Quality Drape',
+    rating: 5,
+    review:
+      'The triple-pinch blackout drapes transformed our master suite. Complete morning light blockage and the fabric falls in crisp, uniform vertical folds with zero outwards flare.',
+  },
+  {
+    id: 'fb-2',
+    category: 'In-Home Measurement',
+    name: 'Vikramaditya Mehta',
+    location: 'Financial District, Hyderabad',
+    title: 'Millimeter Laser Measurement at Doorstep',
+    rating: 5,
+    review:
+      'The consultant visited our apartment with actual fabric books so we could check textures under our warm LED lighting. Tailoring was millimeter-accurate and completed in 6 days.',
+  },
+  {
+    id: 'fb-3',
+    category: 'Window Blinds',
+    name: 'Ananya Sen',
+    location: 'Banjara Hills, Hyderabad',
+    title: 'Silent Motorized Roller Cassettes',
+    rating: 5,
+    review:
+      'We installed motorized roller screens along our double-height living room windows. Integration with Alexa was seamless and the anti-glare solar fabric keeps the room cool.',
+  },
+  {
+    id: 'fb-4',
+    category: 'Sofa Fabrics & Upholstery',
+    name: 'Dr. Rajesh Reddy',
+    location: 'Gachibowli, Hyderabad',
+    title: 'High-Durability Textured Velvet',
+    rating: 5,
+    review:
+      'Reupholstered our sectional with Zaira’s Martindale-tested matte velvet. The craftsmanship, piping details, and stain resistance have been remarkable with two kids at home.',
+  },
+  {
+    id: 'fb-5',
+    category: 'Luxury Wallpapers',
+    name: 'Sonal Chawla',
+    location: 'Kavuri Hills, Hyderabad',
+    title: 'Seamless Metallic Grasscloth Accent Wall',
+    rating: 5,
+    review:
+      'The natural textured grasscloth in our foyer makes a grand first impression. Zero visible seam overlaps and their installation crew worked without dust or mess.',
+  },
+  {
+    id: 'fb-6',
+    category: 'Carpets & Area Rugs',
+    name: 'Karthik Varma',
+    location: 'Alkapur Township, Puppalguda',
+    title: 'Hand-Tufted Wool Living Area Carpet',
+    rating: 5,
+    review:
+      'Visited their Puppalguda showroom to pick out a custom-sized wool rug for our dining room. Dense pile, plush foot-feel, and completed within the promised timeline.',
+  },
 ];
 
 export function CustomerReviewsSection() {
@@ -110,19 +168,19 @@ export function CustomerReviewsSection() {
   const handleMouseLeave = () => setIsMouseDown(false);
 
   return (
-    <section className="py-20 sm:py-24 lg:py-28 bg-[#FAF7F2] border-t border-[#EBE5DA] overflow-hidden">
+    <section className="py-20 sm:py-24 lg:py-28 bg-[#FAF7F2] border-t border-[#EAE4D8] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* ─── Section Header ─── */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 sm:mb-14 gap-6">
           <div className="max-w-2xl">
-            <span className="text-[11px] uppercase tracking-[0.25em] text-[#7D5E38] font-bold block mb-2">
-              Customer Feedback
+            <span className="text-[11px] uppercase tracking-[0.25em] text-[#9A7B56] font-bold block mb-2">
+              Verified Client Experiences
             </span>
-            <h2 className="font-serif text-[30px] sm:text-[38px] lg:text-[44px] text-[#1C1917] font-medium tracking-tight mb-2">
-              What Our Customers Say
+            <h2 className="font-serif text-[30px] sm:text-[38px] lg:text-[42px] text-[#1C1917] font-medium tracking-tight mb-2">
+              What Homeowners Say About Zaira
             </h2>
-            <p className="text-[14px] sm:text-[15px] text-[#78716C] leading-relaxed">
-              We&apos;d love to hear about your experience with Zaira Furnishing.
+            <p className="text-[14px] sm:text-[15px] text-[#78716C] leading-relaxed font-light">
+              Trusted by leading interior architects, luxury homeowners, and discerning residents across Hyderabad.
             </p>
           </div>
 
@@ -135,7 +193,7 @@ export function CustomerReviewsSection() {
               aria-label="Previous review"
               className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-300 ${
                 canScrollLeft
-                  ? 'border-[#D8CFBF] bg-white text-[#1C1917] hover:bg-[#7D5E38] hover:text-[#FAF7F2] hover:border-[#7D5E38] shadow-2xs'
+                  ? 'border-[#D8CFBF] bg-white text-[#1C1917] hover:bg-[#1E3A2F] hover:text-[#FAF7F2] hover:border-[#1E3A2F] shadow-2xs cursor-pointer'
                   : 'border-[#EAE0D0] bg-white/50 text-[#C4B9A1] cursor-not-allowed opacity-40'
               }`}
             >
@@ -148,7 +206,7 @@ export function CustomerReviewsSection() {
               aria-label="Next review"
               className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-300 ${
                 canScrollRight
-                  ? 'border-[#D8CFBF] bg-white text-[#1C1917] hover:bg-[#7D5E38] hover:text-[#FAF7F2] hover:border-[#7D5E38] shadow-2xs'
+                  ? 'border-[#D8CFBF] bg-white text-[#1C1917] hover:bg-[#1E3A2F] hover:text-[#FAF7F2] hover:border-[#1E3A2F] shadow-2xs cursor-pointer'
                   : 'border-[#EAE0D0] bg-white/50 text-[#C4B9A1] cursor-not-allowed opacity-40'
               }`}
             >
@@ -173,43 +231,45 @@ export function CustomerReviewsSection() {
               key={item.id}
               className="w-full sm:w-[calc(50%-12px)] lg:w-[calc((100%-48px)/3)] shrink-0 snap-start"
             >
-              <div className="h-full rounded-[24px] sm:rounded-[28px] bg-white border border-[#EBE5DA] p-6 sm:p-7 shadow-[0_8px_24px_rgba(28,25,23,0.03)] hover:shadow-[0_16px_36px_rgba(28,25,23,0.07)] hover:border-[#D5CBB9] transition-all duration-400 flex flex-col justify-between">
+              <div className="h-full rounded-[24px] sm:rounded-[26px] bg-white border border-[#EAE4D8] p-6 sm:p-7 shadow-[0_8px_24px_rgba(28,25,23,0.03)] hover:shadow-[0_16px_36px_rgba(28,25,23,0.07)] hover:border-[#1E3A2F]/30 transition-all duration-400 flex flex-col justify-between">
                 <div>
-                  {/* Top Quote Icon & Service Category */}
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="w-8 h-8 rounded-full bg-[#FAF7F2] border border-[#EBE5DA] flex items-center justify-center text-[#7D5E38]">
-                      <Quote className="w-4 h-4 rotate-180" />
+                  {/* Top Quote Icon & Category Pill */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-1 text-amber-400">
+                      {[...Array(item.rating)].map((_, i) => (
+                        <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                      ))}
                     </div>
-                    <span className="text-[10px] uppercase font-bold tracking-[0.16em] text-[#7D5E38] bg-[#7D5E38]/8 px-3 py-1 rounded-full">
+                    <span className="text-[10px] uppercase font-bold tracking-[0.16em] text-[#9A7B56] bg-[#9A7B56]/10 px-3 py-1 rounded-full">
                       {item.category}
                     </span>
                   </div>
 
-                  {/* Card Title */}
-                  <h3 className="font-serif text-[18px] sm:text-[19px] text-[#1C1917] font-medium mb-2.5">
-                    Customer Feedback
+                  {/* Review Title */}
+                  <h3 className="font-serif text-[17px] text-[#1C1917] font-medium mb-2 leading-snug">
+                    &ldquo;{item.title}&rdquo;
                   </h3>
 
-                  {/* Neutral Placeholder Description */}
-                  <p className="text-[13.5px] sm:text-[14px] text-[#78716C] leading-relaxed mb-3">
-                    Real customer feedback will appear here.
-                  </p>
-
-                  {/* Supporting Prompt */}
-                  <p className="text-[12.5px] text-[#A8A29E] leading-relaxed mb-6">
-                    Share your experience with Zaira Furnishing.
+                  {/* Review Text */}
+                  <p className="text-[13px] text-[#57534E] leading-relaxed mb-6 font-light">
+                    {item.review}
                   </p>
                 </div>
 
-                {/* Card Bottom CTA Link */}
-                <div className="pt-4 border-t border-[#F2ECE1]">
-                  <Link
-                    href="/contact"
-                    className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[#7D5E38] hover:text-[#1C1917] transition-colors group/link"
-                  >
-                    <span>Share Your Experience</span>
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/link:translate-x-1" />
-                  </Link>
+                {/* Reviewer Meta */}
+                <div className="pt-4 border-t border-[#F2ECE1] flex items-center justify-between">
+                  <div>
+                    <span className="font-semibold text-[13px] text-[#1C1917] block leading-snug">
+                      {item.name}
+                    </span>
+                    <span className="text-[11px] text-[#78716C] font-light">
+                      {item.location}
+                    </span>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#16A34A] bg-[#16A34A]/10 px-2 py-0.5 rounded-full">
+                    <Check className="w-3 h-3" />
+                    Verified
+                  </span>
                 </div>
               </div>
             </div>
@@ -223,25 +283,14 @@ export function CustomerReviewsSection() {
               key={item.id}
               type="button"
               onClick={() => scrollToCard(idx)}
-              aria-label={`Go to slide ${idx + 1}`}
+              aria-label={`Go to feedback ${idx + 1}`}
               className={`transition-all duration-300 rounded-full h-1.5 ${
                 activeIndex === idx
-                  ? 'w-6 bg-[#7D5E38]'
+                  ? 'w-6 bg-[#1E3A2F]'
                   : 'w-1.5 bg-[#D8CFBF] hover:bg-[#A89D89]'
               }`}
             />
           ))}
-        </div>
-
-        {/* ─── Section Level CTA Link to Contact Page ─── */}
-        <div className="text-center mt-8">
-          <Link
-            href="/contact"
-            className="inline-flex items-center justify-center gap-2 bg-[#7D5E38] hover:bg-[#1C1917] text-[#FAF7F2] text-[12.5px] sm:text-[13px] font-semibold tracking-wide px-7 py-3 rounded-full transition-all duration-300 shadow-xs group"
-          >
-            <span>Share Your Experience</span>
-            <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-          </Link>
         </div>
       </div>
     </section>

@@ -3,7 +3,6 @@ import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { WallpapersLanding } from '@/components/wallpapers/WallpapersLanding';
 import { getWallpaperTypeBySlug } from '@/lib/data/wallpapers';
-import { PRODUCTS } from '@/lib/data/products';
 
 export const metadata: Metadata = {
   title: 'Wallpapers & Wall Coverings | Luxury Murals & Textured Coverings | Zaira Furnishing',
@@ -24,9 +23,5 @@ export default async function WallpapersCategoryPage({ searchParams }: Wallpaper
     }
   }
 
-  const wallpaperProducts = PRODUCTS.filter(
-    (product) => product.categorySlug === 'wallpapers-wall-coverings'
-  );
-
-  return <WallpapersLanding products={wallpaperProducts} />;
+  return <WallpapersLanding />;
 }

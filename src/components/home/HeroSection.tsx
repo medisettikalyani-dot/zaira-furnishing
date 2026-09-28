@@ -2,13 +2,36 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Calendar } from 'lucide-react';
+import { DbCmsContent } from '@/lib/db/types';
 
-export function HeroSection() {
+interface HeroSectionProps {
+  cmsContent?: DbCmsContent | null;
+}
+
+export function HeroSection({ cmsContent }: HeroSectionProps) {
+  let contentParsed: any = {};
+  if (cmsContent?.content) {
+    try {
+      contentParsed = JSON.parse(cmsContent.content);
+    } catch {
+      contentParsed = {};
+    }
+  }
+
+  const eyebrow = contentParsed.eyebrow || 'ZAIRA FURNISHING';
+  const title = cmsContent?.title || 'Beautiful Furnishings for Your Home';
+  const subtitle = cmsContent?.subtitle || 'Curtains, blinds, wallpapers, rugs, flooring and more for your home.';
+  const primaryCtaText = contentParsed.primary_cta_text || 'Shop Now';
+  const primaryCtaLink = contentParsed.primary_cta_link || '/products';
+  const secondaryCtaText = contentParsed.secondary_cta_text || 'Book a Free Visit';
+  const secondaryCtaLink = contentParsed.secondary_cta_link || '/services';
+  const heroImage = cmsContent?.image_url || '/images/hero/living_room.jpg';
+
   return (
     <section className="relative overflow-hidden bg-[#FAF7F2] text-[#1C1917] pt-2 sm:pt-4 lg:pt-6 pb-8 sm:pb-12 lg:pb-16">
       {/* ─── Organic Background Waves & Botanical Illustrations ─── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        {/* Sweeping Organic Curved Almond/Beige Backdrop - visible and scaled across mobile, tablet, and desktop */}
+        {/* Sweeping Organic Curved Almond/Beige Backdrop */}
         <div
           className="absolute -top-10 sm:-top-16 right-0 w-[88vw] sm:w-[72vw] lg:w-[58vw] h-[65%] sm:h-[95%] lg:h-[115%] bg-[#EFE7DC] opacity-95 block"
           style={{
@@ -18,7 +41,7 @@ export function HeroSection() {
           }}
         />
 
-        {/* Top-Right Deep Forest Green Organic Arch Shape - visible on mobile with scaled proportions */}
+        {/* Top-Right Deep Forest Green Organic Arch Shape */}
         <div
           className="absolute -top-10 -right-10 sm:-top-14 sm:-right-14 w-40 h-40 sm:w-64 sm:h-64 lg:w-96 lg:h-96 bg-[#233F33] opacity-95 block"
           style={{
@@ -26,7 +49,7 @@ export function HeroSection() {
           }}
         />
 
-        {/* Top-Right Lush Botanical Leaf Branch (overlaying green arch) */}
+        {/* Top-Right Lush Botanical Leaf Branch */}
         <svg
           viewBox="0 0 160 160"
           className="absolute top-2 right-2 sm:top-5 sm:right-5 w-20 h-20 sm:w-28 sm:h-28 lg:w-32 lg:h-32 text-[#6E8F7F] opacity-90 block z-10"
@@ -35,7 +58,6 @@ export function HeroSection() {
           strokeWidth="1.75"
         >
           <path d="M140 15 Q100 55 65 125" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-          {/* Leaves */}
           <path d="M130 30 Q120 12 105 18 Q115 35 130 30" fill="currentColor" opacity="0.9" />
           <path d="M115 45 Q100 30 86 38 Q100 54 115 45" fill="currentColor" opacity="0.9" />
           <path d="M102 65 Q85 52 72 60 Q86 75 102 65" fill="currentColor" opacity="0.9" />
@@ -59,7 +81,7 @@ export function HeroSection() {
           <path d="M80 84 Q95 102 110 96 Q96 80 80 84" fill="currentColor" opacity="0.8" />
         </svg>
 
-        {/* Far-Right Botanical Branch (behind bedroom card) */}
+        {/* Far-Right Botanical Branch */}
         <svg
           viewBox="0 0 160 160"
           className="absolute top-[32%] sm:top-[34%] -right-5 sm:-right-6 w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 text-[#6E8F7F] opacity-75 pointer-events-none block z-0"
@@ -79,55 +101,48 @@ export function HeroSection() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* ─── Split Hero Layout ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 items-center pt-2 sm:pt-4 pb-2 sm:pb-4">
-          {/* Left Column: Eyebrow, Main Heading, Supporting Text, and Buttons */}
+          {/* Left Column */}
           <div className="lg:col-span-5 flex flex-col justify-center text-left py-1 sm:py-2">
-            {/* Eyebrow */}
             <div className="flex items-center gap-2 sm:gap-2.5 mb-2.5 sm:mb-4">
               <span className="text-[10.5px] sm:text-[12px] uppercase tracking-[0.22em] text-[#78716C] font-semibold">
-                ZAIRA FURNISHING
+                {eyebrow}
               </span>
               <span className="h-[1.5px] w-8 sm:w-14 bg-[#C4B9A1] inline-block" />
             </div>
 
-            {/* Main Heading in Refined Serif */}
             <h1 className="font-serif text-[32px] sm:text-[44px] lg:text-[50px] xl:text-[54px] text-[#1E3A2F] font-medium leading-[1.12] tracking-tight mb-3.5 sm:mb-5">
-              Beautiful Furnishings
-              <br />
-              <span className="font-medium text-[#1E3A2F]">for Your Home</span>
+              {title}
             </h1>
 
-            {/* Supporting Text */}
             <p className="text-[14px] sm:text-[15.5px] text-[#57534E] font-normal leading-relaxed max-w-md mb-6 sm:mb-9">
-              Curtains, blinds, wallpapers, rugs, flooring and more for your home.
+              {subtitle}
             </p>
 
-            {/* Buttons: Primary Shop Now + Secondary Book a Free Visit */}
             <div className="flex flex-row items-center gap-2.5 sm:gap-3.5 w-full sm:w-auto">
               <Link
-                href="/products"
+                href={primaryCtaLink}
                 className="flex-1 sm:flex-initial inline-flex items-center justify-center px-5 sm:px-8 py-3.5 sm:py-4 text-[13px] font-medium text-white bg-[#1E3A2F] hover:bg-[#152B23] rounded-full transition-all duration-300 shadow-md hover:shadow-lg group text-center"
               >
-                <span>Shop Now</span>
+                <span>{primaryCtaText}</span>
                 <ArrowRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
 
               <Link
-                href="/services"
+                href={secondaryCtaLink}
                 className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 sm:px-7 py-3.5 sm:py-4 text-[12.5px] sm:text-[13px] font-medium text-[#1E3A2F] bg-white hover:bg-[#FAF7F2] border border-[#C4B9A1] rounded-full transition-all duration-300 shadow-2xs hover:shadow-xs text-center whitespace-nowrap"
               >
                 <Calendar className="w-3.5 h-3.5 text-[#9A7B56]" />
-                <span>Book a Free Visit</span>
+                <span>{secondaryCtaText}</span>
               </Link>
             </div>
           </div>
 
-          {/* Right Column: 3-Image Composition */}
+          {/* Right Column */}
           <div className="lg:col-span-7 relative mt-2 sm:mt-4 lg:mt-0">
             <div className="relative w-full max-w-lg sm:max-w-2xl mx-auto lg:max-w-none pt-2 pb-8 sm:pb-12 px-1 sm:px-4">
-              {/* Main Living Room Image */}
               <div className="relative aspect-[16/11] sm:aspect-[16/10.5] w-full rounded-[24px] sm:rounded-[38px] lg:rounded-[48px] overflow-hidden shadow-[0_16px_40px_rgba(0,0,0,0.12)] border border-white/80 bg-[#EDE5DB]">
                 <Image
-                  src="/images/hero/living_room.jpg"
+                  src={heroImage}
                   alt="Beautiful Furnished Living Room with Pleated Curtains, Sofa, and Coffee Table"
                   fill
                   priority
@@ -136,7 +151,6 @@ export function HeroSection() {
                 />
               </div>
 
-              {/* Floating Image 1 (Left Lower: Curtains) */}
               <div className="group absolute -bottom-4 sm:-bottom-7 lg:-bottom-8 -left-1 sm:-left-3 lg:-left-4 w-[28%] sm:w-[27%] lg:w-[27%] aspect-[3/4] rounded-[16px] sm:rounded-[26px] lg:rounded-[30px] overflow-hidden border-[3px] sm:border-[5px] border-white shadow-[0_12px_30px_rgba(0,0,0,0.16)] z-20 bg-white transition-transform duration-300 hover:scale-[1.02]">
                 <Image
                   src="/images/hero/curtains.jpg"
@@ -147,7 +161,6 @@ export function HeroSection() {
                 />
               </div>
 
-              {/* Floating Image 2 (Right Lower: Bedroom) */}
               <div className="group absolute -bottom-4 sm:-bottom-7 lg:-bottom-8 -right-1 sm:-right-3 lg:-right-4 w-[27%] sm:w-[26%] lg:w-[26%] aspect-[3/4] rounded-[16px] sm:rounded-[26px] lg:rounded-[30px] overflow-hidden border-[3px] sm:border-[5px] border-white shadow-[0_12px_30px_rgba(0,0,0,0.16)] z-20 bg-white transition-transform duration-300 hover:scale-[1.02]">
                 <Image
                   src="/images/hero/bedroom.jpg"

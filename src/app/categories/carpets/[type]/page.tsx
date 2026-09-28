@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { PRODUCTS } from '@/lib/data/products';
+import { getDynamicProducts } from '@/lib/db/catalog';
 import { CARPET_TYPES, getCarpetTypeBySlug } from '@/lib/data/carpets';
 import { CarpetTypePage } from '@/components/carpets/CarpetTypePage';
 
@@ -39,10 +39,8 @@ export default async function CarpetTypeRoute({ params }: CarpetTypeRouteProps) 
     notFound();
   }
 
-  // Filter only carpet products
-  const carpetProducts = PRODUCTS.filter(
-    (product) => product.categorySlug === 'carpets-rugs'
-  );
+  // Filter only carpet products from Cloudflare D1
+  const carpetProducts = await getDynamicProducts({ categorySlug: 'carpets-rugs' });
 
   return <CarpetTypePage carpetType={carpetType} products={carpetProducts} />;
 }

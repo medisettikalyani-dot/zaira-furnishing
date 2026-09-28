@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { PRODUCTS } from '@/lib/data/products';
+import { getDynamicProducts } from '@/lib/db/catalog';
 import { SOFA_FABRIC_TYPES, getSofaFabricTypeBySlug } from '@/lib/data/sofa-fabrics';
 import { SofaFabricTypePage } from '@/components/sofa-fabrics/SofaFabricTypePage';
 
@@ -39,10 +39,8 @@ export default async function SofaFabricTypeRoute({ params }: SofaFabricTypeRout
     notFound();
   }
 
-  // Filter only sofa fabrics products
-  const sofaFabricProducts = PRODUCTS.filter(
-    (product) => product.categorySlug === 'sofa-fabrics-upholstery'
-  );
+  // Filter only sofa fabrics products from Cloudflare D1
+  const sofaFabricProducts = await getDynamicProducts({ categorySlug: 'sofa-fabrics-upholstery' });
 
   return <SofaFabricTypePage sofaFabricType={sofaFabricType} products={sofaFabricProducts} />;
 }

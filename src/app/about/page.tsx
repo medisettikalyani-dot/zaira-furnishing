@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, ShieldCheck, Sparkles, Award } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Sparkles, CheckCircle2 } from 'lucide-react';
 import { CloudflareImage } from '@/components/ui/CloudflareImage';
 
 export const metadata = {
@@ -79,7 +79,7 @@ export default function AboutPage() {
 
           <div className="bg-white p-8 border border-[#EBE7DF]">
             <div className="w-10 h-10 bg-[#FAF7F2] border border-[#E7E2D8] flex items-center justify-center text-[#9A7B56] mb-5">
-              <Award className="w-5 h-5 stroke-[1.5]" />
+              <CheckCircle2 className="w-5 h-5 stroke-[1.5]" />
             </div>
             <h3 className="font-serif text-[20px] text-[#1C1917] font-medium mb-2">
               Atelier Craftsmanship

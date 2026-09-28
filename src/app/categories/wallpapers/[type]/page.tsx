@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { PRODUCTS } from '@/lib/data/products';
+import { getDynamicProducts } from '@/lib/db/catalog';
 import { WALLPAPER_TYPES, getWallpaperTypeBySlug } from '@/lib/data/wallpapers';
 import { WallpaperTypePage } from '@/components/wallpapers/WallpaperTypePage';
 
@@ -39,10 +39,8 @@ export default async function WallpaperTypeRoute({ params }: WallpaperTypeRouteP
     notFound();
   }
 
-  // Filter only wallpaper products
-  const wallpaperProducts = PRODUCTS.filter(
-    (product) => product.categorySlug === 'wallpapers-wall-coverings'
-  );
+  // Filter only wallpaper products from Cloudflare D1
+  const wallpaperProducts = await getDynamicProducts({ categorySlug: 'wallpapers-wall-coverings' });
 
   return <WallpaperTypePage wallpaperType={wallpaperType} products={wallpaperProducts} />;
 }

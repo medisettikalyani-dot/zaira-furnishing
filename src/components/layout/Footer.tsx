@@ -1,182 +1,172 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, MapPin, Phone, Mail, Clock, ShieldCheck } from 'lucide-react';
-import { CATEGORIES } from '@/lib/data/categories';
+import { MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { DbCmsContent } from '@/lib/db/types';
 
-export function Footer() {
-  const topCategories = CATEGORIES.slice(0, 6);
+interface FooterProps {
+  cmsContent?: DbCmsContent | null;
+}
+
+export function Footer({ cmsContent }: FooterProps) {
+  let contentParsed: any = {};
+  if (cmsContent?.content) {
+    try {
+      contentParsed = JSON.parse(cmsContent.content);
+    } catch {
+      contentParsed = {};
+    }
+  }
+
+  const tagline =
+    cmsContent?.subtitle ||
+    'Curtains, blinds, fabrics and furnishings for thoughtfully designed spaces.';
+  const address =
+    contentParsed.address ||
+    'Rd Number 5, Kyetian Goud Nilayam, Alkapur Twp, Puppalguda, Hyderabad, Telangana 500089';
+  const phone = contentParsed.phone || '+91 63001 45763';
+  const email = contentParsed.email || 'concierge@zairafurnishing.com';
+  const hours = contentParsed.hours || 'Mon–Sat 10:30 AM–8:30 PM · Sunday by appointment';
+  const copyright = contentParsed.copyright || '© 2026 Zaira Furnishing. All rights reserved.';
+
+  const shopLinks = [
+    { name: 'All Products', href: '/products' },
+    { name: 'Curtains & Drapes', href: '/categories/curtains' },
+    { name: 'Window Blinds & Shades', href: '/categories/blinds' },
+    { name: 'Sofa Fabrics & Upholstery', href: '/categories/sofa-fabrics' },
+    { name: 'Wallpapers & Wall Coverings', href: '/categories/wallpapers' },
+    { name: 'Carpets & Rugs', href: '/categories/carpets' },
+    { name: 'Mattresses & Sleep Systems', href: '/categories/mattresses-sleep-systems' },
+    { name: 'View All Categories', href: '/categories' },
+  ];
+
+  const exploreLinks = [
+    { name: 'Home', href: '/' },
+    { name: 'About', href: '/about' },
+    { name: 'Services', href: '/services' },
+    { name: 'Contact', href: '/contact' },
+    { name: 'My Orders', href: '/account/orders' },
+  ];
 
   return (
-    <footer className="bg-[#1C1917] text-[#FAF7F2] border-t border-[#2E2A27]">
-      {/* Top Banner Highlight */}
-      <div className="border-b border-[#2E2A27] py-10 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h3 className="font-serif text-[22px] md:text-[24px] text-white tracking-wide">
-              Bespoke Interior & Furnishing Showroom
-            </h3>
-            <p className="text-[13px] text-[#A8A29E] mt-1">
-              Curating exceptional textiles, custom drapery, and architectural finishes.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-4">
-            <Link
-              href="/services"
-              className="px-5 py-2.5 text-[12px] uppercase tracking-widest font-medium bg-[#FAF7F2] text-[#1C1917] hover:bg-[#9A7B56] hover:text-white transition-colors"
-            >
-              Book Free Site Measurement
-            </Link>
-            <Link
-              href="/products"
-              className="px-5 py-2.5 text-[12px] uppercase tracking-widest font-medium border border-[#44403C] text-white hover:border-white transition-colors"
-            >
-              Explore Products
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Footer Links */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
-          {/* Brand Col */}
-          <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-block">
-              <span className="font-serif text-[24px] tracking-[0.15em] font-medium text-white uppercase">
-                Zaira Furnishing
-              </span>
-            </Link>
-            <p className="text-[13px] text-[#A8A29E] leading-relaxed max-w-sm">
-              A premier furnishing showroom dedicated to timeless aesthetics, master craftsmanship, and end-to-end bespoke solutions—from laser site measurement to precision installation.
-            </p>
-            <div className="pt-2">
-              <div className="flex items-center gap-2 text-[12px] text-[#C4B9A1]">
-                <ShieldCheck className="w-4 h-4 text-[#9A7B56]" />
-                <span>Quality Assured Craftsmanship & Master Atelier Tailoring</span>
+    <footer className="bg-[#152B23] text-[#FAF7F2] border-t border-[#234237]">
+      {/* ─── Main Footer Columns ─── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-14 lg:py-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-9 lg:gap-12">
+          
+          {/* COLUMN 1 — BRAND (4 cols) */}
+          <div className="lg:col-span-4 space-y-4">
+            <Link href="/" className="inline-flex items-center gap-2.5 group">
+              <div className="w-8 h-8 flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 36 36" className="w-7 h-7 fill-none" aria-hidden="true">
+                  <path d="M18 3 L31 14 L18 22 L5 14 Z" fill="#9CA488" />
+                  <path d="M5 14 L18 22 L18 33 L5 25 Z" fill="#3D6352" />
+                  <path d="M31 14 L18 22 L18 33 L31 25 Z" fill="#6E8F7F" />
+                </svg>
               </div>
-            </div>
+              <div className="flex flex-col">
+                <span className="font-serif text-[20px] tracking-[0.16em] font-semibold text-white uppercase leading-none">
+                  ZAIRA
+                </span>
+                <span className="text-[7.5px] uppercase tracking-[0.32em] text-[#C4B9A1] font-medium mt-1 leading-none">
+                  FURNISHING
+                </span>
+              </div>
+            </Link>
+
+            <p className="text-[13.5px] text-[#A8A29E] leading-relaxed max-w-sm font-light">
+              {tagline}
+            </p>
           </div>
 
-          {/* Catalog Categories Col */}
-          <div>
-            <h4 className="text-[12px] uppercase tracking-[0.2em] font-semibold text-white mb-4">
-              Catalog
+          {/* COLUMN 2 — SHOP (3 cols) */}
+          <div className="lg:col-span-3">
+            <h4 className="text-[11px] sm:text-[11.5px] uppercase tracking-[0.2em] font-semibold text-[#EAE4D8] mb-4">
+              Shop
             </h4>
             <ul className="space-y-2.5 text-[13px] text-[#A8A29E]">
-              {topCategories.map((cat) => (
-                <li key={cat.id}>
+              {shopLinks.map((item) => (
+                <li key={item.name}>
                   <Link
-                    href={`/categories?slug=${cat.slug}`}
-                    className="hover:text-white transition-colors"
+                    href={item.href}
+                    className="hover:text-white transition-colors block py-0.5"
                   >
-                    {cat.name}
+                    {item.name}
                   </Link>
                 </li>
               ))}
-              <li>
-                <Link
-                  href="/categories"
-                  className="text-[#C4B9A1] hover:text-white inline-flex items-center gap-1 mt-1 transition-colors"
-                >
-                  View All 14 Categories <ArrowRight className="w-3 h-3" />
-                </Link>
-              </li>
             </ul>
           </div>
 
-          {/* Services Col */}
-          <div>
-            <h4 className="text-[12px] uppercase tracking-[0.2em] font-semibold text-white mb-4">
-              Bespoke Services
+          {/* COLUMN 3 — EXPLORE (2 cols) */}
+          <div className="lg:col-span-2">
+            <h4 className="text-[11px] sm:text-[11.5px] uppercase tracking-[0.2em] font-semibold text-[#EAE4D8] mb-4">
+              Explore
             </h4>
             <ul className="space-y-2.5 text-[13px] text-[#A8A29E]">
-              <li>
-                <Link href="/services" className="hover:text-white transition-colors">
-                  In-Home Measurement
-                </Link>
-              </li>
-              <li>
-                <Link href="/services" className="hover:text-white transition-colors">
-                  Doorstep Fabric Demo
-                </Link>
-              </li>
-              <li>
-                <Link href="/services" className="hover:text-white transition-colors">
-                  Custom Tailoring & Pleating
-                </Link>
-              </li>
-              <li>
-                <Link href="/services" className="hover:text-white transition-colors">
-                  Smart Home Motorization
-                </Link>
-              </li>
-              <li>
-                <Link href="/services" className="hover:text-white transition-colors">
-                  NRI Remote Home Styling
-                </Link>
-              </li>
-              <li>
-                <Link href="/services" className="hover:text-white transition-colors">
-                  Warranty & After-Sales
-                </Link>
-              </li>
+              {exploreLinks.map((item) => (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    className="hover:text-white transition-colors block py-0.5"
+                  >
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Showroom & Contact Placeholders (Strictly marked placeholders) */}
-          <div>
-            <h4 className="text-[12px] uppercase tracking-[0.2em] font-semibold text-white mb-4">
-              Showroom Visit
+          {/* COLUMN 4 — CONTACT (3 cols) */}
+          <div className="lg:col-span-3">
+            <h4 className="text-[11px] sm:text-[11.5px] uppercase tracking-[0.2em] font-semibold text-[#EAE4D8] mb-4">
+              Contact
             </h4>
-            <div className="space-y-3 text-[13px] text-[#A8A29E]">
+            <div className="space-y-3.5 text-[13px] text-[#A8A29E]">
+              {/* Address */}
               <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-[#9A7B56] shrink-0 mt-0.5" />
-                <span className="text-[#C4B9A1]">[Showroom Address Placeholder]</span>
+                <address className="not-italic text-[#E5E0D8] leading-relaxed whitespace-pre-line">
+                  {address}
+                </address>
               </div>
+
+              {/* Phone */}
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-[#9A7B56] shrink-0" />
-                <span className="text-[#C4B9A1]">[Phone Number Placeholder]</span>
+                <a
+                  href={`tel:${phone.replace(/\s+/g, '')}`}
+                  className="text-white hover:text-[#9A7B56] transition-colors font-medium"
+                >
+                  {phone}
+                </a>
               </div>
+
+              {/* Email */}
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-[#9A7B56] shrink-0" />
-                <span className="text-[#C4B9A1]">[Email Placeholder]</span>
+                <a
+                  href={`mailto:${email}`}
+                  className="hover:text-white transition-colors break-all"
+                >
+                  {email}
+                </a>
               </div>
-              <div className="flex items-start gap-2.5">
+
+              {/* Hours */}
+              <div className="flex items-start gap-2.5 text-[12.5px] pt-0.5">
                 <Clock className="w-4 h-4 text-[#9A7B56] shrink-0 mt-0.5" />
-                <span>[Showroom Hours Placeholder: Mon - Sat 10:30 AM - 8:30 PM]</span>
-              </div>
-            </div>
-
-            {/* Social Media Placeholders */}
-            <div className="mt-6 pt-4 border-t border-[#2E2A27]">
-              <p className="text-[11px] uppercase tracking-widest text-[#78716C] mb-2">
-                Follow Our Curations
-              </p>
-              <div className="flex gap-3 text-[12px] text-[#A8A29E]">
-                <span className="hover:text-white cursor-pointer">[Instagram]</span>
-                <span className="hover:text-white cursor-pointer">[Pinterest]</span>
-                <span className="hover:text-white cursor-pointer">[YouTube]</span>
+                <div className="leading-snug">
+                  <p className="text-white whitespace-pre-line">{hours}</p>
+                </div>
               </div>
             </div>
           </div>
+
         </div>
-      </div>
 
-      {/* Copyright Bar */}
-      <div className="border-t border-[#2E2A27] py-6 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-[12px] text-[#78716C] gap-3">
-          <p>© {new Date().getFullYear()} Zaira Furnishing. All rights reserved.</p>
-          <div className="flex gap-6">
-            <Link href="/about" className="hover:text-[#A8A29E] transition-colors">
-              About Zaira
-            </Link>
-            <Link href="/services" className="hover:text-[#A8A29E] transition-colors">
-              Services
-            </Link>
-            <Link href="/contact" className="hover:text-[#A8A29E] transition-colors">
-              Contact & Inquiries
-            </Link>
-          </div>
+        {/* ─── Bottom Bar ─── */}
+        <div className="mt-12 pt-6 border-t border-[#234237] flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-[#8C827A]">
+          <p>{copyright}</p>
         </div>
       </div>
     </footer>

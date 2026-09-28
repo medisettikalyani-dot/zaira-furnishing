@@ -3,7 +3,6 @@ import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { SofaFabricsLanding } from '@/components/sofa-fabrics/SofaFabricsLanding';
 import { getSofaFabricTypeBySlug } from '@/lib/data/sofa-fabrics';
-import { PRODUCTS } from '@/lib/data/products';
 
 export const metadata: Metadata = {
   title: 'Sofa Fabrics & Upholstery | Bespoke Textiles & Re-Upholstery | Zaira Furnishing',
@@ -24,9 +23,5 @@ export default async function SofaFabricsCategoryPage({ searchParams }: SofaFabr
     }
   }
 
-  const sofaFabricProducts = PRODUCTS.filter(
-    (product) => product.categorySlug === 'sofa-fabrics-upholstery'
-  );
-
-  return <SofaFabricsLanding products={sofaFabricProducts} />;
+  return <SofaFabricsLanding />;
 }

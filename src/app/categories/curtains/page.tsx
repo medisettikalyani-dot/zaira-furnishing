@@ -14,8 +14,6 @@ interface CurtainsPageProps {
   searchParams: Promise<{ type?: string }>;
 }
 
-import { PRODUCTS } from '@/lib/data/products';
-
 export default async function CurtainsCategoryPage({ searchParams }: CurtainsPageProps) {
   const resolved = await searchParams;
   if (resolved?.type && resolved.type !== 'all') {
@@ -25,9 +23,5 @@ export default async function CurtainsCategoryPage({ searchParams }: CurtainsPag
     }
   }
 
-  const curtainProducts = PRODUCTS.filter(
-    (product) => product.categorySlug === 'curtains-drapes'
-  );
-
-  return <CurtainsLanding products={curtainProducts} />;
+  return <CurtainsLanding />;
 }
