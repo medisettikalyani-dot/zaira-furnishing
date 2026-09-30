@@ -7,19 +7,28 @@ export interface FullProductRecord extends DbProduct {
   specifications: DbProductSpecification[];
 }
 
+export interface DbProductWithCategory extends DbProduct {
+  category_name?: string | null;
+  category_slug?: string | null;
+}
+
 export async function getDbProducts(filters?: {
   categorySlug?: string;
   featured?: boolean;
   search?: string;
-}): Promise<DbProduct[]> {
+  limit?: number;
+}): Promise<DbProductWithCategory[]> {
   try {
     const db = getDatabase();
-    let sql = 'SELECT p.* FROM products p';
+    let sql = `
+      SELECT p.*, c.name as category_name, c.slug as category_slug
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+    `;
     const conditions: string[] = ['p.active = 1'];
     const params: unknown[] = [];
 
     if (filters?.categorySlug) {
-      sql += ' JOIN categories c ON p.category_id = c.id';
       conditions.push('c.slug = ?');
       params.push(filters.categorySlug);
     }
@@ -29,14 +38,20 @@ export async function getDbProducts(filters?: {
       params.push(filters.featured ? 1 : 0);
     }
 
-    if (filters?.search) {
-      conditions.push('(p.name LIKE ? OR p.description LIKE ?)');
-      params.push(`%${filters.search}%`, `%${filters.search}%`);
+    if (filters?.search && filters.search.trim()) {
+      const term = `%${filters.search.trim()}%`;
+      conditions.push('(p.name LIKE ? OR p.display_name LIKE ? OR p.description LIKE ? OR c.name LIKE ?)');
+      params.push(term, term, term, term);
     }
 
     sql += ` WHERE ${conditions.join(' AND ')} ORDER BY p.display_order ASC`;
 
-    const rows = await db.query<DbProduct>(sql, params);
+    if (filters?.limit && filters.limit > 0) {
+      sql += ' LIMIT ?';
+      params.push(filters.limit);
+    }
+
+    const rows = await db.query<DbProductWithCategory>(sql, params);
     return rows || [];
   } catch (error) {
     console.error('Database query error in getDbProducts:', error);

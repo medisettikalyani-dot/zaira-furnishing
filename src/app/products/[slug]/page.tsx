@@ -4,6 +4,10 @@ import { Metadata } from 'next';
 import { getDynamicProductBySlug, getDynamicProducts } from '@/lib/db/catalog';
 import { ProductDetailView } from '@/components/products/ProductDetailView';
 
+// Ensure real-time runtime freshness for product detail pages
+export const dynamicParams = true;
+export const revalidate = 0;
+
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }

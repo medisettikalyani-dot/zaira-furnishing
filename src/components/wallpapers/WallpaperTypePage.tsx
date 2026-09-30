@@ -4,11 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, ArrowLeft, ArrowUpDown } from 'lucide-react';
 import { Product } from '@/lib/data/types';
-import { WallpaperType } from '@/lib/data/wallpapers';
+import { DbSubcategory } from '@/lib/db/types';
 import { ProductCard } from '@/components/ui/ProductCard';
 
 interface WallpaperTypePageProps {
-  wallpaperType: WallpaperType;
+  wallpaperType: DbSubcategory;
   products: Product[];
 }
 
@@ -18,9 +18,9 @@ export function WallpaperTypePage({ wallpaperType, products }: WallpaperTypePage
   // Strict, reliable filter: must belong to wallpapers-wall-coverings category and match this exact wallpaper type
   const typeProducts = products.filter(
     (p) =>
-      p.categorySlug === 'wallpapers-wall-coverings' &&
-      (p.wallpaperType === wallpaperType.slug ||
-        p.slug === wallpaperType.productSlug ||
+      (p.categorySlug === 'wallpapers-wall-coverings' || p.categorySlug === 'wallpapers') &&
+      (!wallpaperType.slug ||
+        p.wallpaperType === wallpaperType.slug ||
         (p.wallpaperType && p.wallpaperType.toLowerCase() === wallpaperType.slug.toLowerCase()))
   );
 

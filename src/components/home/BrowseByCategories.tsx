@@ -4,222 +4,24 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { CURTAIN_TYPES } from '@/lib/data/curtains';
-import { BLIND_TYPES } from '@/lib/data/blinds';
-import { SOFA_FABRIC_TYPES } from '@/lib/data/sofa-fabrics';
-import { WALLPAPER_TYPES } from '@/lib/data/wallpapers';
-import { CARPET_TYPES } from '@/lib/data/carpets';
+import { DiscoveryCategory } from '@/lib/db/catalog';
 
-export interface CategoryDiscoveryItem {
-  id: string;
-  name: string;
-  image: string;
-  href: string;
-}
-
-export interface DiscoveryCategory {
-  id: string;
-  slug: string;
-  tabLabel: string;
-  items: CategoryDiscoveryItem[];
-}
-
-// ─── ALL 9 OFFICIAL ZAIRA FURNISHING CATALOG CATEGORIES ───
-export const DISCOVERY_CATEGORIES: DiscoveryCategory[] = [
-  // 1. Curtains (10 genuine subcategory types)
-  {
-    id: 'disc-curtains',
-    slug: 'curtains-drapes',
-    tabLabel: 'Curtains',
-    items: [
-      {
-        id: 'curt-blackout',
-        name: 'Blackout Curtains',
-        image: '/images/products/curtains/blackout-curtains/main.jpg',
-        href: '/categories/curtains/blackout',
-      },
-      {
-        id: 'curt-custom',
-        name: 'Customized Curtains',
-        image: '/images/products/curtains/custom-made-curtains/main.jpg',
-        href: '/categories/curtains/custom',
-      },
-      {
-        id: 'curt-printed',
-        name: 'Digitally Printed Curtains',
-        image: '/images/products/curtains/digitally-printed-curtains/main.jpg',
-        href: '/categories/curtains/printed',
-      },
-      {
-        id: 'curt-jacquard',
-        name: 'Jacquard Curtains',
-        image: '/images/products/curtains/jacquard-curtains/main.jpg',
-        href: '/categories/curtains/jacquard',
-      },
-      {
-        id: 'curt-sheer',
-        name: 'Sheer / Day Curtains',
-        image: '/images/products/curtains/sheer-day-curtains/main.jpg',
-        href: '/categories/curtains/sheer',
-      },
-      {
-        id: 'curt-velvet',
-        name: 'Velvet Curtains',
-        image: '/images/products/curtains/velvet-curtains/main.jpg',
-        href: '/categories/curtains/velvet',
-      },
-      {
-        id: 'curt-satin',
-        name: 'Satin Plain Curtains',
-        image: '/images/products/curtains/satin-plain-curtains/main.jpg',
-        href: '/categories/curtains/satin',
-      },
-      {
-        id: 'curt-linen',
-        name: 'Linen & Textured Curtains',
-        image: '/images/products/curtains/linen-textured-curtains/main.jpg',
-        href: '/categories/curtains/linen',
-      },
-      {
-        id: 'curt-embroidered',
-        name: 'Embroidered Curtains',
-        image: '/images/products/curtains/embroidered-curtains/main.jpg',
-        href: '/categories/curtains/embroidered',
-      },
-      {
-        id: 'curt-kids',
-        name: 'Kids Room Curtains',
-        image: '/images/products/curtains/kids-room-curtains/main.jpg',
-        href: '/categories/curtains/kids',
-      },
-    ],
-  },
-
-  // 2. Sofa Fabrics (8 genuine upholstery types)
-  {
-    id: 'disc-sofa-fabrics',
-    slug: 'sofa-fabrics-upholstery',
-    tabLabel: 'Sofa Fabrics',
-    items: SOFA_FABRIC_TYPES.map((t) => ({
-      id: t.id,
-      name: t.name,
-      image: t.image || '/images/hero/sofa_fabrics.jpg',
-      href: `/categories/sofa-fabrics/${t.slug}`,
-    })),
-  },
-
-  // 3. Bed Linen (1 real product)
-  {
-    id: 'disc-bed-linen',
-    slug: 'bed-linen-bath',
-    tabLabel: 'Bed Linen',
-    items: [
-      {
-        id: 'prod-linen-1',
-        name: '800TC Egyptian Cotton Sateen Bed Set',
-        image: '/images/categories/bed-linen.jpg',
-        href: '/products/egyptian-sateen-luxury-bed-linen-set',
-      },
-    ],
-  },
-
-  // 4. Carpets & Rugs (5 genuine rug types)
-  {
-    id: 'disc-carpets',
-    slug: 'carpets-rugs',
-    tabLabel: 'Carpets & Rugs',
-    items: CARPET_TYPES.map((t) => ({
-      id: t.id,
-      name: t.name,
-      image: t.image || '/images/hero/rugs.jpg',
-      href: `/categories/carpets/${t.slug}`,
-    })),
-  },
-
-  // 5. Mattresses (1 real product)
-  {
-    id: 'disc-mattresses',
-    slug: 'mattresses-sleep-systems',
-    tabLabel: 'Mattresses',
-    items: [
-      {
-        id: 'prod-matt-1',
-        name: 'OrthoContour Hybrid Pocket Spring & Latex Mattress',
-        image: '/images/categories/mattress.jpg',
-        href: '/products/ortho-contour-hybrid-pocket-spring-mattress',
-      },
-    ],
-  },
-
-  // 6. Wallpapers (5 genuine wallpaper types)
-  {
-    id: 'disc-wallpapers',
-    slug: 'wallpapers-wall-coverings',
-    tabLabel: 'Wallpapers',
-    items: WALLPAPER_TYPES.map((t) => ({
-      id: t.id,
-      name: t.name,
-      image: t.image || '/images/hero/wallpapers.jpg',
-      href: `/categories/wallpapers/${t.slug}`,
-    })),
-  },
-
-  // 7. Window Blinds (9 genuine blind types)
-  {
-    id: 'disc-blinds',
-    slug: 'window-blinds-shades',
-    tabLabel: 'Window Blinds',
-    items: BLIND_TYPES.map((t) => ({
-      id: t.id,
-      name: t.name,
-      image: t.image || '/images/hero/blinds.jpg',
-      href: `/categories/blinds/${t.slug}`,
-    })),
-  },
-
-  // 8. Flooring (1 real product)
-  {
-    id: 'disc-flooring',
-    slug: 'wooden-flooring-sports-floor',
-    tabLabel: 'Flooring',
-    items: [
-      {
-        id: 'prod-floor-1',
-        name: 'European Prime Engineered Oak Flooring',
-        image: '/images/hero/flooring.jpg',
-        href: '/products/european-prime-natural-oak-flooring',
-      },
-    ],
-  },
-
-  // 9. Cushions (1 real product)
-  {
-    id: 'disc-cushions',
-    slug: 'cushions-pillows',
-    tabLabel: 'Cushions',
-    items: [
-      {
-        id: 'prod-cush-1',
-        name: 'Atelia Geometric Embroidered Cushion Cover',
-        image: '/images/categories/cushions.jpg',
-        href: '/products/atelia-embroidered-linen-cushion',
-      },
-    ],
-  },
-];
+export type { CategoryDiscoveryItem, DiscoveryCategory } from '@/lib/db/catalog';
 
 interface BrowseByCategoriesProps {
   id?: string;
   className?: string;
   showExploreAllLink?: boolean;
+  categories?: DiscoveryCategory[];
 }
 
 export function BrowseByCategories({
   id = 'browse-categories',
   className = '',
   showExploreAllLink = true,
+  categories = [],
 }: BrowseByCategoriesProps) {
-  const [activeSlug, setActiveSlug] = useState('curtains-drapes');
+  const [activeSlug, setActiveSlug] = useState(() => categories[0]?.slug || 'curtains-drapes');
   const carouselRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
 
@@ -229,10 +31,17 @@ export function BrowseByCategories({
   const [canScrollTabsRight, setCanScrollTabsRight] = useState(false);
   const [currentDotIndex, setCurrentDotIndex] = useState(0);
 
-  const activeCategory =
-    DISCOVERY_CATEGORIES.find((c) => c.slug === activeSlug) || DISCOVERY_CATEGORIES[0];
+  // Synchronize activeSlug if categories update
+  useEffect(() => {
+    if (categories.length > 0 && !categories.some((c) => c.slug === activeSlug)) {
+      setActiveSlug(categories[0].slug);
+    }
+  }, [categories, activeSlug]);
 
-  const isMultiItem = activeCategory.items.length > 1;
+  const activeCategory =
+    categories.find((c) => c.slug === activeSlug) || categories[0];
+
+  const isMultiItem = (activeCategory?.items?.length || 0) > 1;
 
   // Check cards carousel scroll bounds
   const checkCarouselScrollState = useCallback(() => {
@@ -322,6 +131,10 @@ export function BrowseByCategories({
     tabsRef.current.scrollBy({ left: 200, behavior: 'smooth' });
   };
 
+  if (!categories || categories.length === 0 || !activeCategory) {
+    return null;
+  }
+
   return (
     <section
       id={id}
@@ -378,7 +191,7 @@ export function BrowseByCategories({
             className="flex items-center gap-6 sm:gap-8 overflow-x-auto no-scrollbar scroll-smooth py-1 px-1"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {DISCOVERY_CATEGORIES.map((cat) => {
+            {categories.map((cat) => {
               const isActive = cat.slug === activeSlug;
               return (
                 <button

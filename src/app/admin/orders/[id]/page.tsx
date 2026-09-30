@@ -18,8 +18,9 @@ import {
   ShieldCheck,
   Bell,
   Send,
+  History,
 } from 'lucide-react';
-import { DbOrder, DbOrderItem, DbOrderNotification } from '@/lib/db/types';
+import { DbOrder, DbOrderItem, DbOrderNotification, DbOrderStatusHistory } from '@/lib/db/types';
 
 interface OrderItemWithDetails extends DbOrderItem {
   product_image: string | null;
@@ -29,6 +30,7 @@ interface OrderItemWithDetails extends DbOrderItem {
 interface OrderDetailData extends DbOrder {
   items: OrderItemWithDetails[];
   notifications?: DbOrderNotification[];
+  statusHistory?: DbOrderStatusHistory[];
 }
 
 type AllowedOrderStatus = 'CONFIRMED' | 'PROCESSING' | 'READY' | 'COMPLETED' | 'CANCELLED';
@@ -100,6 +102,9 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
         setSelectedStatus(data.order.status);
         setSelectedPaymentStatus(data.order.payment_status);
         setNotes(data.order.notes || '');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('admin-notifications-refresh'));
+        }
       } else {
         throw new Error('Malformed response from order API');
       }
@@ -138,12 +143,29 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
         throw new Error(data.error || 'Failed to update order');
       }
 
-      setSaveSuccess('Order status and fulfillment details updated successfully.');
+      // Build feedback message
+      const messages: string[] = ['Order updated successfully.'];
+      if (data.statusChanged) {
+        messages[0] = 'Order status updated successfully.';
+        if (data.notificationCreated) {
+          messages.push('Customer notification created.');
+        }
+        if (data.notificationError) {
+          messages.push(`Note: Notification issue — ${data.notificationError}`);
+        }
+      }
+      setSaveSuccess(messages.join(' '));
+
       if (data.order) {
         setOrder((prev) => (prev ? { ...prev, ...data.order } : null));
         setSelectedStatus(data.order.status);
         setSelectedPaymentStatus(data.order.payment_status);
         setNotes(data.order.notes || '');
+      }
+
+      // Refresh layout notification badge
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('admin-notifications-refresh'));
       }
     } catch (err: any) {
       console.error('Error updating order:', err);
@@ -329,6 +351,25 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
               <Banknote className="w-3 h-3" />
               <span>{currentPayBadge.label}</span>
             </span>
+            {/* Order Source Badge */}
+            {order.order_source === 'WHATSAPP' ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold bg-[#25D366]/10 text-[#128C7E] border border-[#25D366]/30">
+                <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
+                <span>WhatsApp Order</span>
+              </span>
+            ) : order.order_source === 'QUOTE' ? (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#9A7B56]/10 text-[#866945] border border-[#9A7B56]/20">
+                <span>Quote</span>
+              </span>
+            ) : order.order_source === 'MEASUREMENT' ? (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                <span>Measurement</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#FAF7F2] text-[#78716C] border border-[#E7DFD5]">
+                <span>WEB</span>
+              </span>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-4 text-[12.5px] text-[#78716C]">
@@ -336,6 +377,8 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
               <Calendar className="w-3.5 h-3.5 text-[#9A7B56]" />
               <span>Placed {formattedDate} at {formattedTime}</span>
             </span>
+            <span className="text-[#D8CFBF]">·</span>
+            <span>Channel: <strong className="text-[#1C1917] font-medium">{order.order_source === 'WHATSAPP' ? 'WhatsApp Order' : (order.order_source || 'WEB')}</strong></span>
             <span className="text-[#D8CFBF]">·</span>
             <span>Internal ID: <code className="text-[#1C1917] font-mono text-[11.5px]">{order.id}</code></span>
             <span className="text-[#D8CFBF]">·</span>
@@ -718,6 +761,22 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                   <span>{order.payment_method} (Cash on Delivery)</span>
                 </span>
               </div>
+
+              <div>
+                <span className="text-[11px] uppercase tracking-wider font-semibold text-[#8C827A] block">
+                  Order Source / Channel
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#FAF7F2] border border-[#EDE8DE] font-semibold text-[#1C1917] text-[12px] mt-0.5">
+                  {order.order_source === 'WHATSAPP' ? (
+                    <>
+                      <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
+                      <span>WhatsApp Order</span>
+                    </>
+                  ) : (
+                    <span>{order.order_source || 'WEB'}</span>
+                  )}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -799,6 +858,67 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
               </div>
             )}
           </div>
+
+          {/* Status History Timeline */}
+          {order.statusHistory && order.statusHistory.length > 0 && (
+            <div className="bg-white rounded-2xl border border-[#EDE8DE] p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#F2ECE1]">
+                <div className="flex items-center gap-2">
+                  <History className="w-4 h-4 text-[#9A7B56]" />
+                  <h3 className="font-serif text-[17px] text-[#1C1917] font-semibold">
+                    Status History
+                  </h3>
+                </div>
+                <span className="text-[11px] text-[#8C827A] font-mono">
+                  {order.statusHistory.length} change{order.statusHistory.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+
+              <div className="relative">
+                {/* Timeline line */}
+                <div className="absolute left-[9px] top-2 bottom-2 w-px bg-[#EDE8DE]" />
+
+                <div className="space-y-3">
+                  {order.statusHistory.map((entry, idx) => {
+                    const isLast = idx === order.statusHistory!.length - 1;
+                    return (
+                      <div key={entry.id} className="flex items-start gap-3 relative">
+                        {/* Timeline dot */}
+                        <div className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          isLast
+                            ? 'border-[#1E3A2F] bg-[#1E3A2F]'
+                            : 'border-[#D5CDBF] bg-white'
+                        }`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${isLast ? 'bg-white' : 'bg-[#D5CDBF]'}`} />
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 pb-1">
+                          <div className="flex items-center gap-2 text-[12px]">
+                            <span className="font-mono text-[11px] text-[#A8A29E] line-through">{entry.old_status}</span>
+                            <span className="text-[#8C827A]">→</span>
+                            <span className={`font-semibold text-[12px] ${
+                              entry.new_status === 'CANCELLED' ? 'text-rose-700' :
+                              entry.new_status === 'COMPLETED' ? 'text-emerald-700' :
+                              'text-[#1C1917]'
+                            }`}>{entry.new_status}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] text-[#A8A29E] mt-0.5">
+                            <span>{entry.changed_by}</span>
+                            <span>·</span>
+                            <span>{new Date(entry.created_at).toLocaleString('en-IN', {
+                              dateStyle: 'medium',
+                              timeStyle: 'short',
+                            })}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

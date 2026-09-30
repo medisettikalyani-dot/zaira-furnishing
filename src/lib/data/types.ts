@@ -48,13 +48,18 @@ export interface Product {
   displayName?: string;
   categorySlug: string;
   categoryName: string;
+  subcategorySlug?: string;
+  subcategoryName?: string;
   shortDescription: string;
   description: string;
   productType: ProductType;
   price: number;
   startingPrice?: boolean;
-  currency: string;
+  unit?: string;
+  currency?: string;
+  image?: string;
   mainImage: string;
+  additionalImages?: string[];
   galleryImages: string[];
   variations: ProductVariation[];
   specifications: ProductSpecification[];
@@ -86,6 +91,7 @@ export interface Service {
   title: string;
   shortDesc: string;
   fullDesc: string;
+  image?: string;
   iconName: string;
   highlights: string[];
   requiresSiteVisit?: boolean;

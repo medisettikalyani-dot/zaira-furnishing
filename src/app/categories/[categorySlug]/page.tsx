@@ -2,9 +2,9 @@ import React from 'react';
 import Link from 'next/link';
 import { Metadata } from 'next';
 import { redirect, notFound } from 'next/navigation';
-import { ArrowLeft, ChevronRight, Sparkles, MessageCircle, Calendar } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Sparkles, Calendar } from 'lucide-react';
 import { normalizeCategorySlug } from '@/lib/data/categories';
-import { getDynamicCategoryBySlug, getDynamicProducts } from '@/lib/db/catalog';
+import { getDynamicCategories, getDynamicCategoryBySlug, getDynamicProducts } from '@/lib/db/catalog';
 import { ProductCard } from '@/components/ui/ProductCard';
 
 interface CategoryPageProps {
@@ -12,16 +12,20 @@ interface CategoryPageProps {
 }
 
 export async function generateStaticParams() {
-  const canonicalSlugs = [
-    'cushions-pillows',
-    'mattresses-sleep-systems',
-    'wooden-flooring-sports-floor',
-    'bed-linen-bath',
-  ];
+  const categories = await getDynamicCategories();
+  const dedicated = new Set([
+    'curtains-drapes',
+    'window-blinds-shades',
+    'sofa-fabrics-upholstery',
+    'wallpapers-wall-coverings',
+    'carpets-rugs',
+  ]);
 
-  return canonicalSlugs.map((slug) => ({
-    categorySlug: slug,
-  }));
+  return categories
+    .filter((c) => !dedicated.has(c.slug))
+    .map((c) => ({
+      categorySlug: c.slug,
+    }));
 }
 
 export async function generateMetadata({

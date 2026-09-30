@@ -1,8 +1,11 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getDynamicProducts } from '@/lib/db/catalog';
-import { WALLPAPER_TYPES, getWallpaperTypeBySlug } from '@/lib/data/wallpapers';
+import {
+  getDynamicProducts,
+  getDynamicSubcategories,
+  getDynamicSubcategoryBySlug,
+} from '@/lib/db/catalog';
 import { WallpaperTypePage } from '@/components/wallpapers/WallpaperTypePage';
 
 interface WallpaperTypeRouteProps {
@@ -10,14 +13,15 @@ interface WallpaperTypeRouteProps {
 }
 
 export async function generateStaticParams() {
-  return WALLPAPER_TYPES.map((t) => ({
+  const subcategories = await getDynamicSubcategories('cat-4');
+  return subcategories.map((t) => ({
     type: t.slug,
   }));
 }
 
 export async function generateMetadata({ params }: WallpaperTypeRouteProps): Promise<Metadata> {
   const resolved = await params;
-  const wallpaperType = getWallpaperTypeBySlug(resolved.type);
+  const wallpaperType = await getDynamicSubcategoryBySlug('cat-4', resolved.type);
 
   if (!wallpaperType) {
     return {
@@ -27,20 +31,24 @@ export async function generateMetadata({ params }: WallpaperTypeRouteProps): Pro
 
   return {
     title: `${wallpaperType.name} | Wallpapers & Wall Coverings | Zaira Furnishing`,
-    description: wallpaperType.description,
+    description: wallpaperType.description || undefined,
   };
 }
 
 export default async function WallpaperTypeRoute({ params }: WallpaperTypeRouteProps) {
   const resolved = await params;
-  const wallpaperType = getWallpaperTypeBySlug(resolved.type);
+  const wallpaperType = await getDynamicSubcategoryBySlug('cat-4', resolved.type);
 
   if (!wallpaperType) {
     notFound();
   }
 
-  // Filter only wallpaper products from Cloudflare D1
-  const wallpaperProducts = await getDynamicProducts({ categorySlug: 'wallpapers-wall-coverings' });
+  // Filter wallpaper products directly from Cloudflare D1
+  const wallpaperProducts = await getDynamicProducts({
+    categorySlug: 'wallpapers-wall-coverings',
+    subcategorySlug: wallpaperType.slug,
+  });
 
   return <WallpaperTypePage wallpaperType={wallpaperType} products={wallpaperProducts} />;
 }
+

@@ -8,6 +8,8 @@ export async function GET(req: NextRequest) {
     const categorySlug = searchParams.get('category') || undefined;
     const featured = searchParams.get('featured') === 'true' ? true : undefined;
     const search = searchParams.get('search') || undefined;
+    const limitParam = searchParams.get('limit');
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
 
     if (slug) {
       const product = await getDbProductBySlug(slug);
@@ -17,7 +19,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ data: product });
     }
 
-    const products = await getDbProducts({ categorySlug, featured, search });
+    const products = await getDbProducts({ categorySlug, featured, search, limit });
     return NextResponse.json({
       data: products,
       total: products.length,

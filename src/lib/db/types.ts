@@ -159,6 +159,8 @@ export interface DbCmsContent {
   updated_at: string;
 }
 
+export type OrderSource = 'WEB' | 'WHATSAPP' | 'QUOTE' | 'MEASUREMENT';
+
 export interface DbOrder {
   id: string;
   order_number: string;
@@ -190,6 +192,7 @@ export interface DbOrder {
   total_amount: number;
   notes?: string | null;
   idempotency_key?: string | null;
+  order_source: OrderSource;
   created_at: string;
   updated_at: string;
 }
@@ -265,9 +268,20 @@ export interface DbOrderNotification {
   payload_summary?: string | null; // JSON string summary
   idempotency_key: string;
   attempts: number;
+  is_read: number; // 1 | 0
+  read_at?: string | null;
   created_at: string;
   sent_at?: string | null;
   updated_at: string;
+}
+
+export interface DbOrderStatusHistory {
+  id: string;
+  order_id: string;
+  old_status: string;
+  new_status: string;
+  changed_by: string;
+  created_at: string;
 }
 
 // ─── STAGE 3: QUOTE REQUESTS & FREE MEASUREMENT REQUESTS ───
@@ -325,5 +339,41 @@ export interface DbMeasurementRequest {
   created_at: string;
   updated_at: string;
 }
+
+// ─── PRODUCT CUSTOMER REVIEWS ───
+
+export type ProductReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface DbProductReview {
+  id: string;
+  product_id: string;
+  user_id?: string | null;
+  customer_name: string;
+  rating: number;
+  comment: string;
+  is_verified_purchase: number; // 1 | 0
+  status: ProductReviewStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+// ─── CONTACT INQUIRIES ───
+
+export type ContactInquiryStatus = 'NEW' | 'READ' | 'CONTACTED' | 'RESOLVED' | 'ARCHIVED';
+
+export interface DbContactInquiry {
+  id: string;
+  inquiry_number: string;
+  name: string;
+  phone: string;
+  email: string;
+  subject?: string | null;
+  message: string;
+  status: ContactInquiryStatus;
+  idempotency_key?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 
 

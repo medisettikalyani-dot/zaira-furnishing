@@ -21,7 +21,19 @@ import {
   User,
 } from 'lucide-react';
 import { useStore } from '@/lib/context/StoreContext';
-import { PRODUCTS } from '@/lib/data/products';
+import { getCategoryHref } from '@/lib/data/categories';
+import { DbCategory } from '@/lib/db/types';
+
+interface HeaderProductResult {
+  id: string;
+  name: string;
+  display_name?: string | null;
+  slug: string;
+  starting_price?: number | null;
+  base_price?: number | null;
+  currency?: string | null;
+  category_name?: string | null;
+}
 
 export function Header() {
   const pathname = usePathname();
@@ -74,48 +86,75 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filtered products for quick search
-  const filteredProducts = searchQuery.trim()
-    ? PRODUCTS.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (p.displayName && p.displayName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          p.categoryName.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
+  // Dynamic D1 categories state
+  const [categories, setCategories] = useState<DbCategory[]>([]);
 
-  const mainCategories = [
-    {
-      title: 'Curtains & Drapes',
-      href: '/categories/curtains',
-      desc: 'Blackout, sheer, velvet, jacquard, linen & bespoke tailoring',
-    },
-    {
-      title: 'Window Blinds & Shades',
-      href: '/categories/blinds',
-      desc: 'Architectural roller, zebra day & night, roman, wooden venetians',
-    },
-    {
-      title: 'Luxury Wallpapers',
-      href: '/categories/wallpapers',
-      desc: 'Textured grasscloth, metallic foil & panoramic murals',
-    },
-    {
-      title: 'Sofa Fabrics & Upholstery',
-      href: '/categories/sofa-fabrics',
-      desc: 'Performance velvets, bouclé weaves & textured chenilles',
-    },
-    {
-      title: 'Carpets & Rugs',
-      href: '/categories/carpets',
-      desc: 'Hand-tufted wool, silk blends & seamless area rugs',
-    },
-    {
-      title: 'Wooden Flooring',
-      href: '/categories/wooden-flooring-sports-floor',
-      desc: 'Engineered oak planks, herringbone & performance surfaces',
-    },
-  ];
+  useEffect(() => {
+    let isMounted = true;
+    async function loadCategories() {
+      try {
+        const res = await fetch('/api/categories');
+        if (!res.ok) throw new Error('Failed to load categories');
+        const json = await res.json();
+        if (isMounted && Array.isArray(json.data)) {
+          setCategories(json.data);
+        }
+      } catch (err) {
+        console.error('Header categories fetch error:', err);
+      }
+    }
+    loadCategories();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Dynamic D1 search state
+  const [searchResults, setSearchResults] = useState<HeaderProductResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (!query) {
+      setSearchResults([]);
+      setIsSearching(false);
+      setSearchError(null);
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchError(null);
+
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=8`, {
+          signal: abortController.signal,
+        });
+        if (!res.ok) throw new Error('Search request failed');
+        const json = await res.json();
+        if (Array.isArray(json.data)) {
+          setSearchResults(json.data);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Header search error:', err);
+          setSearchError('Unable to complete search. Please try again.');
+          setSearchResults([]);
+        }
+      } finally {
+        setIsSearching(false);
+      }
+    }, 250);
+
+    return () => {
+      clearTimeout(timeoutId);
+      abortController.abort();
+    };
+  }, [searchQuery]);
 
   return (
     <>
@@ -212,25 +251,26 @@ export function Header() {
                         onClick={() => setShopMenuOpen(false)}
                         className="text-[11.5px] uppercase tracking-wider font-semibold text-[#1E3A2F] hover:text-[#9A7B56] inline-flex items-center gap-1 transition-colors"
                       >
-                        <span>All 9 Categories</span>
+                        <span>All {categories.length || 9} Categories</span>
                         <ArrowRight className="w-3 h-3" />
                       </Link>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      {mainCategories.map((cat) => (
+                    <div className="grid grid-cols-2 gap-3 max-h-[380px] overflow-y-auto">
+                      {categories.map((cat) => (
                         <Link
-                          key={cat.title}
-                          href={cat.href}
+                          key={cat.id}
+                          href={getCategoryHref(cat.slug)}
+                          onClick={() => setShopMenuOpen(false)}
                           className="p-3 rounded-xl hover:bg-[#FAF7F2] border border-transparent hover:border-[#EAE4D8] transition-all group/item"
                         >
                           <div className="flex items-center justify-between">
                             <span className="font-serif text-[14.5px] font-medium text-[#1C1917] group-hover/item:text-[#1E3A2F]">
-                              {cat.title}
+                              {cat.name}
                             </span>
                           </div>
                           <p className="text-[11.5px] text-[#78716C] line-clamp-1 mt-1 font-light">
-                            {cat.desc}
+                            {cat.description || cat.tagline || ''}
                           </p>
                         </Link>
                       ))}
@@ -407,50 +447,17 @@ export function Header() {
                   <span>Shop by Category</span>
                   <ArrowRight className="w-4 h-4 text-[#9A7B56]" />
                 </Link>
-                <Link
-                  href="/categories/curtains"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
-                >
-                  <span>Curtains & Drapes</span>
-                  <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
-                </Link>
-
-                <Link
-                  href="/categories/blinds"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
-                >
-                  <span>Window Blinds</span>
-                  <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
-                </Link>
-
-                <Link
-                  href="/categories/wallpapers"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
-                >
-                  <span>Wallpapers</span>
-                  <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
-                </Link>
-
-                <Link
-                  href="/categories/sofa-fabrics"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
-                >
-                  <span>Sofa Fabrics</span>
-                  <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
-                </Link>
-
-                <Link
-                  href="/categories/carpets"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
-                >
-                  <span>Carpets & Rugs</span>
-                  <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
-                </Link>
+                {categories.map((cat) => (
+                  <Link
+                    key={cat.id}
+                    href={getCategoryHref(cat.slug)}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
+                  >
+                    <span>{cat.name}</span>
+                    <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
+                  </Link>
+                ))}
 
                 <Link
                   href="/products"
@@ -593,31 +600,47 @@ export function Header() {
                     )}
                   </div>
                 </div>
-              ) : filteredProducts.length > 0 ? (
+              ) : isSearching ? (
+                <div className="py-8 text-center text-[#78716C] text-[13px]">
+                  <p className="font-serif text-[15px] text-[#1C1917] font-medium mb-1">
+                    Searching catalog...
+                  </p>
+                  <p className="text-[11.5px] text-[#A8A29E]">Querying our atelier collections</p>
+                </div>
+              ) : searchError ? (
+                <div className="py-8 text-center text-[#78716C] text-[13px]">
+                  {searchError}
+                </div>
+              ) : searchResults.length > 0 ? (
                 <div className="space-y-2">
                   <p className="text-[11px] uppercase tracking-wider text-[#78716C] mb-2">
-                    Found {filteredProducts.length} items
+                    Found {searchResults.length} items
                   </p>
-                  {filteredProducts.map((prod) => (
-                    <Link
-                      key={prod.id}
-                      href={`/products/${prod.slug}`}
-                      className="flex items-center justify-between p-3 hover:bg-[#FAF7F2] rounded-xl border border-transparent hover:border-[#EAE4D8] transition-colors"
-                    >
-                      <div>
-                        <p className="text-[14px] font-serif font-medium text-[#1C1917]">
-                          {prod.displayName || prod.name}
-                        </p>
-                        <p className="text-[11px] text-[#9A7B56]">{prod.categoryName}</p>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-serif text-[14px] font-semibold text-[#1C1917]">
-                          {prod.currency}
-                          {prod.price.toLocaleString('en-IN')}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
+                  {searchResults.map((prod) => {
+                    const priceValue = prod.base_price || prod.starting_price || 0;
+                    const currencySymbol = prod.currency || '₹';
+                    return (
+                      <Link
+                        key={prod.id}
+                        href={`/products/${prod.slug}`}
+                        onClick={() => setSearchOpen(false)}
+                        className="flex items-center justify-between p-3 hover:bg-[#FAF7F2] rounded-xl border border-transparent hover:border-[#EAE4D8] transition-colors"
+                      >
+                        <div>
+                          <p className="text-[14px] font-serif font-medium text-[#1C1917]">
+                            {prod.display_name || prod.name}
+                          </p>
+                          <p className="text-[11px] text-[#9A7B56]">{prod.category_name || 'Bespoke Collection'}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-serif text-[14px] font-semibold text-[#1C1917]">
+                            {currencySymbol}
+                            {priceValue.toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="py-8 text-center text-[#78716C] text-[13px]">

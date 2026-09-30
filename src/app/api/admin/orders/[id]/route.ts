@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/auth/admin';
 import { getDatabase } from '@/lib/db';
 import { DbOrder, DbOrderItem } from '@/lib/db/types';
-import { triggerOrderStatusUpdateNotification, getOrderNotifications } from '@/lib/notifications/service';
+import {
+  triggerOrderStatusUpdateNotification,
+  getOrderNotifications,
+  recordStatusHistory,
+  getOrderStatusHistory,
+} from '@/lib/notifications/service';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -48,6 +53,14 @@ export async function GET(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
+    // Automatically acknowledge / mark unread admin notifications as read for this order
+    await db.execute(
+      `UPDATE order_notifications
+       SET is_read = 1, read_at = datetime('now'), updated_at = datetime('now')
+       WHERE order_id = ? AND recipient_type = 'ADMIN' AND (is_read = 0 OR is_read IS NULL)`,
+      [order.id]
+    );
+
     // Query order items using historical snapshots (never overwrite with current catalog prices)
     const items = await db.query<
       DbOrderItem & {
@@ -66,14 +79,18 @@ export async function GET(req: NextRequest, context: RouteContext) {
       [order.id]
     );
 
-    // Query notifications history for this order
-    const notifications = await getOrderNotifications(order.id);
+    // Query notifications history and status history for this order
+    const [notifications, statusHistory] = await Promise.all([
+      getOrderNotifications(order.id),
+      getOrderStatusHistory(order.id),
+    ]);
 
     return NextResponse.json({
       order: {
         ...order,
         items,
         notifications,
+        statusHistory,
       },
     });
   } catch (error) {
@@ -187,25 +204,45 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       [existingOrder.id]
     );
 
-    // 5. Trigger customer notification ONLY if status actually changed
-    if (updatedOrder && newStatus && newStatus !== existingOrder.status) {
+    const statusActuallyChanged = !!(newStatus && newStatus !== existingOrder.status);
+    let notificationCreated = false;
+    let notificationError: string | null = null;
+
+    // 5. Record status history & trigger customer notification ONLY if status actually changed
+    if (updatedOrder && statusActuallyChanged && newStatus) {
+      // Record audit trail
       try {
-        await triggerOrderStatusUpdateNotification(
+        await recordStatusHistory(existingOrder.id, existingOrder.status, newStatus, 'ADMIN');
+      } catch (historyErr) {
+        console.error('Non-blocking status history error:', historyErr);
+      }
+
+      // Trigger customer notification
+      try {
+        const notifResult = await triggerOrderStatusUpdateNotification(
           updatedOrder,
           existingOrder.status,
           newStatus
         );
-      } catch (notifErr) {
+        notificationCreated = !!notifResult;
+      } catch (notifErr: any) {
         console.error('Non-blocking notification error after admin status update:', notifErr);
+        notificationError = notifErr?.message || 'Notification dispatch failed';
       }
     }
 
-    // 6. Query updated notifications list
-    const notifications = await getOrderNotifications(existingOrder.id);
+    // 6. Query updated notifications and status history
+    const [notifications, statusHistory] = await Promise.all([
+      getOrderNotifications(existingOrder.id),
+      getOrderStatusHistory(existingOrder.id),
+    ]);
 
     return NextResponse.json({
       success: true,
-      order: updatedOrder ? { ...updatedOrder, notifications } : updatedOrder,
+      statusChanged: !!statusActuallyChanged,
+      notificationCreated,
+      notificationError,
+      order: updatedOrder ? { ...updatedOrder, notifications, statusHistory } : updatedOrder,
     });
   } catch (error) {
     console.error('Error updating admin order:', error);

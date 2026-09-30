@@ -59,3 +59,17 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #BDB5A4;
 }
+
+/* Subtle gallery image transition */
+@keyframes galleryFadeIn {
+  from {
+    opacity: 0.82;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-gallery-fade {
+  animation: galleryFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

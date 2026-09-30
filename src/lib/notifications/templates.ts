@@ -244,7 +244,9 @@ export function generateAdminNewOrderEmail(
   order: DbOrder,
   items: OrderItemData[]
 ): { subject: string; html: string; text: string } {
-  const subject = `[New Order Alert] #${order.order_number} — ${formatCurrency(order.total_amount)} (COD)`;
+  const isWhatsApp = order.order_source === 'WHATSAPP';
+  const prefix = isWhatsApp ? '[New WhatsApp Order]' : '[New Order Alert]';
+  const subject = `${prefix} #${order.order_number} — ${formatCurrency(order.total_amount)} (COD)`;
   const adminOrderDetailUrl = `${getSiteUrl()}/admin/orders/${order.order_number}`;
 
   const itemsSummary = items
@@ -313,7 +315,29 @@ export function generateCustomerStatusUpdateEmail(
 ): { subject: string; html: string; text: string } {
   const newStatusLabel = formatStatusLabel(newStatus);
   const previousStatusLabel = formatStatusLabel(previousStatus);
-  const subject = `Order #${order.order_number} Status Update: ${newStatusLabel} — Zaira Furnishing`;
+
+  let statusHeadline = `Your order status is now ${newStatusLabel}.`;
+  let subject = `Order #${order.order_number} Status Update: ${newStatusLabel} — Zaira Furnishing`;
+
+  switch (newStatus.toUpperCase()) {
+    case 'PROCESSING':
+      statusHeadline = 'Your order is now being processed.';
+      subject = `Order #${order.order_number}: Your order is now being processed — Zaira Furnishing`;
+      break;
+    case 'READY':
+      statusHeadline = 'Your order is ready.';
+      subject = `Order #${order.order_number}: Your order is ready — Zaira Furnishing`;
+      break;
+    case 'COMPLETED':
+      statusHeadline = 'Your order has been completed.';
+      subject = `Order #${order.order_number}: Your order has been completed — Zaira Furnishing`;
+      break;
+    case 'CANCELLED':
+      statusHeadline = 'Your order has been cancelled.';
+      subject = `Order #${order.order_number}: Your order has been cancelled — Zaira Furnishing`;
+      break;
+  }
+
   const trackingUrl = `${getSiteUrl()}/account/orders/${order.order_number}`;
 
   const html = `
@@ -333,16 +357,19 @@ export function generateCustomerStatusUpdateEmail(
       <p style="font-size: 15px; margin-top: 0;">
         Dear <strong>${order.customer_name}</strong>,
       </p>
-      <p style="font-size: 14px; line-height: 1.6; color: #44403C;">
-        The fulfillment stage for your order <strong style="font-family: monospace;">#${order.order_number}</strong> has been updated.
+      <p style="font-size: 16px; font-weight: 600; color: #1C1917; margin: 12px 0;">
+        ${statusHeadline}
+      </p>
+      <p style="font-size: 13.5px; line-height: 1.6; color: #57534E;">
+        Order Reference: <strong style="font-family: monospace; color: #1C1917;">#${order.order_number}</strong>
       </p>
 
       <div style="background-color: #FAF7F2; border: 1px solid #EDE8DE; border-radius: 8px; padding: 16px; margin: 20px 0; text-align: center;">
-        <div style="font-size: 12px; color: #8C827A; text-transform: uppercase;">Previous Status</div>
-        <div style="font-size: 13px; color: #78716C; text-decoration: line-through; margin-bottom: 8px;">${previousStatusLabel}</div>
-        <div style="font-size: 18px; color: #9A7B56; margin: 4px 0;">↓</div>
-        <div style="font-size: 12px; color: #8C827A; text-transform: uppercase;">Current Status</div>
-        <div style="font-size: 16px; font-weight: bold; color: #1E3A2F;">${newStatusLabel}</div>
+        <div style="font-size: 11px; color: #8C827A; text-transform: uppercase; letter-spacing: 0.05em;">Previous Status</div>
+        <div style="font-size: 13px; color: #78716C; text-decoration: line-through; margin-bottom: 6px;">${previousStatusLabel}</div>
+        <div style="font-size: 16px; color: #9A7B56; margin: 2px 0;">↓</div>
+        <div style="font-size: 11px; color: #8C827A; text-transform: uppercase; letter-spacing: 0.05em;">Current Status</div>
+        <div style="font-size: 15px; font-weight: bold; color: ${newStatus.toUpperCase() === 'CANCELLED' ? '#BE123C' : '#1E3A2F'};">${newStatusLabel}</div>
       </div>
 
       <div style="text-align: center; margin: 24px 0;">
@@ -350,7 +377,7 @@ export function generateCustomerStatusUpdateEmail(
       </div>
 
       <div style="padding: 16px; background-color: #FAF7F2; border-radius: 8px; text-align: center; font-size: 12px; color: #78716C;">
-        Questions about your commission? WhatsApp our concierge at <a href="tel:${SUPPORT_PHONE.replace(/\s+/g, '')}" style="color: #1E3A2F; font-weight: 600;">${SUPPORT_PHONE}</a> or email <a href="mailto:${SUPPORT_EMAIL}" style="color: #1E3A2F; font-weight: 600;">${SUPPORT_EMAIL}</a>.
+        Questions about your furnishings? WhatsApp our concierge at <a href="tel:${SUPPORT_PHONE.replace(/\s+/g, '')}" style="color: #1E3A2F; font-weight: 600;">${SUPPORT_PHONE}</a> or email <a href="mailto:${SUPPORT_EMAIL}" style="color: #1E3A2F; font-weight: 600;">${SUPPORT_EMAIL}</a>.
       </div>
     </div>
   </div>
@@ -363,9 +390,12 @@ ZAIRA FURNISHING — ORDER STATUS UPDATE
 ==================================================
 Dear ${order.customer_name},
 
-Your order #${order.order_number} has an updated status:
+Order Reference: #${order.order_number}
+
+${statusHeadline}
+
 Previous Status: ${previousStatusLabel}
-New Status: ${newStatusLabel}
+Current Status: ${newStatusLabel}
 
 Track order details online:
 ${trackingUrl}

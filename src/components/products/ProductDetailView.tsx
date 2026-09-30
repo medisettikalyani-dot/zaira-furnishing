@@ -1,26 +1,22 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
+  ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Heart,
   Check,
   ShoppingBag,
   MessageCircle,
-  ChevronDown,
   Ruler,
   Share2,
   Minus,
   Plus,
   ArrowRight,
-  ShieldCheck,
-  Truck,
-  Sparkles,
-  Layers,
-  Clock,
   FileText,
   Calendar,
   MapPin,
@@ -30,16 +26,15 @@ import {
   X,
   Send,
   AlertCircle,
-  CheckCircle2,
+  Maximize2,
+  Scissors,
 } from 'lucide-react';
 import { Product } from '@/lib/data/types';
 import { useStore } from '@/lib/context/StoreContext';
 import { ProductCard } from '@/components/ui/ProductCard';
-import { getCurtainTypeBySlug } from '@/lib/data/curtains';
-import { getBlindTypeBySlug } from '@/lib/data/blinds';
-import { getWallpaperTypeBySlug } from '@/lib/data/wallpapers';
-import { getCarpetTypeBySlug } from '@/lib/data/carpets';
-import { getSofaFabricTypeBySlug } from '@/lib/data/sofa-fabrics';
+import { ProductTrustBenefits } from './ProductTrustBenefits';
+import { ProductCustomerReviews } from './ProductCustomerReviews';
+import { ZAIRA_WHATSAPP_NUMBER } from '@/lib/whatsapp';
 
 interface ProductDetailViewProps {
   product: Product;
@@ -50,14 +45,16 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
   const router = useRouter();
   const { addToCart, isWishlisted, toggleWishlist, customer, setIsCartOpen } = useStore();
 
+  // ─── DATA-DRIVEN PRODUCT PROPERTIES ───
   const isCustom = product.productType === 'custom_made';
   const isCurtain = product.categorySlug === 'curtains-drapes';
   const isBlind = product.categorySlug === 'window-blinds-shades';
   const isWallpaper = product.categorySlug === 'wallpapers-wall-coverings';
   const isCarpet = product.categorySlug === 'carpets-rugs';
   const isSofaFabric = product.categorySlug === 'sofa-fabrics-upholstery';
+  const isMattress = product.categorySlug === 'mattresses-sleep-systems';
 
-  // ─── CONFIRMED HEADING/PLEAT STYLES (from product data only) ───
+  // ─── CONFIRMED HEADING/PLEAT STYLES (FROM PRODUCT DATA ONLY) ───
   const confirmedHeadingStyles = useMemo(() => {
     if (!isCurtain || !product.specifications) return [];
     const headingSpec = product.specifications.find(
@@ -66,22 +63,20 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
         s.label.toLowerCase().includes('pleat') ||
         s.label.toLowerCase().includes('stitch')
     );
-    if (!headingSpec || !headingSpec.value) return [];
+    if (!headingSpec?.value) return [];
     return headingSpec.value
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
   }, [isCurtain, product.specifications]);
 
-  // ─── DYNAMIC VARIANT LABEL ───
-  // Determined from actual product variant data only — never assumed from category.
+  // ─── DYNAMIC VARIANT LABEL (FROM PRODUCT VARIANT DATA ONLY) ───
   const variantLabel = useMemo(() => {
     const vars = product.variations;
     if (!vars || vars.length <= 1) return '';
 
-    // Size indicators — check names and attributes first
     const hasSize =
-      product.categorySlug === 'mattresses-sleep-systems' ||
+      isMattress ||
       vars.some(
         (v) =>
           v.name.toLowerCase().includes('king') ||
@@ -89,74 +84,123 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
           v.name.toLowerCase().includes('single') ||
           v.name.toLowerCase().includes('double') ||
           v.name.toLowerCase().includes(' inch') ||
-          v.name.toLowerCase().includes('x ') ||
           v.attributes?.Size
       );
-    if (hasSize) return 'Select Size:';
+    if (hasSize) return 'Select Size';
 
-    // Colour indicators — from actual variant data (type field or colorHex), not category
-    const hasColor = vars.some(
-      (v) => v.type === 'color' || v.colorHex
-    );
-    if (hasColor) return 'Select Colour:';
+    const hasColor = vars.some((v) => v.type === 'color' || v.colorHex);
+    if (hasColor) return 'Select Colour';
 
-    // Pattern / design / material — from variant_type in data
     const firstType = vars[0]?.type;
-    if (firstType === 'pattern') return 'Select Pattern:';
-    if (firstType === 'design') return 'Select Design:';
-    if (firstType === 'material') return 'Select Material:';
+    if (firstType === 'pattern') return 'Select Pattern';
+    if (firstType === 'design') return 'Select Design';
+    if (firstType === 'material') return 'Select Material';
 
-    return 'Select Option:';
-  }, [product]);
+    return 'Select Option';
+  }, [product, isMattress]);
 
-  // ─── COLOR & IMAGE GALLERY STATE ───
+  // ─── VARIANT & IMAGE STATE ───
   const [selectedVariantIdx, setSelectedVariantIdx] = useState(0);
   const currentVariant = product.variations?.[selectedVariantIdx] || product.variations?.[0];
 
-  // Primary image starts with variant image if present, else product.mainImage
+  // Active image: primary product image
   const [activeImage, setActiveImage] = useState<string>(
-    currentVariant?.image || product.mainImage
+    product.image || product.mainImage || currentVariant?.image || ''
   );
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
-  // ─── CRITICAL: Reset variant selection and image whenever the product changes ───
-  // Prevents cross-product state leak when navigating between product pages.
-  // React may reuse this component instance, keeping stale selectedVariantIdx.
+  // Sync activeImage whenever product changes (keep main product view as primary)
   useEffect(() => {
     setSelectedVariantIdx(0);
-    const firstVariant = product.variations?.[0];
-    setActiveImage(firstVariant?.image || product.mainImage);
-  }, [product.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    const initialImg =
+      product.image ||
+      product.mainImage ||
+      product.variations?.[0]?.image ||
+      '';
+    setActiveImage(initialImg);
+  }, [product.id, product.image, product.mainImage, product.variations]);
 
-  // Gallery thumbnails: combine all unique images (mainImage, galleryImages, variant images)
+  // Gallery: exactly 2–3 images representing the SAME product (main view, room angle, fabric detail)
   const galleryImages = useMemo(() => {
+    const primaryImg = product.image || product.mainImage;
     const list: string[] = [];
-    if (product.mainImage) list.push(product.mainImage);
-    if (product.galleryImages) {
+    if (primaryImg) list.push(primaryImg);
+
+    if (product.additionalImages && product.additionalImages.length > 0) {
+      product.additionalImages.forEach((img) => {
+        if (img && !list.includes(img) && list.length < 3) {
+          list.push(img);
+        }
+      });
+    } else if (product.galleryImages && product.galleryImages.length > 0) {
       product.galleryImages.forEach((img) => {
-        if (!list.includes(img)) list.push(img);
+        if (img && !list.includes(img) && list.length < 3) {
+          list.push(img);
+        }
       });
     }
-    if (product.variations) {
-      product.variations.forEach((v) => {
-        if (v.image && !list.includes(v.image)) list.push(v.image);
-      });
-    }
-    return list.length > 0 ? list : [product.mainImage];
+
+    return list.length > 0 ? list : [primaryImg];
   }, [product]);
 
-  // ─── PURCHASE / CUSTOMIZATION OPTIONS STATE ───
+  const currentImgIdx = useMemo(() => {
+    const idx = galleryImages.indexOf(activeImage);
+    return idx >= 0 ? idx : 0;
+  }, [galleryImages, activeImage]);
+
+  const handlePrevImage = () => {
+    const prevIdx = (currentImgIdx - 1 + galleryImages.length) % galleryImages.length;
+    setActiveImage(galleryImages[prevIdx]);
+  };
+
+  const handleNextImage = () => {
+    const nextIdx = (currentImgIdx + 1) % galleryImages.length;
+    setActiveImage(galleryImages[nextIdx]);
+  };
+
+  const handleThumbnailClick = (img: string) => {
+    setActiveImage(img);
+  };
+
+  const handleSelectVariant = (idx: number) => {
+    setSelectedVariantIdx(idx);
+    const v = product.variations?.[idx];
+    if (v?.image) {
+      setActiveImage(v.image);
+    } else if (v?.thumbnailImage) {
+      setActiveImage(v.thumbnailImage);
+    } else if (v?.images?.[0]) {
+      setActiveImage(v.images[0]);
+    }
+  };
+
+  // ─── REAL CUSTOMIZATION OPTIONS (CURTAINS / BLINDS) ───
   const [sizeType, setSizeType] = useState<'standard' | 'custom'>('standard');
   const [customWidth, setCustomWidth] = useState('60');
-  const [customHeight, setCustomHeight] = useState('96');
-  const [selectedStitching, setSelectedStitching] = useState('');
-  const activeStitching = selectedStitching || confirmedHeadingStyles[0] || '';
+  const [customHeight, setCustomHeight] = useState('84');
+  const activeHeadingStyle = confirmedHeadingStyles[0] || 'French Pinch Pleat';
+
+  // ─── QUANTITY & ACTION STATE ───
   const [quantity, setQuantity] = useState(1);
   const [addedNotice, setAddedNotice] = useState(false);
   const [isBuyingNow, setIsBuyingNow] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // Stage 2 & 3: MODAL FLOWS STATE
-  // Quote Modal State
+  // ─── ACCORDIONS STATE (CLEAN DIVIDERS) ───
+  const [openAccordions, setOpenAccordions] = useState<Set<string>>(
+    new Set(['specs', 'details'])
+  );
+
+  const toggleAccordion = useCallback((key: string) => {
+    setOpenAccordions((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  // ─── MODAL FLOWS STATE (QUOTE & MEASUREMENT) ───
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [quoteName, setQuoteName] = useState(customer?.name || '');
   const [quotePhone, setQuotePhone] = useState(customer?.phone || '');
@@ -167,7 +211,6 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
   const [quoteRequestNumber, setQuoteRequestNumber] = useState<string | null>(null);
   const [isQuoteSubmitting, setIsQuoteSubmitting] = useState(false);
 
-  // Measurement Modal State
   const [isMeasurementModalOpen, setIsMeasurementModalOpen] = useState(false);
   const [measName, setMeasName] = useState(customer?.name || '');
   const [measPhone, setMeasPhone] = useState(customer?.phone || '');
@@ -181,81 +224,29 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
   const [measRequestNumber, setMeasRequestNumber] = useState<string | null>(null);
   const [isMeasSubmitting, setIsMeasSubmitting] = useState(false);
 
-  const [minBookingDate, setMinBookingDate] = useState('');
-  useEffect(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    setMinBookingDate(tomorrow.toISOString().split('T')[0]);
-  }, []);
+  // Subcategory metadata resolution for breadcrumbs directly from dynamic product
+  const subcategoryUrl = useMemo(() => {
+    const slug = product.subcategorySlug || product.curtainType || product.blindType || product.sofaFabricType || product.wallpaperType || product.carpetType;
+    if (!slug) return null;
+    if (isCurtain) return `/categories/curtains/${slug}`;
+    if (isBlind) return `/categories/blinds/${slug}`;
+    if (isSofaFabric) return `/categories/sofa-fabrics/${slug}`;
+    if (isWallpaper) return `/categories/wallpapers/${slug}`;
+    if (isCarpet) return `/categories/carpets/${slug}`;
+    return null;
+  }, [isCurtain, isBlind, isSofaFabric, isWallpaper, isCarpet, product]);
 
-  // ─── ACCORDIONS STATE ───
-  const [openSection, setOpenSection] = useState<string | null>('desc');
+  const subcategoryName = useMemo(() => {
+    return product.subcategoryName || null;
+  }, [product.subcategoryName]);
 
-  // Subcategory metadata resolution for breadcrumbs
-  const curtainType = useMemo(
-    () => (isCurtain && product.curtainType ? getCurtainTypeBySlug(product.curtainType) : null),
-    [isCurtain, product.curtainType]
-  );
-  const blindType = useMemo(
-    () => (isBlind && product.blindType ? getBlindTypeBySlug(product.blindType) : null),
-    [isBlind, product.blindType]
-  );
-  const wallpaperType = useMemo(
-    () => (isWallpaper && product.wallpaperType ? getWallpaperTypeBySlug(product.wallpaperType) : null),
-    [isWallpaper, product.wallpaperType]
-  );
-  const carpetType = useMemo(
-    () => (isCarpet && product.carpetType ? getCarpetTypeBySlug(product.carpetType) : null),
-    [isCarpet, product.carpetType]
-  );
-  const sofaFabricType = useMemo(
-    () => (isSofaFabric && product.sofaFabricType ? getSofaFabricTypeBySlug(product.sofaFabricType) : null),
-    [isSofaFabric, product.sofaFabricType]
-  );
-
-  const subcategoryName =
-    curtainType?.name ||
-    blindType?.name ||
-    wallpaperType?.name ||
-    carpetType?.name ||
-    sofaFabricType?.name;
-
-  const subcategoryUrl =
-    curtainType ? `/categories/curtains/${curtainType.slug}` :
-    blindType ? `/categories/blinds/${blindType.slug}` :
-    wallpaperType ? `/categories/wallpapers/${wallpaperType.slug}` :
-    carpetType ? `/categories/carpets/${carpetType.slug}` :
-    sofaFabricType ? `/categories/sofa-fabrics/${sofaFabricType.slug}` :
-    null;
-
-  // ─── COLOR SELECTION HANDLER (swaps large image) ───
-  const handleSelectColor = (idx: number) => {
-    setSelectedVariantIdx(idx);
-    const variant = product.variations?.[idx];
-    if (variant?.image) {
-      setActiveImage(variant.image);
-    }
-  };
-
-  // ─── THUMBNAIL CLICK HANDLER ───
-  const handleThumbnailClick = (img: string) => {
-    setActiveImage(img);
-    if (product.variations) {
-      const matchedIdx = product.variations.findIndex(
-        (v) => v.image === img || v.images?.includes(img)
-      );
-      if (matchedIdx >= 0) {
-        setSelectedVariantIdx(matchedIdx);
-      }
-    }
-  };
-
-  // ─── RESOLVE SIZE LABEL HELPER ───
-  const getResolvedSizeLabel = () => {
+  // Sizing label helper
+  const getResolvedSizeLabel = useCallback(() => {
     if (isCurtain || isBlind) {
-      return sizeType === 'custom'
-        ? `Custom (${customWidth}″W × ${customHeight}″H)`
-        : 'Standard Size';
+      if (sizeType === 'custom') {
+        return `Custom (${customWidth}″W × ${customHeight}″H)${activeHeadingStyle ? ` • ${activeHeadingStyle}` : ''}`;
+      }
+      return `Standard Size${activeHeadingStyle ? ` • ${activeHeadingStyle}` : ''}`;
     }
     if (isSofaFabric) {
       return `${quantity} Metre${quantity > 1 ? 's' : ''}`;
@@ -264,11 +255,54 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
       return currentVariant.attributes.Size;
     }
     return 'Standard Size';
-  };
+  }, [
+    isCurtain,
+    isBlind,
+    sizeType,
+    customWidth,
+    customHeight,
+    activeHeadingStyle,
+    isSofaFabric,
+    quantity,
+    currentVariant,
+  ]);
 
-  // ─── ADD TO CART HANDLER (STANDARD PRODUCTS) ───
+  const getResolvedDimensions = useCallback((): string | undefined => {
+    if ((isCurtain || isBlind) && sizeType === 'custom') {
+      return `${customWidth}″ Width × ${customHeight}″ Height`;
+    }
+    return undefined;
+  }, [isCurtain, isBlind, sizeType, customWidth, customHeight]);
+
+  // Quantity unit label
+  const quantityUnit = useMemo(() => {
+    if (isSofaFabric) return quantity === 1 ? 'metre' : 'metres';
+    if (isCurtain) return quantity === 1 ? 'panel' : 'panels';
+    if (isWallpaper) return quantity === 1 ? 'roll' : 'rolls';
+    if (isBlind) return quantity === 1 ? 'unit' : 'units';
+    if (isCarpet) return quantity === 1 ? 'rug' : 'rugs';
+    if (isMattress) return quantity === 1 ? 'mattress' : 'mattresses';
+    if (product.categorySlug === 'bed-linen-bath') return quantity === 1 ? 'set' : 'sets';
+    if (product.categorySlug === 'cushions-pillows') return quantity === 1 ? 'cover' : 'covers';
+    return quantity === 1 ? 'unit' : 'units';
+  }, [isSofaFabric, isCurtain, isWallpaper, isBlind, isCarpet, isMattress, product.categorySlug, quantity]);
+
+  // Real unit price directly from product data
+  const effectivePrice = currentVariant?.price || product.price;
+
+  // Pricing unit helper
+  const pricingUnit = useMemo(() => {
+    if (isSofaFabric) return '/ metre';
+    if (isCurtain && product.startingPrice) return '/ panel';
+    if (isWallpaper && product.startingPrice) return '/ roll';
+    if (product.startingPrice) return 'onwards';
+    return '';
+  }, [isSofaFabric, isCurtain, isWallpaper, product.startingPrice]);
+
+  // Add to cart handler
   const handleAddToCart = async () => {
     const sizeLabel = getResolvedSizeLabel();
+    const customDimensions = getResolvedDimensions();
 
     await addToCart({
       productId: product.id,
@@ -279,24 +313,25 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
       variantName: currentVariant?.name,
       sku: currentVariant?.sku || product.id,
       sizeLabel,
-      headingStyle: isCurtain && confirmedHeadingStyles.length > 0 ? activeStitching : undefined,
-      customDimensions:
-        sizeType === 'custom' ? `${customWidth}″ Width × ${customHeight}″ Height` : undefined,
+      headingStyle: isCurtain && confirmedHeadingStyles.length > 0 ? activeHeadingStyle : undefined,
+      customDimensions,
       quantity,
-      unitPrice: product.price,
+      unitPrice: effectivePrice,
+      productType: product.productType,
     });
 
     setAddedNotice(true);
-    setTimeout(() => setAddedNotice(false), 2800);
+    setTimeout(() => setAddedNotice(false), 2600);
   };
 
-  // ─── BUY NOW HANDLER (STANDARD PRODUCTS) ───
+  // Buy now handler
   const handleBuyNow = async () => {
     if (isBuyingNow) return;
     setIsBuyingNow(true);
 
     try {
       const sizeLabel = getResolvedSizeLabel();
+      const customDimensions = getResolvedDimensions();
 
       await addToCart({
         productId: product.id,
@@ -307,14 +342,13 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
         variantName: currentVariant?.name,
         sku: currentVariant?.sku || product.id,
         sizeLabel,
-        headingStyle: isCurtain && confirmedHeadingStyles.length > 0 ? activeStitching : undefined,
-        customDimensions:
-          sizeType === 'custom' ? `${customWidth}″ Width × ${customHeight}″ Height` : undefined,
+        headingStyle: isCurtain && confirmedHeadingStyles.length > 0 ? activeHeadingStyle : undefined,
+        customDimensions,
         quantity,
-        unitPrice: product.price,
+        unitPrice: effectivePrice,
+        productType: product.productType,
       });
 
-      // Close cart drawer if opened by addToCart and redirect straight to checkout
       setIsCartOpen(false);
       router.push('/checkout');
     } catch (err) {
@@ -323,111 +357,62 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
     }
   };
 
-  // ─── STANDARDIZED WHATSAPP URL (PRESERVES CONFIG PHONE: 916300145763) ───
+  // Standardized WhatsApp URL
   const whatsappUrl = useMemo(() => {
-    const phone = '916300145763';
+    const phone = ZAIRA_WHATSAPP_NUMBER;
     const productName = product.displayName || product.name;
     const currentUrl =
       typeof window !== 'undefined'
         ? window.location.href
         : `https://zairafurnishing.com/products/${product.slug}`;
+    const qtyText = `${quantity} ${quantityUnit}`;
+    const sizeLabel = getResolvedSizeLabel();
 
-    let qtyText = `${quantity} ${quantity > 1 ? 'units' : 'unit'}`;
-    if (isSofaFabric) {
-      qtyText = `${quantity} Metre${quantity > 1 ? 's' : ''}`;
-    } else if (isCurtain) {
-      qtyText = `${quantity} Panel${quantity > 1 ? 's' : ''}`;
-    } else if (isWallpaper) {
-      qtyText = `${quantity} Roll${quantity > 1 ? 's' : ''}`;
-    }
-
-    if (!isCustom) {
-      // STANDARD PRODUCT: DIRECT ORDER PLACEMENT ENQUIRY
-      const messageLines = [
-        'Hello Zaira Furnishing,',
-        '',
-        `I would like to order: ${productName}`,
-        `Category: ${product.categoryName}`,
-      ];
-
-      if (currentVariant?.name && product.variations && product.variations.length > 1) {
-        const isSizeVariant =
-          product.categorySlug === 'mattresses-sleep-systems' ||
-          Boolean(currentVariant.attributes?.Size);
-        messageLines.push(`${isSizeVariant ? 'Selected Size' : 'Selected Option'}: ${currentVariant.name}`);
-      }
-
-      messageLines.push(`Quantity: ${qtyText}`);
-      messageLines.push(
-        `Price: ${product.currency}${product.price.toLocaleString('en-IN')} (Total: ${product.currency}${(
-          product.price * quantity
-        ).toLocaleString('en-IN')})`
-      );
-      messageLines.push(`Product Link: ${currentUrl}`);
-      messageLines.push('');
-      messageLines.push('Please confirm availability and dispatch details (Cash on Delivery).');
-
-      return `https://wa.me/${phone}?text=${encodeURIComponent(messageLines.join('\n'))}`;
-    }
-
-    // CUSTOM / MADE-TO-MEASURE PRODUCT: QUOTATION & SAMPLES ENQUIRY
     const messageLines = [
       'Hello Zaira Furnishing,',
       '',
-      `I would like to enquire about bespoke order: ${productName}`,
+      `I am interested in: ${productName}`,
       `Category: ${product.categoryName}`,
     ];
 
-    if (currentVariant?.name && product.variations && product.variations.length > 0) {
-      messageLines.push(`Selected Variant: ${currentVariant.name}`);
+    if (currentVariant?.name && product.variations && product.variations.length > 1) {
+      messageLines.push(`Selected Option: ${currentVariant.name}`);
     }
 
-    if (isCurtain || isBlind) {
-      if (sizeType === 'custom') {
-        messageLines.push(`Custom Size: ${customWidth}″ Width × ${customHeight}″ Height`);
-      } else {
-        messageLines.push('Size: Standard Size');
-      }
+    if (isCurtain || isBlind || currentVariant?.attributes?.Size) {
+      messageLines.push(`Specification: ${sizeLabel}`);
     }
 
-    if (isCurtain && confirmedHeadingStyles.length > 0 && activeStitching) {
-      messageLines.push(`Heading Pleat Style: ${activeStitching}`);
+    if (isCurtain && confirmedHeadingStyles.length > 0 && activeHeadingStyle) {
+      messageLines.push(`Heading Style: ${activeHeadingStyle}`);
     }
 
     messageLines.push(`Quantity: ${qtyText}`);
     messageLines.push(
-      `Starting Price: ${product.startingPrice ? 'From ' : ''}${product.currency}${product.price.toLocaleString('en-IN')}`
+      `Price: ${product.currency}${effectivePrice.toLocaleString('en-IN')}${pricingUnit ? ` ${pricingUnit}` : ''}`
     );
     messageLines.push(`Product Link: ${currentUrl}`);
-    messageLines.push('');
-    messageLines.push('Please share fabric samples, laser measurement scheduling, and bespoke quotation.');
 
     return `https://wa.me/${phone}?text=${encodeURIComponent(messageLines.join('\n'))}`;
   }, [
     product,
     currentVariant,
-    sizeType,
-    customWidth,
-    customHeight,
     isCurtain,
     isBlind,
-    isSofaFabric,
-    isWallpaper,
-    isCustom,
     confirmedHeadingStyles,
-    activeStitching,
+    activeHeadingStyle,
     quantity,
+    quantityUnit,
+    pricingUnit,
+    effectivePrice,
+    getResolvedSizeLabel,
   ]);
 
-  // ─── MODAL SUBMISSION WHATSAPP URLS ───
+  // Modal WhatsApp URLs
   const getQuoteWhatsAppUrl = () => {
-    const phone = '916300145763';
+    const phone = ZAIRA_WHATSAPP_NUMBER;
     const productName = product.displayName || product.name;
-
-    let dimsText = '';
-    if (isCurtain || isBlind) {
-      dimsText = sizeType === 'custom' ? `${customWidth}″ Width × ${customHeight}″ Height` : 'Standard Size';
-    }
+    const sizeLabel = getResolvedSizeLabel();
 
     const lines = [
       'Hello Zaira Furnishing,',
@@ -436,74 +421,73 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
       quoteRequestNumber ? `Request Ref: ${quoteRequestNumber}` : '',
       `Product: ${productName}`,
       `Category: ${product.categoryName}`,
-      currentVariant?.name ? `Variant: ${currentVariant.name}` : '',
-      dimsText ? `Dimensions: ${dimsText}` : '',
-      `Quantity: ${quantity}`,
+      currentVariant?.name && product.variations && product.variations.length > 1
+        ? `Option: ${currentVariant.name}`
+        : '',
+      sizeLabel ? `Size/Style: ${sizeLabel}` : '',
+      `Quantity: ${quantity} ${quantityUnit}`,
       `Customer Name: ${quoteName}`,
-      quoteMessage ? `Requirements / Notes: ${quoteMessage}` : '',
+      quoteMessage ? `Notes: ${quoteMessage}` : '',
       '',
-      'Please review and share a tailored quote.',
+      'Please review and share a quote.',
     ].filter(Boolean);
 
     return `https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`;
   };
 
   const getMeasurementWhatsAppUrl = () => {
-    const phone = '916300145763';
+    const phone = ZAIRA_WHATSAPP_NUMBER;
     const productName = product.displayName || product.name;
+    const sizeLabel = getResolvedSizeLabel();
 
     const lines = [
       'Hello Zaira Furnishing,',
       '',
-      'I have submitted a Free Measurement Request:',
+      'I booked an In-Home Measurement Visit:',
       measRequestNumber ? `Request Ref: ${measRequestNumber}` : '',
       `Product: ${productName}`,
       `Category: ${product.categoryName}`,
-      currentVariant?.name ? `Variant: ${currentVariant.name}` : '',
-      `Preferred Date: ${measDate}`,
-      `Preferred Time: ${measTimeSlot}`,
-      `Address / Location: ${measAddress}`,
+      sizeLabel ? `Specification: ${sizeLabel}` : '',
+      `Customer: ${measName}`,
+      `Phone: ${measPhone}`,
+      `Address: ${measAddress}`,
+      measDate ? `Preferred Date: ${measDate} (${measTimeSlot})` : '',
       measNotes ? `Notes: ${measNotes}` : '',
       '',
-      'Our team will contact you to confirm the visit.',
+      'Please confirm the appointment visit.',
     ].filter(Boolean);
 
     return `https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`;
   };
 
-  // ─── FORM SUBMISSIONS (CONNECTED TO BACKEND) ───
-  const handleQuoteSubmit = async (e: React.FormEvent) => {
+  // Submit quote request
+  const handleSubmitQuote = async (e: React.FormEvent) => {
     e.preventDefault();
     setQuoteError(null);
 
-    if (!quoteName.trim()) {
-      setQuoteError('Please enter your full name.');
-      return;
-    }
     const cleanPhone = quotePhone.replace(/\D/g, '');
-    if (!cleanPhone || cleanPhone.length < 10) {
-      setQuoteError('Please enter a valid 10-digit phone number.');
+    if (!quoteName.trim()) {
+      setQuoteError('Please enter your name.');
       return;
     }
-    if ((isCurtain || isBlind) && sizeType === 'custom') {
-      if (!customWidth || !customHeight || Number(customWidth) <= 0 || Number(customHeight) <= 0) {
-        setQuoteError('Please enter valid width and drop dimensions in inches.');
-        return;
-      }
+    if (cleanPhone.length < 10) {
+      setQuoteError('Please enter a valid 10-digit mobile number.');
+      return;
     }
 
-    if (isQuoteSubmitting) return;
     setIsQuoteSubmitting(true);
 
     try {
-      const idempotencyKey = `quote_${product.id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-      const dimensionsText = (isCurtain || isBlind)
-        ? (sizeType === 'custom' ? `${customWidth}″ Width × ${customHeight}″ Height` : 'Standard Size')
-        : undefined;
+      const sizeLabel = getResolvedSizeLabel();
+      const idempotencyKey = `quote_${product.id}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-      const customizationDetailsText = (isCurtain && confirmedHeadingStyles.length > 0 && activeStitching)
-        ? `Heading Pleat Style: ${activeStitching}`
-        : undefined;
+      const fullNotes = [
+        quoteMessage.trim(),
+        currentVariant?.name ? `Option: ${currentVariant.name}` : '',
+        `Requested Qty: ${quantity} ${quantityUnit}`,
+      ]
+        .filter(Boolean)
+        .join(' | ');
 
       const res = await fetch('/api/quote-requests', {
         method: 'POST',
@@ -511,13 +495,12 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
         body: JSON.stringify({
           productId: product.id,
           variantId: currentVariant?.id,
-          quantity,
           customerName: quoteName.trim(),
           phone: cleanPhone,
           email: quoteEmail.trim() || undefined,
-          dimensions: dimensionsText,
-          customizationDetails: customizationDetailsText,
-          customerNotes: quoteMessage.trim() || undefined,
+          message: fullNotes,
+          dimensions: sizeLabel,
+          quantity,
           idempotencyKey,
         }),
       });
@@ -540,40 +523,31 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
     }
   };
 
-  const handleMeasurementSubmit = async (e: React.FormEvent) => {
+  // Submit measurement request
+  const handleSubmitMeasurement = async (e: React.FormEvent) => {
     e.preventDefault();
     setMeasError(null);
 
+    const cleanPhone = measPhone.replace(/\D/g, '');
     if (!measName.trim()) {
-      setMeasError('Please enter your full name.');
+      setMeasError('Please enter your name.');
       return;
     }
-    const cleanPhone = measPhone.replace(/\D/g, '');
-    if (!cleanPhone || cleanPhone.length < 10) {
-      setMeasError('Please enter a valid 10-digit phone number.');
+    if (cleanPhone.length < 10) {
+      setMeasError('Please enter a valid 10-digit mobile number.');
       return;
     }
     if (!measAddress.trim()) {
       setMeasError('Please enter your address or location.');
       return;
     }
-    if (!measDate) {
-      setMeasError('Please select your preferred visit date.');
-      return;
-    }
-    if (!measTimeSlot) {
-      setMeasError('Please select a preferred time slot.');
-      return;
-    }
 
-    if (isMeasSubmitting) return;
     setIsMeasSubmitting(true);
 
     try {
-      const idempotencyKey = `meas_${product.id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-      const dimensionsText = (isCurtain || isBlind) && sizeType === 'custom'
-        ? `${customWidth}″ Width × ${customHeight}″ Height`
-        : undefined;
+      const sizeLabel = getResolvedSizeLabel();
+      const idempotencyKey = `meas_${product.id}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const dimensionsText = sizeLabel || `Approx ${quantity} ${quantityUnit}`;
 
       const res = await fetch('/api/measurement-requests', {
         method: 'POST',
@@ -616,301 +590,359 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
     if (typeof window !== 'undefined') {
       navigator.clipboard.writeText(window.location.href);
       setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2500);
+      setTimeout(() => setCopiedLink(false), 2400);
     }
-  };
-
-  const toggleAccordion = (key: string) => {
-    setOpenSection((prev) => (prev === key ? null : key));
   };
 
   const isFav = isWishlisted(product.id);
 
-  const careSpec = product.specifications?.find((s) =>
-    s.label.toLowerCase().includes('care')
+  // Specifications strictly from product data
+  const careSpec = product.specifications?.find(
+    (s) =>
+      s.label.toLowerCase().includes('care') ||
+      s.label.toLowerCase().includes('maintenance') ||
+      s.label.toLowerCase().includes('cleaning')
   );
 
+  const technicalSpecs = useMemo(() => {
+    if (!product.specifications) return [];
+    return careSpec ? product.specifications.filter((s) => s !== careSpec) : product.specifications;
+  }, [product.specifications, careSpec]);
+
   return (
-    <div className="bg-[#FAF7F2] min-h-screen text-[#1C1917] selection:bg-[#9A7B56] selection:text-white">
-      {/* ─── 1. BREADCRUMBS ─── */}
-      <div className="border-b border-[#EAE4D8] bg-[#F7F4EE]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <nav className="flex items-center gap-1.5 text-[11.5px] sm:text-[12px] text-[#78716C] flex-wrap font-normal">
-            <Link href="/" className="hover:text-[#1C1917] transition-colors">
+    <div className="bg-[#FAF7F2] min-h-screen text-[#1C1917] selection:bg-[#9A7B56] selection:text-white pb-24 lg:pb-20">
+
+      {/* ──────────────────────────────────────────────────────────
+          1. BREADCRUMB NAVIGATION
+         ────────────────────────────────────────────────────────── */}
+      <nav aria-label="Breadcrumb" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-3">
+        <ol className="flex items-center gap-1.5 text-[11.5px] sm:text-[12px] text-[#8C827A] flex-wrap list-none p-0 m-0 font-normal">
+          <li>
+            <Link href="/" className="hover:text-[#1E3A2F] transition-colors">
               Home
             </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E]" />
-
-            <Link href="/products" className="hover:text-[#1C1917] transition-colors">
-              Catalog
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E]" />
-
-            {isCurtain && (
-              <>
-                <Link href="/categories/curtains" className="hover:text-[#1C1917] transition-colors">
-                  Curtains & Drapes
-                </Link>
-                {curtainType && (
-                  <>
-                    <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E]" />
-                    <Link
-                      href={`/categories/curtains/${curtainType.slug}`}
-                      className="hover:text-[#1C1917] transition-colors"
-                    >
-                      {curtainType.name}
-                    </Link>
-                  </>
-                )}
-              </>
+          </li>
+          <li aria-hidden="true" className="text-[#C4B9A1]">/</li>
+          <li>
+            {subcategoryUrl ? (
+              <Link href={subcategoryUrl} className="hover:text-[#1E3A2F] transition-colors">
+                {subcategoryName}
+              </Link>
+            ) : (
+              <Link href={`/categories/${product.categorySlug}`} className="hover:text-[#1E3A2F] transition-colors">
+                {product.categoryName}
+              </Link>
             )}
+          </li>
+          <li aria-hidden="true" className="text-[#C4B9A1]">/</li>
+          <li aria-current="page" className="text-[#1E3A2F] font-medium truncate max-w-[220px] sm:max-w-none">
+            {product.displayName || product.name}
+          </li>
+        </ol>
+      </nav>
 
-            {isBlind && (
-              <>
-                <Link href="/categories/blinds" className="hover:text-[#1C1917] transition-colors">
-                  Window Blinds
-                </Link>
-                {blindType && (
-                  <>
-                    <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E]" />
-                    <Link
-                      href={`/categories/blinds/${blindType.slug}`}
-                      className="hover:text-[#1C1917] transition-colors"
-                    >
-                      {blindType.name}
-                    </Link>
-                  </>
-                )}
-              </>
-            )}
+      {/* ──────────────────────────────────────────────────────────
+          2. MAIN PRODUCT HERO SHOWROOM (55% GALLERY / 45% SHOPPING PANEL)
+         ────────────────────────────────────────────────────────── */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-14 items-start">
 
-            {isWallpaper && (
-              <>
-                <Link href="/categories/wallpapers" className="hover:text-[#1C1917] transition-colors">
-                  Wallpapers
-                </Link>
-                {wallpaperType && (
-                  <>
-                    <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E]" />
-                    <Link
-                      href={`/categories/wallpapers/${wallpaperType.slug}`}
-                      className="hover:text-[#1C1917] transition-colors"
-                    >
-                      {wallpaperType.name}
-                    </Link>
-                  </>
-                )}
-              </>
-            )}
+          {/* ─── LEFT: DOMINANT SHOWROOM PRODUCT GALLERY (55%) ─── */}
+          <div className="lg:col-span-7 lg:sticky lg:top-24">
+            <div className="flex flex-col lg:flex-row gap-3.5 sm:gap-4 items-start">
 
-            {isSofaFabric && (
-              <>
-                <Link href="/categories/sofa-fabrics" className="hover:text-[#1C1917] transition-colors">
-                  Sofa Fabrics
-                </Link>
-                {sofaFabricType && (
-                  <>
-                    <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E]" />
-                    <Link
-                      href={`/categories/sofa-fabrics/${sofaFabricType.slug}`}
-                      className="hover:text-[#1C1917] transition-colors"
-                    >
-                      {sofaFabricType.name}
-                    </Link>
-                  </>
-                )}
-              </>
-            )}
-
-            {isCarpet && (
-              <>
-                <Link href="/categories/carpets" className="hover:text-[#1C1917] transition-colors">
-                  Carpets & Rugs
-                </Link>
-                {carpetType && (
-                  <>
-                    <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E]" />
-                    <Link
-                      href={`/categories/carpets/${carpetType.slug}`}
-                      className="hover:text-[#1C1917] transition-colors"
-                    >
-                      {carpetType.name}
-                    </Link>
-                  </>
-                )}
-              </>
-            )}
-
-            {!isCurtain && !isBlind && !isWallpaper && !isSofaFabric && !isCarpet && (
-              <>
-                <Link
-                  href={`/categories/${product.categorySlug}`}
-                  className="hover:text-[#1C1917] transition-colors"
-                >
-                  {product.categoryName || 'Categories'}
-                </Link>
-              </>
-            )}
-
-            <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E]" />
-            <span className="text-[#1C1917] font-semibold truncate max-w-[200px] sm:max-w-none">
-              {product.displayName || product.name}
-            </span>
-          </nav>
-        </div>
-      </div>
-
-      {/* ─── 2. MAIN PRODUCT SECTION (2-COL DESKTOP) ─── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 lg:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-14 items-start">
-          
-          {/* ─── LEFT: LARGE PRODUCT GALLERY ─── */}
-          <div className="lg:col-span-7 flex flex-col gap-3.5 lg:sticky lg:top-24">
-            {/* Main Product Image Container */}
-            <div className="relative aspect-[4/4.8] sm:aspect-[4/4.5] w-full bg-gradient-to-b from-[#F7F4EE] to-[#EDE7DC] rounded-xl sm:rounded-2xl border border-[#EDE8DE] overflow-hidden shadow-[0_4px_24px_rgba(28,25,23,0.04)]">
-              <Image
-                src={activeImage}
-                alt={product.displayName || product.name}
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 58vw"
-                className="object-cover object-center transition-all duration-500 ease-out"
-              />
-
-              {/* Badges on Image (Top-Left) */}
-              <div className="absolute top-3.5 left-3.5 z-10 flex flex-col gap-1.5 pointer-events-none">
-                {isCustom ? (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[9px] uppercase tracking-[0.16em] font-semibold bg-[#1C1917]/85 text-[#FDFBF7] backdrop-blur-md rounded-sm border border-white/10 shadow-xs">
-                    <Sparkles className="w-3 h-3 text-[#9A7B56]" />
-                    <span>Custom Made</span>
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-2.5 py-1 text-[9px] uppercase tracking-[0.16em] font-semibold bg-[#1E3A2F]/90 text-white backdrop-blur-md rounded-sm border border-white/10 shadow-xs">
-                    Ready to Order
-                  </span>
-                )}
-              </div>
-
-              {/* Top Quick Actions (Wishlist & Share) */}
-              <div className="absolute top-3.5 right-3.5 z-10 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => toggleWishlist(product.id)}
-                  aria-label={isFav ? 'Remove from wishlist' : 'Add to wishlist'}
-                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all shadow-xs backdrop-blur-md cursor-pointer hover:scale-105 active:scale-95 ${
-                    isFav
-                      ? 'bg-white text-[#B43D3D] shadow-md border border-[#EAE4D8]'
-                      : 'bg-white/90 hover:bg-white text-[#57534E] hover:text-[#B43D3D] border border-white/60'
-                  }`}
-                >
-                  <Heart
-                    className={`w-4 h-4 transition-colors ${
-                      isFav ? 'fill-[#B43D3D] text-[#B43D3D]' : 'text-[#57534E]'
-                    }`}
-                  />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  aria-label="Share product link"
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/90 hover:bg-white text-[#57534E] hover:text-[#1C1917] flex items-center justify-center transition-all shadow-xs backdrop-blur-md border border-white/60 cursor-pointer hover:scale-105 active:scale-95"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Toast when link copied */}
-              {copiedLink && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-[#1C1917] text-white text-[11.5px] font-medium shadow-md">
-                  Link copied to clipboard!
+              {/* Thumbnails: Desktop (Vertical Column on Left), Mobile (Horizontal Row Below Main Image) */}
+              {galleryImages.length > 1 && (
+                <div className="order-2 lg:order-1 flex flex-row lg:flex-col gap-2.5 sm:gap-3 shrink-0 overflow-x-auto lg:overflow-visible w-full lg:w-auto scrollbar-none pb-1 lg:pb-0">
+                  {galleryImages.map((img, idx) => {
+                    const isSelected = activeImage === img;
+                    const labels = ['Main product view', 'Room view perspective', 'Fabric & detail texture'];
+                    const ariaLabel = labels[idx] || `View product image ${idx + 1}`;
+                    return (
+                      <button
+                        key={img + idx}
+                        type="button"
+                        onClick={() => handleThumbnailClick(img)}
+                        aria-label={ariaLabel}
+                        className={`relative w-[70px] h-[70px] sm:w-[76px] sm:h-[76px] lg:w-[82px] lg:h-[82px] rounded-lg overflow-hidden shrink-0 cursor-pointer transition-all duration-200 bg-[#F4EFE6] ${
+                          isSelected
+                            ? 'border-2 border-[#1E3A2F] ring-2 ring-[#1E3A2F]/20 opacity-100 shadow-2xs'
+                            : 'border border-[#E5DEC9] opacity-75 hover:opacity-100 hover:border-[#8C7A6B]'
+                        }`}
+                      >
+                        <Image
+                          src={img}
+                          alt={`${product.displayName || product.name} thumbnail ${idx + 1}`}
+                          fill
+                          sizes="(max-width: 640px) 70px, (max-width: 1024px) 76px, 82px"
+                          className="object-cover object-center"
+                        />
+                      </button>
+                    );
+                  })}
                 </div>
               )}
-            </div>
 
-            {/* Clearly Clickable Thumbnails Underneath */}
-            {galleryImages.length > 1 && (
-              <div className="flex items-center gap-2.5 sm:gap-3 overflow-x-auto pb-1 pt-0.5 scrollbar-none">
-                {galleryImages.map((img, idx) => {
-                  const isSelected = activeImage === img;
-                  return (
-                    <button
-                      key={img + idx}
-                      type="button"
-                      onClick={() => handleThumbnailClick(img)}
-                      aria-label={`View image ${idx + 1}`}
-                      className={`relative w-18 h-22 sm:w-20 sm:h-24 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-200 shrink-0 bg-white cursor-pointer ${
-                        isSelected
-                          ? 'border-[#1C1917] ring-2 ring-[#9A7B56]/30 shadow-xs opacity-100 scale-102'
-                          : 'border-[#EDE8DE] opacity-75 hover:opacity-100 hover:border-[#9A7B56]'
+              {/* Main Showroom Image Area (Guaranteed Height, High Aspect Ratio) */}
+              <div
+                onClick={() => setIsLightboxOpen(true)}
+                style={{
+                  minHeight: '480px',
+                  height: 'clamp(480px, 50vw, 640px)',
+                  width: '100%',
+                }}
+                className="order-1 lg:order-2 relative flex-1 min-w-0 w-full rounded-2xl overflow-hidden bg-[#F4EFE6] border border-[#E8E1D3] cursor-zoom-in group select-none shadow-[0_4px_20px_rgba(28,25,23,0.04)]"
+              >
+                <Image
+                  key={activeImage}
+                  src={activeImage}
+                  alt={product.displayName || product.name}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover object-center transition-transform duration-700 ease-out animate-gallery-fade group-hover:scale-105"
+                />
+
+                {/* Showroom Badge in Top-Left (Real Data Only) */}
+                <div className="absolute top-3.5 left-3.5 z-10 flex flex-col gap-1.5 pointer-events-none">
+                  {product.customMeasurementAvailable ? (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1E3A2F]/90 backdrop-blur-md text-[#FAF7F2] text-[10.5px] uppercase tracking-wider font-semibold shadow-xs border border-white/10">
+                      <Ruler className="w-3.5 h-3.5 text-[#E6C687]" />
+                      <span>Free Measurement</span>
+                    </div>
+                  ) : isCustom ? (
+                    <div className="px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md text-[#FAF7F2] text-[10.5px] uppercase tracking-wider font-medium border border-white/10 w-fit">
+                      <span>Custom Made</span>
+                    </div>
+                  ) : null}
+                </div>
+
+                {/* Floating Top-Right Actions */}
+                <div className="absolute top-3.5 right-3.5 z-10 flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsLightboxOpen(true);
+                    }}
+                    aria-label="View fullscreen image"
+                    className="w-9 h-9 rounded-full bg-white/90 hover:bg-white text-[#57534E] hover:text-[#1E3A2F] flex items-center justify-center transition-all shadow-xs backdrop-blur-xs border border-white/80 cursor-pointer hover:scale-105 active:scale-95"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleWishlist(product.id);
+                    }}
+                    aria-label={isFav ? 'Remove from wishlist' : 'Add to wishlist'}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-xs backdrop-blur-xs cursor-pointer hover:scale-105 active:scale-95 border ${isFav
+                      ? 'bg-white text-[#B43D3D] border-rose-200'
+                      : 'bg-white/90 hover:bg-white text-[#57534E] hover:text-[#B43D3D] border-white/80'
                       }`}
+                  >
+                    <Heart
+                      className={`w-3.5 h-3.5 transition-colors ${isFav ? 'fill-[#B43D3D] text-[#B43D3D]' : 'text-[#57534E]'
+                        }`}
+                    />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleShare();
+                    }}
+                    aria-label="Share product link"
+                    className="w-9 h-9 rounded-full bg-white/90 hover:bg-white text-[#57534E] hover:text-[#1E3A2F] flex items-center justify-center transition-all shadow-xs backdrop-blur-xs border border-white/80 cursor-pointer hover:scale-105 active:scale-95"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Left / Right Arrow Navigation */}
+                {galleryImages.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePrevImage();
+                      }}
+                      aria-label="Previous image"
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-[#1E3A2F] shadow-sm flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 cursor-pointer backdrop-blur-xs"
                     >
-                      <Image
-                        src={img}
-                        alt={`${product.name} gallery image ${idx + 1}`}
-                        fill
-                        sizes="80px"
-                        className="object-cover object-center"
-                      />
+                      <ChevronLeft className="w-4 h-4" />
                     </button>
-                  );
-                })}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleNextImage();
+                      }}
+                      aria-label="Next image"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-[#1E3A2F] shadow-sm flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 cursor-pointer backdrop-blur-xs"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+
+                {/* Image Counter Badge */}
+                {galleryImages.length > 1 && (
+                  <div className="absolute bottom-3.5 right-3.5 z-10 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-medium tracking-wider pointer-events-none">
+                    {currentImgIdx + 1} / {galleryImages.length}
+                  </div>
+                )}
+
+                {/* Share Toast */}
+                {copiedLink && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 px-3.5 py-1.5 rounded-full bg-[#1E3A2F] text-white text-[11px] font-medium shadow-md">
+                    Link copied to clipboard
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
-          {/* ─── RIGHT: PRODUCT INFORMATION & PURCHASE CONTROLS ─── */}
-          <div className="lg:col-span-5 flex flex-col pt-0 sm:pt-1">
-            {/* Category / Subcategory Eyebrow */}
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#9A7B56]" />
-              <span className="text-[10.5px] sm:text-[11px] uppercase tracking-[0.22em] text-[#9A7B56] font-semibold">
+          {/* ─── RIGHT: MODERN E-COMMERCE SHOPPING PANEL (45%) ─── */}
+          <div className="lg:col-span-5 flex flex-col">
+
+            {/* 1. Category Eyebrow */}
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <span className="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#9A7B56]">
                 {subcategoryName || product.categoryName}
               </span>
             </div>
 
-            {/* Product Title Heading */}
-            <h1 className="font-serif text-[26px] sm:text-[32px] lg:text-[36px] text-[#1C1917] font-medium tracking-tight leading-[1.2] mb-3">
+            {/* 2. Product Name */}
+            <h1 className="font-serif text-[28px] sm:text-[32px] lg:text-[36px] font-normal text-[#1E3A2F] tracking-tight leading-[1.15] mb-2.5">
               {product.displayName || product.name}
             </h1>
 
-            {/* Short Product Description */}
-            <p className="text-[13.5px] sm:text-[14px] text-[#57534E] leading-relaxed mb-4">
-              {product.shortDescription}
-            </p>
+            {/* 3. Short Description */}
+            {product.shortDescription && (
+              <p className="text-[14px] sm:text-[14.5px] text-[#57534E] leading-relaxed mb-4 font-normal">
+                {product.shortDescription}
+              </p>
+            )}
 
-            {/* Price Area */}
-            <div className="mb-5 pb-5 border-b border-[#EDE8DE]">
-              <div className="flex items-baseline gap-2">
-                {isCustom && product.startingPrice && (
-                  <span className="text-[11.5px] sm:text-[12px] font-semibold text-[#8C827A] uppercase tracking-wider">
+            {/* 4. Real Price Display (Strictly from Product Data) */}
+            <div className="pb-4 mb-5 border-b border-[#EAE4D8]">
+              <div className="flex items-baseline gap-2 flex-wrap">
+                {product.startingPrice && (
+                  <span className="text-[11.5px] uppercase tracking-wider font-semibold text-[#8C827A]">
                     From
                   </span>
                 )}
-                <span className="font-serif text-[26px] sm:text-[30px] font-bold text-[#1C1917] tracking-tight">
-                  {product.currency}{product.price.toLocaleString('en-IN')}
+                <span className="font-serif text-[30px] sm:text-[34px] font-semibold text-[#1E3A2F] tracking-tight leading-none">
+                  {product.currency}{effectivePrice.toLocaleString('en-IN')}
                 </span>
-                {isCustom && product.startingPrice && (
-                  <span className="text-[12px] text-[#78716C] font-normal">
-                    {isSofaFabric ? '/ metre' : isCurtain ? '/ panel' : isWallpaper ? '/ roll' : 'onwards'}
+                {pricingUnit && (
+                  <span className="text-[14px] text-[#78716C] font-normal">
+                    {pricingUnit}
                   </span>
                 )}
+                <span className="text-[11.5px] text-[#8C827A] ml-auto">
+                  Inclusive of all taxes
+                </span>
               </div>
-              <p className="text-[11.5px] text-[#8C827A] mt-1 font-light">
-                {isCurtain && isCustom
-                  ? 'Includes standard tailoring & GST. Final price tailored to your exact measurements.'
-                  : 'All taxes included. Complimentary white-glove doorstep delivery.'}
-              </p>
+
+              {quantity > 1 && (
+                <div className="mt-2 text-[12px] text-[#78716C]">
+                  Estimated Subtotal: <strong className="font-semibold text-[#1E3A2F] text-[13px]">₹{(effectivePrice * quantity).toLocaleString('en-IN')}</strong> for {quantity} {quantityUnit}
+                </div>
+              )}
             </div>
 
-            {/* ─── 3. COLOR / VARIANT SELECTION (Only when multiple confirmed variants exist) ─── */}
+            {/* 5. Real Product Options (Strictly From Product Data) */}
+
+            {/* ─── Curtains: Heading Style (Fixed Product Specification) ─── */}
+            {isCurtain && (
+              <div className="mb-5 space-y-1">
+                <span className="block text-[11px] uppercase tracking-wider font-semibold text-[#8C827A]">
+                  Heading Style
+                </span>
+                <p className="text-[14px] sm:text-[14.5px] font-medium text-[#1E3A2F]">
+                  French Pinch Pleat
+                </p>
+              </div>
+            )}
+
+            {/* ─── Curtains / Blinds: Custom Dimensions (When Made to Measure) ─── */}
+            {(isCurtain || isBlind) && isCustom && (
+              <div className="mb-5 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase tracking-wider font-semibold text-[#1C1917]">
+                    Dimensions
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSizeType('standard')}
+                      className={`text-[11px] font-medium px-2 py-0.5 rounded cursor-pointer transition-colors ${sizeType === 'standard'
+                        ? 'bg-[#1E3A2F] text-white'
+                        : 'text-[#78716C] hover:text-[#1E3A2F]'
+                        }`}
+                    >
+                      Standard
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSizeType('custom')}
+                      className={`text-[11px] font-medium px-2 py-0.5 rounded cursor-pointer transition-colors ${sizeType === 'custom'
+                        ? 'bg-[#1E3A2F] text-white'
+                        : 'text-[#78716C] hover:text-[#1E3A2F]'
+                        }`}
+                    >
+                      Custom Size
+                    </button>
+                  </div>
+                </div>
+
+                {sizeType === 'custom' && (
+                  <div className="grid grid-cols-2 gap-2.5 p-3 rounded-xl bg-white border border-[#E0D7C6] animate-in fade-in duration-150">
+                    <div>
+                      <label className="block text-[10.5px] text-[#78716C] mb-1 font-medium">
+                        Width (inches)
+                      </label>
+                      <input
+                        type="number"
+                        min="10"
+                        max="300"
+                        value={customWidth}
+                        onChange={(e) => setCustomWidth(e.target.value)}
+                        className="w-full h-8.5 text-[12px] px-2.5 rounded-lg border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10.5px] text-[#78716C] mb-1 font-medium">
+                        Height / Drop (inches)
+                      </label>
+                      <input
+                        type="number"
+                        min="10"
+                        max="300"
+                        value={customHeight}
+                        onChange={(e) => setCustomHeight(e.target.value)}
+                        className="w-full h-8.5 text-[12px] px-2.5 rounded-lg border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ─── Real Color/Pattern/Size Variants From Product Data ─── */}
             {product.variations && product.variations.length > 1 && (
-              <div className="mb-5 pb-5 border-b border-[#EDE8DE]">
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-[11.5px] sm:text-[12px] uppercase tracking-wider font-semibold text-[#1C1917]">
+              <div className="mb-5">
+                <div className="flex items-baseline justify-between mb-2">
+                  <span className="text-[11px] uppercase tracking-wider font-semibold text-[#1C1917]">
                     {variantLabel}
                   </span>
-                  <span className="text-[12px] sm:text-[12.5px] text-[#9A7B56] font-medium">
+                  <span className="text-[12px] text-[#9A7B56] font-medium">
                     {currentVariant?.name}
                   </span>
                 </div>
@@ -918,27 +950,40 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                 <div className="flex flex-wrap gap-2">
                   {product.variations.map((variant, idx) => {
                     const isSelected = selectedVariantIdx === idx;
+                    const variantImg = variant.thumbnailImage || variant.image;
+
                     return (
                       <button
                         key={variant.id}
                         type="button"
-                        onClick={() => handleSelectColor(idx)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-left transition-all duration-200 cursor-pointer ${
-                          isSelected
-                            ? 'border-[#1C1917] bg-white ring-1 ring-[#1C1917] shadow-xs font-semibold text-[#1C1917]'
-                            : 'border-[#EDE8DE] bg-white/70 hover:border-[#9A7B56] hover:bg-white text-[#57534E]'
-                        }`}
+                        onClick={() => handleSelectVariant(idx)}
+                        className={`group relative flex items-center gap-2 p-1.5 pr-2.5 rounded-xl border text-left transition-all duration-150 cursor-pointer ${isSelected
+                          ? 'border-[#1E3A2F] bg-white ring-1.5 ring-[#1E3A2F] shadow-2xs font-medium text-[#1E3A2F]'
+                          : 'border-[#EDE8DE] bg-white/70 hover:bg-white hover:border-[#9A7B56] text-[#57534E]'
+                          }`}
                       >
-                        {variant.colorHex && (
+                        {variantImg ? (
+                          <div className="relative w-7 h-7 rounded-lg overflow-hidden shrink-0 border border-black/10">
+                            <Image
+                              src={variantImg}
+                              alt={variant.name}
+                              fill
+                              sizes="28px"
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : variant.colorHex ? (
                           <span
-                            className={`w-3.5 h-3.5 rounded-full border shadow-2xs transition-transform ${
-                              isSelected ? 'scale-110 border-[#1C1917]' : 'border-black/20'
-                            }`}
+                            className="w-7 h-7 rounded-lg border border-black/15 shadow-2xs shrink-0"
                             style={{ backgroundColor: variant.colorHex }}
                           />
+                        ) : (
+                          <span className="w-7 h-7 rounded-lg bg-[#F5EFE4] border border-[#E5DEC9] flex items-center justify-center text-[10px] font-serif text-[#1E3A2F]">
+                            {idx + 1}
+                          </span>
                         )}
-                        <span className="text-[12px] sm:text-[12.5px]">{variant.name}</span>
-                        {isSelected && <Check className="w-3 h-3 text-[#1C1917]" />}
+                        <span className="text-[11.5px] truncate max-w-[120px]">{variant.name}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-[#1E3A2F] shrink-0" />}
                       </button>
                     );
                   })}
@@ -946,184 +991,109 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
               </div>
             )}
 
-            {/* ─── 4. CUSTOMIZATION (Curtains & Blinds) ─── */}
-            {(isCurtain || isBlind) && (
-              <div className="mb-5 pb-5 border-b border-[#EDE8DE]">
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-[11.5px] sm:text-[12px] uppercase tracking-wider font-semibold text-[#1C1917]">
-                    Sizing Method:
-                  </span>
-                  <span className="text-[11.5px] text-[#9A7B56] flex items-center gap-1 font-medium">
-                    <Sparkles className="w-3 h-3" />
-                    <span>Free Laser Measurement</span>
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2.5 mb-3">
-                  <button
-                    type="button"
-                    onClick={() => setSizeType('standard')}
-                    className={`py-2.5 px-3 rounded-lg border text-center text-[12px] sm:text-[12.5px] font-medium transition-all cursor-pointer ${
-                      sizeType === 'standard'
-                        ? 'border-[#1C1917] bg-white ring-1 ring-[#1C1917] font-semibold text-[#1C1917] shadow-xs'
-                        : 'border-[#EDE8DE] bg-white/70 text-[#57534E] hover:border-[#9A7B56]'
-                    }`}
-                  >
-                    Standard Size
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSizeType('custom')}
-                    className={`py-2.5 px-3 rounded-lg border text-center text-[12px] sm:text-[12.5px] font-medium transition-all cursor-pointer ${
-                      sizeType === 'custom'
-                        ? 'border-[#1C1917] bg-white ring-1 ring-[#1C1917] font-semibold text-[#1C1917] shadow-xs'
-                        : 'border-[#EDE8DE] bg-white/70 text-[#57534E] hover:border-[#9A7B56]'
-                    }`}
-                  >
-                    Custom Size (Bespoke)
-                  </button>
-                </div>
-
-                {/* Standard Size Details (Curtains Only) */}
-                {sizeType === 'standard' && isCurtain && (
-                  <p className="text-[11.5px] text-[#78716C] bg-white/60 p-2.5 rounded-lg border border-[#EDE8DE] font-light">
-                    Standard panel dimensions: <strong>48″ Width × 84″ Drop (Window)</strong> or <strong>48″ Width × 108″ Drop (Door)</strong>.
-                  </p>
-                )}
-
-                {/* Custom Size Inputs (Inches) */}
-                {sizeType === 'custom' && (
-                  <div className="p-3.5 rounded-xl bg-white border border-[#EDE8DE] space-y-3 shadow-2xs">
-                    <div className="flex items-center gap-2 text-[12px] font-semibold text-[#1C1917]">
-                      <Ruler className="w-3.5 h-3.5 text-[#9A7B56]" />
-                      <span>Approximate Window Measurements (Inches)</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[11px] text-[#78716C] font-medium mb-1">
-                          Width (inches):
-                        </label>
-                        <input
-                          type="number"
-                          min="20"
-                          max="300"
-                          value={customWidth}
-                          onChange={(e) => setCustomWidth(e.target.value)}
-                          className="w-full h-10 text-[13px] px-3 rounded-lg border border-[#D8CFBF] focus:border-[#1C1917] focus:ring-1 focus:ring-[#1C1917] bg-[#FAF7F2] outline-none transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] text-[#78716C] font-medium mb-1">
-                          Drop / Height (inches):
-                        </label>
-                        <input
-                          type="number"
-                          min="20"
-                          max="300"
-                          value={customHeight}
-                          onChange={(e) => setCustomHeight(e.target.value)}
-                          className="w-full h-10 text-[13px] px-3 rounded-lg border border-[#D8CFBF] focus:border-[#1C1917] focus:ring-1 focus:ring-[#1C1917] bg-[#FAF7F2] outline-none transition-all"
-                        />
-                      </div>
-                    </div>
-                    <p className="text-[11px] text-[#8C827A] font-light">
-                      Don’t worry about exact millimeter precision — our master tailor will re-verify all dimensions during your complimentary in-home laser measurement visit.
-                    </p>
-                  </div>
-                )}
+            {/* 6. Quantity Stepper */}
+            <div className="flex items-center justify-between mb-5 pb-5 border-b border-[#EAE4D8]">
+              <div>
+                <span className="block text-[11px] uppercase tracking-wider font-semibold text-[#1C1917]">
+                  Quantity ({quantityUnit})
+                </span>
+                <span className="text-[11.5px] text-[#78716C]">
+                  {quantity > 1
+                    ? `${quantity} ${quantityUnit} • ₹${(effectivePrice * quantity).toLocaleString('en-IN')}`
+                    : `Single ${quantityUnit}`}
+                </span>
               </div>
-            )}
 
-            {/* ─── HEADING PLEAT STYLE (Curtains with confirmed styles only) ─── */}
-            {isCurtain && confirmedHeadingStyles.length > 0 && (
-              <div className="mb-5 pb-5 border-b border-[#EDE8DE]">
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-[11.5px] sm:text-[12px] uppercase tracking-wider font-semibold text-[#1C1917]">
-                    Heading Pleat Style:
-                  </span>
-                  <span className="text-[12px] sm:text-[12.5px] text-[#9A7B56] font-medium">
-                    {activeStitching}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {confirmedHeadingStyles.map((style) => {
-                    const isSelected = activeStitching === style;
-                    return (
-                      <button
-                        key={style}
-                        type="button"
-                        onClick={() => setSelectedStitching(style)}
-                        className={`py-2 px-2.5 rounded-lg border text-center text-[11.5px] sm:text-[12px] transition-all cursor-pointer ${
-                          isSelected
-                            ? 'border-[#1C1917] bg-white ring-1 ring-[#1C1917] text-[#1C1917] font-semibold shadow-xs'
-                            : 'border-[#EDE8DE] bg-white/70 text-[#57534E] hover:border-[#9A7B56]'
-                        }`}
-                      >
-                        {style}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* ─── QUANTITY STEPPER ─── */}
-            <div className="mb-6 flex items-center justify-between">
-              <span className="text-[11.5px] sm:text-[12px] uppercase tracking-wider font-semibold text-[#1C1917]">
-                {isSofaFabric
-                  ? 'Quantity (Metres):'
-                  : isCurtain
-                  ? 'Quantity (Panels):'
-                  : isWallpaper
-                  ? 'Quantity (Rolls):'
-                  : 'Quantity:'}
-              </span>
-              <div className="inline-flex items-center border border-[#E2DBD0] rounded-lg bg-white overflow-hidden shadow-2xs">
+              <div className="inline-flex items-center border border-[#D5CCBA] rounded-xl bg-white overflow-hidden shadow-2xs">
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  disabled={quantity <= 1}
                   aria-label="Decrease quantity"
-                  className="w-9 h-9 flex items-center justify-center text-[#57534E] hover:text-[#1C1917] hover:bg-[#FAF7F2] transition-colors cursor-pointer"
+                  className="w-9 h-9 flex items-center justify-center text-[#57534E] hover:text-[#1E3A2F] hover:bg-[#FAF7F2] transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <Minus className="w-3.5 h-3.5" />
                 </button>
-                <span className="w-10 text-center text-[13px] font-semibold text-[#1C1917]">
+                <span className="px-3.5 min-w-[50px] text-center text-[13px] font-semibold text-[#1E3A2F] select-none">
                   {quantity}
                 </span>
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => q + 1)}
                   aria-label="Increase quantity"
-                  className="w-9 h-9 flex items-center justify-center text-[#57534E] hover:text-[#1C1917] hover:bg-[#FAF7F2] transition-colors cursor-pointer"
+                  className="w-9 h-9 flex items-center justify-center text-[#57534E] hover:text-[#1E3A2F] hover:bg-[#FAF7F2] transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
 
-            {/* ─── 5. PURCHASE / ENQUIRY ACTIONS (STAGE 2 DATA-DRIVEN CTAS) ─── */}
+            {/* 7. Action Buttons (Strictly by Product Type) */}
             <div className="space-y-2.5 mb-6">
-              {isCustom ? (
-                /* ─── CUSTOM / MADE-TO-MEASURE PRODUCT CTAS ─── */
+              {!isCustom ? (
+                /* ─── STANDARD PRODUCTS: ADD TO CART & BUY NOW ─── */
                 <>
-                  {product.customMeasurementAvailable ? (
-                    <div className="grid grid-cols-2 gap-2.5">
-                      {/* [ Request a Quote ] */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsQuoteModalOpen(true);
-                          setQuoteSubmitted(false);
-                          setQuoteError(null);
-                        }}
-                        className="w-full py-3.5 px-3 sm:px-4 rounded-xl font-semibold text-[11.5px] sm:text-[12.5px] uppercase tracking-[0.12em] bg-[#1C1917] hover:bg-[#9A7B56] text-[#FAF7F2] hover:text-white transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 shadow-xs active:scale-[0.99] cursor-pointer text-center"
-                      >
-                        <FileText className="w-4 h-4 text-[#9A7B56]" />
-                        <span>Request a Quote</span>
-                      </button>
+                  <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    className={`w-full h-12 rounded-xl font-semibold text-[12px] uppercase tracking-[0.14em] transition-all duration-200 flex items-center justify-center gap-2 shadow-xs active:scale-[0.99] cursor-pointer ${addedNotice
+                      ? 'bg-[#15803D] text-white'
+                      : 'bg-[#1E3A2F] hover:bg-[#152B23] text-white'
+                      }`}
+                  >
+                    {addedNotice ? (
+                      <>
+                        <Check className="w-4 h-4 stroke-[2.5]" />
+                        <span>Added to Cart</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag className="w-4 h-4 stroke-[2]" />
+                        <span>Add to Cart</span>
+                      </>
+                    )}
+                  </button>
 
-                      {/* [ Book Free Measurement ] */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={handleBuyNow}
+                      disabled={isBuyingNow}
+                      className="h-10.5 rounded-xl font-semibold text-[11px] uppercase tracking-wider border border-[#1E3A2F] text-[#1E3A2F] bg-white hover:bg-[#FAF7F2] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-75"
+                    >
+                      <ArrowRight className="w-3.5 h-3.5 text-[#1E3A2F]" />
+                      <span>{isBuyingNow ? 'Proceeding...' : 'Buy Now'}</span>
+                    </button>
+
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-10.5 rounded-xl border border-[#25D366] bg-white hover:bg-[#25D366]/5 text-[#15803D] text-[11px] uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
+                      <span>Order on WhatsApp</span>
+                    </a>
+                  </div>
+                </>
+              ) : (
+                /* ─── CUSTOM / MADE TO MEASURE PRODUCTS: REQUEST QUOTE & MEASUREMENT ─── */
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsQuoteModalOpen(true);
+                      setQuoteSubmitted(false);
+                      setQuoteError(null);
+                    }}
+                    className="w-full h-12 rounded-xl font-semibold text-[12px] uppercase tracking-[0.14em] bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all duration-200 flex items-center justify-center gap-2 shadow-xs active:scale-[0.99] cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4 text-[#C4B9A1]" />
+                    <span>Request a Quote</span>
+                  </button>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {product.customMeasurementAvailable && (
                       <button
                         type="button"
                         onClick={() => {
@@ -1131,340 +1101,181 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                           setMeasSubmitted(false);
                           setMeasError(null);
                         }}
-                        className="w-full py-3.5 px-3 sm:px-4 rounded-xl font-semibold text-[11.5px] sm:text-[12.5px] uppercase tracking-[0.12em] border border-[#1C1917] text-[#1C1917] hover:bg-[#1C1917] hover:text-white transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 shadow-xs active:scale-[0.99] cursor-pointer text-center bg-white"
+                        className="h-10.5 rounded-xl font-semibold text-[11px] uppercase tracking-wider border border-[#1E3A2F] text-[#1E3A2F] bg-white hover:bg-[#FAF7F2] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs hover:border-[#152B23]"
                       >
-                        <Ruler className="w-4 h-4 text-[#9A7B56]" />
+                        <Ruler className="w-3.5 h-3.5 text-[#9A7B56]" />
                         <span>Book Free Measurement</span>
                       </button>
-                    </div>
-                  ) : (
-                    /* [ Request a Quote ] (Full Width when measurement not applicable) */
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsQuoteModalOpen(true);
-                        setQuoteSubmitted(false);
-                        setQuoteError(null);
-                      }}
-                      className="w-full py-3.5 px-4 rounded-xl font-semibold text-[12px] sm:text-[12.5px] uppercase tracking-[0.14em] bg-[#1C1917] hover:bg-[#9A7B56] text-[#FAF7F2] hover:text-white transition-all duration-200 flex items-center justify-center gap-2 shadow-xs active:scale-[0.99] cursor-pointer text-center"
-                    >
-                      <FileText className="w-4 h-4 text-[#9A7B56]" />
-                      <span>Request a Quote</span>
-                    </button>
-                  )}
+                    )}
 
-                  {/* [ Order on WhatsApp ] */}
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-3.5 px-4 rounded-xl border border-[#25D366]/40 hover:border-[#25D366] bg-[#25D366]/5 hover:bg-[#25D366]/10 text-[#15803D] text-[12px] sm:text-[12.5px] uppercase tracking-[0.14em] font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
-                  >
-                    <MessageCircle className="w-4 h-4 text-[#25D366] fill-[#25D366]" />
-                    <span>Order on WhatsApp</span>
-                  </a>
-
-                  {/* Auxiliary Wishlist Button */}
-                  <div className="flex justify-end pt-0.5">
-                    <button
-                      type="button"
-                      onClick={() => toggleWishlist(product.id)}
-                      className="inline-flex items-center gap-1.5 text-[11.5px] text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`h-10.5 rounded-xl border border-[#25D366] bg-white hover:bg-[#25D366]/5 text-[#15803D] text-[11px] uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs ${!product.customMeasurementAvailable ? 'sm:col-span-2' : ''
+                        }`}
                     >
-                      <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-[#B43D3D] text-[#B43D3D]' : 'text-[#78716C]'}`} />
-                      <span>{isFav ? 'Saved in Wishlist' : 'Save to Wishlist'}</span>
-                    </button>
-                  </div>
-                </>
-              ) : (
-                /* ─── STANDARD PRODUCT CTAS ─── */
-                <>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {/* [ Add to Cart ] */}
-                    <button
-                      type="button"
-                      onClick={handleAddToCart}
-                      className={`w-full py-3.5 px-3 sm:px-4 rounded-xl font-semibold text-[11.5px] sm:text-[12.5px] uppercase tracking-[0.14em] transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 shadow-xs active:scale-[0.99] cursor-pointer border border-[#EDE8DE] ${
-                        addedNotice
-                          ? 'bg-[#15803D] text-white shadow-sm'
-                          : 'bg-white hover:border-[#1C1917] text-[#1C1917]'
-                      }`}
-                    >
-                      {addedNotice ? (
-                        <>
-                          <Check className="w-4 h-4 stroke-[2.5]" />
-                          <span>Added to Cart!</span>
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingBag className="w-4 h-4 stroke-[2]" />
-                          <span>Add to Cart</span>
-                        </>
-                      )}
-                    </button>
-
-                    {/* [ Buy Now ] */}
-                    <button
-                      type="button"
-                      onClick={handleBuyNow}
-                      disabled={isBuyingNow}
-                      className="w-full py-3.5 px-3 sm:px-4 rounded-xl font-semibold text-[11.5px] sm:text-[12.5px] uppercase tracking-[0.14em] transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 shadow-xs active:scale-[0.99] cursor-pointer bg-[#1E3A2F] hover:bg-[#152B23] text-white disabled:opacity-75"
-                    >
-                      <ArrowRight className="w-4 h-4" />
-                      <span>{isBuyingNow ? 'Proceeding...' : 'Buy Now'}</span>
-                    </button>
-                  </div>
-
-                  {/* [ Order on WhatsApp ] */}
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-3.5 px-4 rounded-xl border border-[#25D366]/40 hover:border-[#25D366] bg-[#25D366]/5 hover:bg-[#25D366]/10 text-[#15803D] text-[12px] sm:text-[12.5px] uppercase tracking-[0.14em] font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
-                  >
-                    <MessageCircle className="w-4 h-4 text-[#25D366] fill-[#25D366]" />
-                    <span>Order on WhatsApp</span>
-                  </a>
-
-                  {/* Auxiliary Wishlist Button */}
-                  <div className="flex justify-end pt-0.5">
-                    <button
-                      type="button"
-                      onClick={() => toggleWishlist(product.id)}
-                      className="inline-flex items-center gap-1.5 text-[11.5px] text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
-                    >
-                      <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-[#B43D3D] text-[#B43D3D]' : 'text-[#78716C]'}`} />
-                      <span>{isFav ? 'Saved in Wishlist' : 'Save to Wishlist'}</span>
-                    </button>
+                      <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
+                      <span>Order on WhatsApp</span>
+                    </a>
                   </div>
                 </>
               )}
             </div>
 
-            {/* Quick Brand Trust Features */}
-            <div className="pt-4 border-t border-[#EDE8DE] grid grid-cols-2 gap-3 text-[11.5px] sm:text-[12px] text-[#78716C]">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#9A7B56] shrink-0" />
-                <span>{isCurtain || isSofaFabric ? '100% Genuine Fabrics' : '100% Certified Materials'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Truck className="w-3.5 h-3.5 text-[#9A7B56] shrink-0" />
-                <span>{product.customMeasurementAvailable ? 'Free In-Home Measurement' : 'Doorstep Delivery'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-[#9A7B56] shrink-0" />
-                <span>{isCustom ? '5–7 Days Handcrafted' : 'Showroom Inspected'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Layers className="w-3.5 h-3.5 text-[#9A7B56] shrink-0" />
-                <span>{isCurtain || isBlind || isSofaFabric || isWallpaper ? 'Doorstep Swatches' : 'Atelier Standard'}</span>
+            {/* 8. Service Reassurance (Strictly Real Supported Services) */}
+            <div className="border-t border-b border-[#EDE8DE] py-3.5 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-[#EDE8DE] text-center">
+                {product.customMeasurementAvailable && (
+                  <div className="px-2">
+                    <Ruler className="w-4 h-4 mx-auto mb-1 text-[#9A7B56]" />
+                    <span className="block text-[11.5px] font-semibold text-[#1E3A2F] leading-tight">Free Measurement</span>
+                    <span className="block text-[10px] text-[#78716C] mt-0.5">In-home visit</span>
+                  </div>
+                )}
+                {isCustom && (
+                  <div className="px-2">
+                    <Scissors className="w-4 h-4 mx-auto mb-1 text-[#9A7B56]" />
+                    <span className="block text-[11.5px] font-semibold text-[#1E3A2F] leading-tight">Custom Tailoring</span>
+                    <span className="block text-[10px] text-[#78716C] mt-0.5">Made to measure</span>
+                  </div>
+                )}
+                <div className="px-2">
+                  <MessageCircle className="w-4 h-4 mx-auto mb-1 text-[#9A7B56]" />
+                  <span className="block text-[11.5px] font-semibold text-[#1E3A2F] leading-tight">WhatsApp Support</span>
+                  <span className="block text-[10px] text-[#78716C] mt-0.5">Direct team assistance</span>
+                </div>
               </div>
             </div>
+
+            {/* 9. Product Details & Specifications (Strictly Real Data) */}
+            <div className="divide-y divide-[#EAE4D8] border-t border-b border-[#EAE4D8]">
+
+              {/* Quick Specs (Only if specifications exist) */}
+              {technicalSpecs.length > 0 && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => toggleAccordion('specs')}
+                    className="w-full flex items-center justify-between py-3.5 text-left cursor-pointer hover:text-[#1E3A2F] transition-colors"
+                  >
+                    <span className="text-[12px] font-semibold uppercase tracking-wider text-[#1C1917]">
+                      Specifications
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-[#78716C] transition-transform duration-200 ${openAccordions.has('specs') ? 'rotate-180' : ''
+                        }`}
+                    />
+                  </button>
+                  {openAccordions.has('specs') && (
+                    <div className="pb-3.5">
+                      <div className="divide-y divide-[#F2ECE1]">
+                        {technicalSpecs.map((s) => (
+                          <div key={s.label} className="py-1.5 flex justify-between items-baseline gap-2">
+                            <span className="text-[11.5px] text-[#8C827A] font-medium">{s.label}</span>
+                            <span className="text-[12px] text-[#1E3A2F] font-medium text-right">{s.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Product Details (Only if description exists) */}
+              {product.description && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => toggleAccordion('details')}
+                    className="w-full flex items-center justify-between py-3.5 text-left cursor-pointer hover:text-[#1E3A2F] transition-colors"
+                  >
+                    <span className="text-[12px] font-semibold uppercase tracking-wider text-[#1C1917]">
+                      Product Details
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-[#78716C] transition-transform duration-200 ${openAccordions.has('details') ? 'rotate-180' : ''
+                        }`}
+                    />
+                  </button>
+                  {openAccordions.has('details') && (
+                    <div className="pb-3.5 text-[13px] text-[#57534E] leading-relaxed">
+                      <p>{product.description}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Care & Maintenance (Only if care spec exists) */}
+              {careSpec && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => toggleAccordion('care')}
+                    className="w-full flex items-center justify-between py-3.5 text-left cursor-pointer hover:text-[#1E3A2F] transition-colors"
+                  >
+                    <span className="text-[12px] font-semibold uppercase tracking-wider text-[#1C1917]">
+                      Care &amp; Maintenance
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-[#78716C] transition-transform duration-200 ${openAccordions.has('care') ? 'rotate-180' : ''
+                        }`}
+                    />
+                  </button>
+                  {openAccordions.has('care') && (
+                    <div className="pb-3.5 text-[12.5px] text-[#57534E] leading-relaxed">
+                      <p className="font-medium text-[#1E3A2F] mb-0.5">{careSpec.label}</p>
+                      <p>{careSpec.value}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            </div>
+
           </div>
         </div>
 
-        {/* ─── 6. EXPANDABLE SPECIFICATIONS & DETAILS ACCORDION ─── */}
-        <section className="mt-14 sm:mt-20 pt-10 border-t border-[#EAE4D8] max-w-4xl mx-auto">
-          <div className="text-center mb-7">
-            <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.24em] text-[#9A7B56] font-semibold block mb-1">
-              Specifications & Atelier Craftsmanship
-            </span>
-            <h2 className="font-serif text-[22px] sm:text-[26px] text-[#1C1917] font-medium">
-              {(isCurtain || isBlind) && product.customMeasurementAvailable ? 'Product Details & Sizing' : 'Product Details'}
-            </h2>
-          </div>
+        {/* ──────────────────────────────────────────────────────────
+            9B. COMPACT TRUST & BENEFITS ("WHY SHOP FROM ZAIRA?")
+           ────────────────────────────────────────────────────────── */}
+        <ProductTrustBenefits />
 
-          <div className="divide-y divide-[#EDE8DE] border border-[#EDE8DE] bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-2xs">
-            {/* Description Accordion */}
-            <div className="p-4 sm:p-5">
-              <button
-                type="button"
-                onClick={() => toggleAccordion('desc')}
-                className="w-full flex items-center justify-between text-left font-serif text-[16px] sm:text-[17px] font-medium text-[#1C1917] cursor-pointer"
-              >
-                <span>Full Description & Craftsmanship</span>
-                <ChevronDown
-                  className={`w-4 h-4 text-[#8C827A] transition-transform duration-200 ${
-                    openSection === 'desc' ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-              {openSection === 'desc' && (
-                <div className="mt-3 text-[13.5px] text-[#57534E] leading-relaxed font-light">
-                  <p>{product.description}</p>
-                </div>
-              )}
-            </div>
+        {/* ──────────────────────────────────────────────────────────
+            9C. CUSTOMER REVIEWS
+           ────────────────────────────────────────────────────────── */}
+        <ProductCustomerReviews
+          productId={product.id}
+          productSlug={product.slug}
+          productName={product.displayName || product.name}
+        />
 
-            {/* Material & Fabric Specifications Accordion */}
-            {product.specifications && product.specifications.length > 0 && (
-              <div className="p-4 sm:p-5">
-                <button
-                  type="button"
-                  onClick={() => toggleAccordion('material')}
-                  className="w-full flex items-center justify-between text-left font-serif text-[16px] sm:text-[17px] font-medium text-[#1C1917] cursor-pointer"
-                >
-                  <span>Technical Specifications & Materials</span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-[#8C827A] transition-transform duration-200 ${
-                      openSection === 'material' ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-                {openSection === 'material' && (
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[13px] text-[#57534E]">
-                    {product.specifications.map((s) => (
-                      <div key={s.label} className="p-2.5 rounded-lg bg-[#FAF7F2] border border-[#EDE8DE]">
-                        <span className="text-[11px] uppercase tracking-wider font-semibold text-[#8C827A] block mb-0.5">
-                          {s.label}
-                        </span>
-                        <span className="text-[13px] font-medium text-[#1C1917]">
-                          {s.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Sizing & Measurement Service Accordion (Curtains & Blinds only) */}
-            {(isCurtain || isBlind) && product.customMeasurementAvailable && (
-              <div className="p-4 sm:p-5">
-                <button
-                  type="button"
-                  onClick={() => toggleAccordion('size')}
-                  className="w-full flex items-center justify-between text-left font-serif text-[16px] sm:text-[17px] font-medium text-[#1C1917] cursor-pointer"
-                >
-                  <span>Made-to-Measure & Sizing Guidance</span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-[#8C827A] transition-transform duration-200 ${
-                      openSection === 'size' ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-                {openSection === 'size' && (
-                  <div className="mt-3 text-[13.5px] text-[#57534E] leading-relaxed space-y-2">
-                    <p>
-                      Every residential window and living suite is architecturally distinct. Our Hyderabad showroom provides made-to-measure tailoring for all window drops and widths.
-                    </p>
-                    <p className="text-[#9A7B56] font-medium">
-                      • Complimentary in-home laser measurement visit available across Hyderabad.
-                    </p>
-                    <p>
-                      • We bring fabric swatch books directly to your space so you can compare textures against your wall paint and daylight conditions.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Care Instructions Accordion */}
-            {careSpec && (
-              <div className="p-4 sm:p-5">
-                <button
-                  type="button"
-                  onClick={() => toggleAccordion('care')}
-                  className="w-full flex items-center justify-between text-left font-serif text-[16px] sm:text-[17px] font-medium text-[#1C1917] cursor-pointer"
-                >
-                  <span>Care Guidelines</span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-[#8C827A] transition-transform duration-200 ${
-                      openSection === 'care' ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-                {openSection === 'care' && (
-                  <div className="mt-3 text-[13.5px] text-[#57534E] leading-relaxed">
-                    <p>{careSpec.value}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Delivery & White-Glove Installation Accordion */}
-            <div className="p-4 sm:p-5">
-              <button
-                type="button"
-                onClick={() => toggleAccordion('delivery')}
-                className="w-full flex items-center justify-between text-left font-serif text-[16px] sm:text-[17px] font-medium text-[#1C1917] cursor-pointer"
-              >
-                <span>Delivery & Professional Installation</span>
-                <ChevronDown
-                  className={`w-4 h-4 text-[#8C827A] transition-transform duration-200 ${
-                    openSection === 'delivery' ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-              {openSection === 'delivery' && (
-                <div className="mt-3 text-[13.5px] text-[#57534E] leading-relaxed space-y-2">
-                  <p>
-                    • <strong>Standard Orders:</strong> Carefully packaged and dispatched in 2–4 business days with doorstep delivery.
-                  </p>
-                  <p>
-                    • <strong>Bespoke Tailored Pieces:</strong> Handcrafted to your exact dimensions in 5–7 business days.
-                  </p>
-                  <p>
-                    • <strong>Showroom & Site Visit:</strong> Visit our Puppalguda showroom or request fabric swatches and measurement via WhatsApp.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* ─── 7. AUTHENTIC SHOWROOM CONSULTATION (No fake reviews) ─── */}
-        <section className="mt-14 sm:mt-20 pt-10 border-t border-[#EAE4D8] max-w-4xl mx-auto">
-          <div className="p-6 sm:p-8 rounded-2xl bg-white border border-[#EDE8DE] flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xs">
-            <div>
-              <span className="text-[10px] sm:text-[10.5px] uppercase tracking-[0.2em] font-semibold text-[#9A7B56] block mb-1">
-                Atelier Styling Consultation
-              </span>
-              <h3 className="font-serif text-[18px] sm:text-[22px] text-[#1C1917] font-medium mb-1.5">
-                Questions about fabric weights or measurements?
-              </h3>
-              <p className="text-[13px] sm:text-[13.5px] text-[#78716C] leading-relaxed max-w-xl">
-                Connect directly with our Hyderabad showroom team for curated recommendations, custom measurements, and sample swatches.
-              </p>
-            </div>
-            <a
-              href={`https://wa.me/916300145763?text=Hello%20Zaira%20Furnishing%2C%20I%20would%20like%20to%20consult%20about%20${encodeURIComponent(
-                product.displayName || product.name
-              )}.`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-[11.5px] uppercase tracking-wider font-semibold bg-[#1C1917] hover:bg-[#9A7B56] text-white transition-colors rounded-xl shrink-0"
-            >
-              <MessageCircle className="w-4 h-4 text-[#25D366]" />
-              <span>WhatsApp Consultation</span>
-            </a>
-          </div>
-        </section>
-
-        {/* ─── 8. RELATED PRODUCTS ("YOU MAY ALSO LIKE") ─── */}
+        {/* ──────────────────────────────────────────────────────────
+            10. RELATED PRODUCTS ("COMPLETE THE LOOK")
+           ────────────────────────────────────────────────────────── */}
         {relatedProducts.length > 0 && (
-          <section className="mt-14 sm:mt-20 pt-10 border-t border-[#EAE4D8]">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
+          <section className="mt-14 sm:mt-18 pt-8 border-t border-[#EAE4D8]">
+            <div className="flex items-baseline justify-between mb-6">
               <div>
-                <span className="text-[10.5px] uppercase tracking-[0.2em] text-[#9A7B56] font-semibold block mb-1">
-                  Curated Suggestions
+                <span className="text-[10px] uppercase tracking-[0.2em] text-[#9A7B56] font-semibold block mb-1">
+                  Curated Collection
                 </span>
-                <h2 className="font-serif text-[22px] sm:text-[26px] text-[#1C1917] font-medium">
-                  You May Also Like
+                <h2 className="font-serif text-[22px] sm:text-[26px] text-[#1E3A2F] font-medium">
+                  Complete the Look
                 </h2>
               </div>
               {subcategoryUrl && (
                 <Link
                   href={subcategoryUrl}
-                  className="text-[11.5px] sm:text-[12px] uppercase tracking-wider font-semibold text-[#1E3A2F] hover:text-[#9A7B56] transition-colors inline-flex items-center gap-1 self-start sm:self-auto"
+                  className="text-[11.5px] uppercase tracking-wider font-semibold text-[#1E3A2F] hover:text-[#9A7B56] transition-colors inline-flex items-center gap-1"
                 >
-                  <span>Browse More {subcategoryName}</span>
+                  <span>View All {subcategoryName}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               )}
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-5 lg:gap-6 items-stretch">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               {relatedProducts.slice(0, 4).map((item) => (
                 <div key={item.id} className="h-full">
                   <ProductCard product={item} />
@@ -1473,13 +1284,141 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
             </div>
           </section>
         )}
+
       </main>
 
-      {/* ─── 9. REQUEST A QUOTE MODAL (CUSTOM PRODUCTS) ─── */}
+      {/* ──────────────────────────────────────────────────────────
+          11. MOBILE STICKY PURCHASE BAR
+         ────────────────────────────────────────────────────────── */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EAE4D8] px-4 py-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <span className="block text-[10px] text-[#8C827A] uppercase tracking-wider font-medium truncate">
+            {product.displayName || product.name}
+          </span>
+          <div className="flex items-baseline gap-1">
+            <span className="font-serif text-[17px] font-bold text-[#1E3A2F]">
+              {product.currency}{effectivePrice.toLocaleString('en-IN')}
+            </span>
+            {pricingUnit && (
+              <span className="text-[11px] text-[#78716C]">{pricingUnit}</span>
+            )}
+          </div>
+        </div>
+
+        <div className="shrink-0 flex items-center gap-2">
+          {!isCustom ? (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className={`h-10 px-4 rounded-xl font-semibold text-[11.5px] uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer ${addedNotice
+                ? 'bg-[#15803D] text-white'
+                : 'bg-[#1E3A2F] text-white hover:bg-[#152B23]'
+                }`}
+            >
+              {addedNotice ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Added</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                  <span>Add to Cart</span>
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setIsQuoteModalOpen(true);
+                setQuoteSubmitted(false);
+                setQuoteError(null);
+              }}
+              className="h-10 px-4 rounded-xl font-semibold text-[11.5px] uppercase tracking-wider bg-[#1E3A2F] text-white hover:bg-[#152B23] transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+            >
+              <FileText className="w-3.5 h-3.5 text-[#C4B9A1]" />
+              <span>Request Quote</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ──────────────────────────────────────────────────────────
+          12. FULLSCREEN IMAGE LIGHTBOX MODAL
+         ────────────────────────────────────────────────────────── */}
+      {isLightboxOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image Lightbox"
+          className="fixed inset-0 z-50 bg-black/92 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setIsLightboxOpen(false)}
+        >
+          <div
+            className="relative max-w-4xl max-h-[85vh] w-full h-full flex flex-col items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setIsLightboxOpen(false)}
+              aria-label="Close fullscreen view"
+              className="absolute top-2 right-2 z-10 p-2.5 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full transition-colors cursor-pointer"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {galleryImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrevImage}
+                  aria-label="Previous image"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextImage}
+                  aria-label="Next image"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+
+            <div className="relative w-full h-[75vh] flex items-center justify-center">
+              <Image
+                src={activeImage}
+                alt={product.displayName || product.name}
+                fill
+                sizes="90vw"
+                className="object-contain"
+              />
+            </div>
+
+            {galleryImages.length > 1 && (
+              <div className="mt-3 text-white/70 text-[12px] font-medium tracking-wider">
+                {currentImgIdx + 1} / {galleryImages.length}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────
+          13. REQUEST A QUOTE MODAL (CUSTOM PRODUCTS)
+         ────────────────────────────────────────────────────────── */}
       {isQuoteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg bg-[#FAF7F2] rounded-2xl sm:rounded-3xl border border-[#EDE8DE] shadow-2xl p-5 sm:p-7 overflow-y-auto max-h-[92vh] text-[#1C1917]">
-            {/* Close Button */}
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Request a Customized Quote"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div className="relative w-full max-w-lg bg-[#FAF7F2] rounded-2xl border border-[#EDE8DE] shadow-2xl p-5 sm:p-7 overflow-y-auto max-h-[92vh] text-[#1C1917]">
             <button
               type="button"
               onClick={() => {
@@ -1495,22 +1434,18 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
 
             {!quoteSubmitted ? (
               <>
-                {/* Modal Header */}
                 <div className="mb-5 pr-6">
-                  <span className="text-[10.5px] uppercase tracking-[0.2em] font-semibold text-[#9A7B56] block mb-1">
-                    Bespoke Atelier Service
-                  </span>
-                  <h3 className="font-serif text-[20px] sm:text-[23px] font-medium text-[#1C1917]">
-                    Request a Customized Quote
+                  <h3 className="font-serif text-[21px] font-medium text-[#1E3A2F]">
+                    Request a Quote
                   </h3>
                   <p className="text-[12.5px] text-[#78716C] mt-1 leading-relaxed">
-                    Provide your requirements below and our Hyderabad showroom team will prepare an exact bespoke quotation.
+                    Provide your contact details below and our team will prepare a quotation for you.
                   </p>
                 </div>
 
-                {/* Selected Item Summary Card */}
-                <div className="mb-5 p-3.5 rounded-xl bg-white border border-[#EDE8DE] flex items-center gap-3.5 shadow-2xs">
-                  <div className="relative w-14 h-16 rounded-lg overflow-hidden bg-[#FAF7F2] shrink-0 border border-[#EAE4D8]">
+                {/* Summary Card */}
+                <div className="p-3 rounded-xl bg-white border border-[#EAE3D5] mb-5 flex items-center gap-3">
+                  <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-[#F4EFE6]">
                     <Image
                       src={activeImage}
                       alt={product.displayName || product.name}
@@ -1518,223 +1453,143 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                       className="object-cover"
                     />
                   </div>
-                  <div className="min-w-0 flex-1 text-[12px]">
-                    <h4 className="font-semibold text-[#1C1917] truncate">
+                  <div className="min-w-0">
+                    <span className="block font-medium text-[13px] text-[#1E3A2F] truncate">
                       {product.displayName || product.name}
-                    </h4>
-                    <p className="text-[#78716C] text-[11px] truncate">{product.categoryName}</p>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                      {currentVariant?.name && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-[#FAF7F2] border border-[#EAE4D8] font-medium text-[#57534E]">
-                          Variant: {currentVariant.name}
-                        </span>
-                      )}
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-[#FAF7F2] border border-[#EAE4D8] font-medium text-[#57534E]">
-                        Qty: {quantity}
-                      </span>
-                    </div>
+                    </span>
+                    <span className="block text-[11px] text-[#78716C]">
+                      Qty: {quantity} {quantityUnit} • {getResolvedSizeLabel()}
+                    </span>
                   </div>
                 </div>
 
-                {/* Form */}
-                <form onSubmit={handleQuoteSubmit} className="space-y-3.5">
+                <form onSubmit={handleSubmitQuote} className="space-y-3.5">
                   {quoteError && (
-                    <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[12px] flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[12px] flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                       <span>{quoteError}</span>
                     </div>
                   )}
 
-                  {/* Dimensions fields (only where relevant: curtains & blinds) */}
-                  {(isCurtain || isBlind) && (
-                    <div className="p-3 rounded-xl bg-white border border-[#EDE8DE] space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11.5px] font-semibold text-[#1C1917] flex items-center gap-1.5">
-                          <Ruler className="w-3.5 h-3.5 text-[#9A7B56]" />
-                          <span>Window Dimensions (Inches)</span>
-                        </span>
-                        <span className="text-[10.5px] text-[#78716C]">Approximate</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2.5">
-                        <div>
-                          <label className="block text-[11px] text-[#78716C] font-medium mb-1">
-                            Width (inches):
-                          </label>
-                          <input
-                            type="number"
-                            min="10"
-                            max="500"
-                            value={customWidth}
-                            onChange={(e) => setCustomWidth(e.target.value)}
-                            className="w-full h-9 text-[12.5px] px-3 rounded-lg border border-[#D8CFBF] focus:border-[#1C1917] bg-[#FAF7F2] outline-none"
-                            placeholder="e.g. 60"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] text-[#78716C] font-medium mb-1">
-                            Drop / Height (inches):
-                          </label>
-                          <input
-                            type="number"
-                            min="10"
-                            max="500"
-                            value={customHeight}
-                            onChange={(e) => setCustomHeight(e.target.value)}
-                            className="w-full h-9 text-[12.5px] px-3 rounded-lg border border-[#D8CFBF] focus:border-[#1C1917] bg-[#FAF7F2] outline-none"
-                            placeholder="e.g. 96"
-                          />
-                        </div>
-                      </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-[#44403C] uppercase tracking-wider mb-1">
+                      Full Name *
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C827A]" />
+                      <input
+                        type="text"
+                        required
+                        value={quoteName}
+                        onChange={(e) => setQuoteName(e.target.value)}
+                        placeholder="Your full name"
+                        className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none"
+                      />
                     </div>
-                  )}
+                  </div>
 
-                  {/* Contact Fields */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11.5px] font-semibold text-[#1C1917] mb-1">
-                        Your Full Name <span className="text-rose-600">*</span>
+                      <label className="block text-[11px] font-medium text-[#44403C] uppercase tracking-wider mb-1">
+                        Phone Number *
                       </label>
                       <div className="relative">
-                        <User className="w-4 h-4 text-[#A8A29E] absolute left-3 top-2.5" />
-                        <input
-                          type="text"
-                          required
-                          value={quoteName}
-                          onChange={(e) => setQuoteName(e.target.value)}
-                          placeholder="e.g. Priya Sharma"
-                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D8CFBF] focus:border-[#1C1917] bg-white text-[12.5px] outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11.5px] font-semibold text-[#1C1917] mb-1">
-                        Phone Number <span className="text-rose-600">*</span>
-                      </label>
-                      <div className="relative">
-                        <Phone className="w-4 h-4 text-[#A8A29E] absolute left-3 top-2.5" />
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C827A]" />
                         <input
                           type="tel"
                           required
                           value={quotePhone}
                           onChange={(e) => setQuotePhone(e.target.value)}
-                          placeholder="10-digit mobile number"
-                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D8CFBF] focus:border-[#1C1917] bg-white text-[12.5px] outline-none"
+                          placeholder="10-digit phone number"
+                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-medium text-[#44403C] uppercase tracking-wider mb-1">
+                        Email Address
+                      </label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C827A]" />
+                        <input
+                          type="email"
+                          value={quoteEmail}
+                          onChange={(e) => setQuoteEmail(e.target.value)}
+                          placeholder="name@example.com"
+                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none"
                         />
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[11.5px] font-semibold text-[#1C1917] mb-1">
-                      Email Address <span className="text-[10.5px] text-[#78716C] font-normal">(Optional)</span>
-                    </label>
-                    <div className="relative">
-                      <Mail className="w-4 h-4 text-[#A8A29E] absolute left-3 top-2.5" />
-                      <input
-                        type="email"
-                        value={quoteEmail}
-                        onChange={(e) => setQuoteEmail(e.target.value)}
-                        placeholder="e.g. priya@example.com"
-                        className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D8CFBF] focus:border-[#1C1917] bg-white text-[12.5px] outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11.5px] font-semibold text-[#1C1917] mb-1">
-                      Specific Requirements / Notes <span className="text-[10.5px] text-[#78716C] font-normal">(Optional)</span>
+                    <label className="block text-[11px] font-medium text-[#44403C] uppercase tracking-wider mb-1">
+                      Notes / Requirements
                     </label>
                     <textarea
-                      rows={2}
+                      rows={3}
                       value={quoteMessage}
                       onChange={(e) => setQuoteMessage(e.target.value)}
-                      placeholder="e.g., Need blackout lining for master bedroom, motorized track option, etc."
-                      className="w-full p-3 rounded-xl border border-[#D8CFBF] focus:border-[#1C1917] bg-white text-[12.5px] outline-none resize-none"
+                      placeholder="Specify dimensions, room type, or specific requirements..."
+                      className="w-full p-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none resize-none"
                     />
                   </div>
 
-                  <p className="text-[11px] text-[#78716C] leading-normal pt-1">
-                    * Cash on delivery & bespoke showroom consultations available across Hyderabad. No obligation.
-                  </p>
-
-                  <button
-                    type="submit"
-                    disabled={isQuoteSubmitting}
-                    className="w-full py-3.5 px-6 rounded-xl font-semibold text-[12px] uppercase tracking-[0.14em] bg-[#1C1917] hover:bg-[#9A7B56] text-white transition-all duration-200 cursor-pointer shadow-xs active:scale-[0.99] flex items-center justify-center gap-2 mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>{isQuoteSubmitting ? 'Submitting Request...' : 'Submit Quote Request'}</span>
-                  </button>
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={isQuoteSubmitting}
+                      className="w-full h-11 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12px] uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
+                    >
+                      {isQuoteSubmitting ? (
+                        <span>Submitting Request...</span>
+                      ) : (
+                        <>
+                          <Send className="w-3.5 h-3.5 text-[#E6C687]" />
+                          <span>Submit Quote Request</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </form>
               </>
             ) : (
-              /* Success / Confirmation Screen */
-              <div className="py-4 text-center space-y-4">
-                <div className="w-14 h-14 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200">
-                  <CheckCircle2 className="w-7 h-7" />
+              <div className="text-center py-6 animate-in fade-in duration-200">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 text-[#15803D] flex items-center justify-center mx-auto mb-3">
+                  <Check className="w-6 h-6 stroke-[2.5]" />
                 </div>
-
-                <div>
-                  <h3 className="font-serif text-[22px] font-medium text-[#1C1917]">
-                    Your quote request has been received.
-                  </h3>
-                  <p className="text-[13px] text-[#57534E] mt-1.5 max-w-sm mx-auto leading-relaxed">
-                    Thank you, <strong>{quoteName}</strong>. We have received your quotation request for <strong>{product.displayName || product.name}</strong>.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-white border border-[#EDE8DE] text-left text-[12px] space-y-1.5 shadow-2xs">
-                  {quoteRequestNumber && (
-                    <div className="flex justify-between items-center text-[#78716C] pb-1.5 mb-1.5 border-b border-[#F0EBE1]">
-                      <span className="font-semibold text-[#1C1917]">Request Number:</span>
-                      <span className="font-mono font-bold text-[#9A7B56]">{quoteRequestNumber}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-[#78716C]">
-                    <span>Item:</span>
-                    <span className="font-medium text-[#1C1917]">{product.displayName || product.name}</span>
-                  </div>
-                  {currentVariant?.name && (
-                    <div className="flex justify-between text-[#78716C]">
-                      <span>Variant:</span>
-                      <span className="font-medium text-[#1C1917]">{currentVariant.name}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-[#78716C]">
-                    <span>Quantity:</span>
-                    <span className="font-medium text-[#1C1917]">{quantity}</span>
-                  </div>
-                  <div className="flex justify-between text-[#78716C]">
-                    <span>Phone:</span>
-                    <span className="font-medium text-[#1C1917]">{quotePhone}</span>
-                  </div>
-                </div>
-
-                <p className="text-[11.5px] text-[#78716C] leading-relaxed">
-                  Our showroom team will review your specifications and get in touch with you shortly. You may also connect instantly on WhatsApp with your request reference.
+                <h3 className="font-serif text-[22px] font-medium text-[#1E3A2F] mb-1">
+                  Quote Request Received
+                </h3>
+                <p className="text-[13px] text-[#57534E] mb-2">
+                  Thank you, <strong>{quoteName}</strong>. Our team will contact you shortly with your quotation.
                 </p>
+                {quoteRequestNumber && (
+                  <p className="text-[11.5px] text-[#8C827A] mb-5">
+                    Reference Number: <strong className="font-mono text-[#1E3A2F]">{quoteRequestNumber}</strong>
+                  </p>
+                )}
 
-                <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
+                <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
                   <a
                     href={getQuoteWhatsAppUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 py-3 px-4 rounded-xl border border-[#25D366]/40 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#15803D] text-[12px] font-semibold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                    className="h-10 px-5 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-[11.5px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
-                    <MessageCircle className="w-4 h-4 text-[#25D366] fill-[#25D366]" />
-                    <span>Open in WhatsApp</span>
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Send on WhatsApp</span>
                   </a>
-
                   <button
                     type="button"
                     onClick={() => {
                       setIsQuoteModalOpen(false);
                       setQuoteSubmitted(false);
                     }}
-                    className="py-3 px-6 rounded-xl bg-[#1C1917] text-white hover:bg-[#9A7B56] text-[12px] font-semibold uppercase tracking-wider cursor-pointer transition-colors"
+                    className="h-10 px-5 rounded-xl border border-[#D5CCBA] text-[#1E3A2F] hover:bg-[#FAF7F2] text-[11.5px] font-semibold uppercase tracking-wider transition-colors cursor-pointer"
                   >
-                    Done
+                    Close
                   </button>
                 </div>
               </div>
@@ -1743,11 +1598,17 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
         </div>
       )}
 
-      {/* ─── 10. BOOK FREE MEASUREMENT MODAL (ONLY WHERE SUPPORTED) ─── */}
-      {isMeasurementModalOpen && product.customMeasurementAvailable && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg bg-[#FAF7F2] rounded-2xl sm:rounded-3xl border border-[#EDE8DE] shadow-2xl p-5 sm:p-7 overflow-y-auto max-h-[92vh] text-[#1C1917]">
-            {/* Close Button */}
+      {/* ──────────────────────────────────────────────────────────
+          14. BOOK FREE MEASUREMENT MODAL (ONLY IF AVAILABLE)
+         ────────────────────────────────────────────────────────── */}
+      {isMeasurementModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Book Free Measurement Visit"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div className="relative w-full max-w-lg bg-[#FAF7F2] rounded-2xl border border-[#EDE8DE] shadow-2xl p-5 sm:p-7 overflow-y-auto max-h-[92vh] text-[#1C1917]">
             <button
               type="button"
               onClick={() => {
@@ -1763,146 +1624,116 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
 
             {!measSubmitted ? (
               <>
-                {/* Modal Header */}
                 <div className="mb-5 pr-6">
-                  <span className="text-[10.5px] uppercase tracking-[0.2em] font-semibold text-[#9A7B56] block mb-1">
-                    Atelier In-Home Service
-                  </span>
-                  <h3 className="font-serif text-[20px] sm:text-[23px] font-medium text-[#1C1917]">
-                    Book Free Laser Measurement
+                  <h3 className="font-serif text-[21px] font-medium text-[#1E3A2F]">
+                    Book Free Measurement
                   </h3>
                   <p className="text-[12.5px] text-[#78716C] mt-1 leading-relaxed">
-                    Our master tailor visits your residence with physical swatch books and millimeter laser tools. No visit charge.
+                    Schedule an in-home visit from our measurement specialist.
                   </p>
                 </div>
 
-                {/* Selected Item Summary Card */}
-                <div className="mb-5 p-3.5 rounded-xl bg-white border border-[#EDE8DE] flex items-center gap-3.5 shadow-2xs">
-                  <div className="relative w-14 h-16 rounded-lg overflow-hidden bg-[#FAF7F2] shrink-0 border border-[#EAE4D8]">
-                    <Image
-                      src={activeImage}
-                      alt={product.displayName || product.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1 text-[12px]">
-                    <h4 className="font-semibold text-[#1C1917] truncate">
-                      {product.displayName || product.name}
-                    </h4>
-                    <p className="text-[#78716C] text-[11px] truncate">{product.categoryName}</p>
-                    {currentVariant?.name && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-[#FAF7F2] border border-[#EAE4D8] font-medium text-[#57534E] mt-1">
-                        Variant: {currentVariant.name}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Form */}
-                <form onSubmit={handleMeasurementSubmit} className="space-y-3.5">
+                <form onSubmit={handleSubmitMeasurement} className="space-y-3.5">
                   {measError && (
-                    <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[12px] flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[12px] flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                       <span>{measError}</span>
                     </div>
                   )}
 
+                  <div>
+                    <label className="block text-[11px] font-medium text-[#44403C] uppercase tracking-wider mb-1">
+                      Full Name *
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C827A]" />
+                      <input
+                        type="text"
+                        required
+                        value={measName}
+                        onChange={(e) => setMeasName(e.target.value)}
+                        placeholder="Your full name"
+                        className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none"
+                      />
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11.5px] font-semibold text-[#1C1917] mb-1">
-                        Your Full Name <span className="text-rose-600">*</span>
+                      <label className="block text-[11px] font-medium text-[#44403C] uppercase tracking-wider mb-1">
+                        Phone Number *
                       </label>
                       <div className="relative">
-                        <User className="w-4 h-4 text-[#A8A29E] absolute left-3 top-2.5" />
-                        <input
-                          type="text"
-                          required
-                          value={measName}
-                          onChange={(e) => setMeasName(e.target.value)}
-                          placeholder="e.g. Ramesh Reddy"
-                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D8CFBF] focus:border-[#1C1917] bg-white text-[12.5px] outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11.5px] font-semibold text-[#1C1917] mb-1">
-                        Phone Number <span className="text-rose-600">*</span>
-                      </label>
-                      <div className="relative">
-                        <Phone className="w-4 h-4 text-[#A8A29E] absolute left-3 top-2.5" />
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C827A]" />
                         <input
                           type="tel"
                           required
                           value={measPhone}
                           onChange={(e) => setMeasPhone(e.target.value)}
-                          placeholder="10-digit mobile number"
-                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D8CFBF] focus:border-[#1C1917] bg-white text-[12.5px] outline-none"
+                          placeholder="10-digit phone number"
+                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-medium text-[#44403C] uppercase tracking-wider mb-1">
+                        Email Address
+                      </label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C827A]" />
+                        <input
+                          type="email"
+                          value={measEmail}
+                          onChange={(e) => setMeasEmail(e.target.value)}
+                          placeholder="name@example.com"
+                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none"
                         />
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[11.5px] font-semibold text-[#1C1917] mb-1">
-                      Address / Location <span className="text-rose-600">*</span>
+                    <label className="block text-[11px] font-medium text-[#44403C] uppercase tracking-wider mb-1">
+                      Address / Location *
                     </label>
                     <div className="relative">
-                      <MapPin className="w-4 h-4 text-[#A8A29E] absolute left-3 top-2.5" />
-                      <input
-                        type="text"
+                      <MapPin className="absolute left-3 top-3 w-4 h-4 text-[#8C827A]" />
+                      <textarea
                         required
+                        rows={2}
                         value={measAddress}
                         onChange={(e) => setMeasAddress(e.target.value)}
-                        placeholder="e.g., Villa 14, Rainbow Vistas / Jubilee Hills, Hyderabad"
-                        className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D8CFBF] focus:border-[#1C1917] bg-white text-[12.5px] outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11.5px] font-semibold text-[#1C1917] mb-1">
-                      Email Address <span className="text-[10.5px] text-[#78716C] font-normal">(Optional)</span>
-                    </label>
-                    <div className="relative">
-                      <Mail className="w-4 h-4 text-[#A8A29E] absolute left-3 top-2.5" />
-                      <input
-                        type="email"
-                        value={measEmail}
-                        onChange={(e) => setMeasEmail(e.target.value)}
-                        placeholder="e.g. ramesh@example.com"
-                        className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D8CFBF] focus:border-[#1C1917] bg-white text-[12.5px] outline-none"
+                        placeholder="Your residential address or locality"
+                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none resize-none"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11.5px] font-semibold text-[#1C1917] mb-1">
-                        Preferred Date <span className="text-rose-600">*</span>
+                      <label className="block text-[11px] font-medium text-[#44403C] uppercase tracking-wider mb-1">
+                        Preferred Date
                       </label>
                       <div className="relative">
-                        <Calendar className="w-4 h-4 text-[#A8A29E] absolute left-3 top-2.5" />
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C827A]" />
                         <input
                           type="date"
-                          required
                           value={measDate}
-                          min={minBookingDate || undefined}
                           onChange={(e) => setMeasDate(e.target.value)}
-                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D8CFBF] focus:border-[#1C1917] bg-white text-[12.5px] outline-none"
+                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-[11.5px] font-semibold text-[#1C1917] mb-1">
-                        Preferred Time Slot <span className="text-rose-600">*</span>
+                      <label className="block text-[11px] font-medium text-[#44403C] uppercase tracking-wider mb-1">
+                        Preferred Time
                       </label>
                       <select
                         value={measTimeSlot}
                         onChange={(e) => setMeasTimeSlot(e.target.value)}
-                        className="w-full h-10 px-3 rounded-xl border border-[#D8CFBF] focus:border-[#1C1917] bg-white text-[12.5px] outline-none cursor-pointer"
+                        className="w-full h-10 px-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none cursor-pointer"
                       >
                         <option value="Morning (10:00 AM – 1:00 PM)">Morning (10:00 AM – 1:00 PM)</option>
                         <option value="Afternoon (1:00 PM – 4:00 PM)">Afternoon (1:00 PM – 4:00 PM)</option>
@@ -1912,97 +1743,72 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                   </div>
 
                   <div>
-                    <label className="block text-[11.5px] font-semibold text-[#1C1917] mb-1">
-                      Optional Notes <span className="text-[10.5px] text-[#78716C] font-normal">(e.g., number of rooms, fabric preferences)</span>
+                    <label className="block text-[11px] font-medium text-[#44403C] uppercase tracking-wider mb-1">
+                      Notes
                     </label>
                     <textarea
                       rows={2}
                       value={measNotes}
                       onChange={(e) => setMeasNotes(e.target.value)}
-                      placeholder="e.g., Need consultation for living room and 2 bedrooms; bring blackout and sheer books."
-                      className="w-full p-3 rounded-xl border border-[#D8CFBF] focus:border-[#1C1917] bg-white text-[12.5px] outline-none resize-none"
+                      placeholder="Any specific instructions for our specialist..."
+                      className="w-full p-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none resize-none"
                     />
                   </div>
 
-                  <p className="text-[11px] text-[#78716C] leading-normal pt-1">
-                    * In-home measurements are scheduled by our team upon review.
-                  </p>
-
-                  <button
-                    type="submit"
-                    disabled={isMeasSubmitting}
-                    className="w-full py-3.5 px-6 rounded-xl font-semibold text-[12px] uppercase tracking-[0.14em] bg-[#1C1917] hover:bg-[#9A7B56] text-white transition-all duration-200 cursor-pointer shadow-xs active:scale-[0.99] flex items-center justify-center gap-2 mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    <Ruler className="w-4 h-4 text-[#9A7B56]" />
-                    <span>{isMeasSubmitting ? 'Submitting Request...' : 'Submit Measurement Request'}</span>
-                  </button>
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={isMeasSubmitting}
+                      className="w-full h-11 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12px] uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
+                    >
+                      {isMeasSubmitting ? (
+                        <span>Submitting Request...</span>
+                      ) : (
+                        <>
+                          <Ruler className="w-3.5 h-3.5 text-[#E6C687]" />
+                          <span>Confirm Measurement Visit</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </form>
               </>
             ) : (
-              /* Success / Confirmation Screen */
-              <div className="py-4 text-center space-y-4">
-                <div className="w-14 h-14 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200">
-                  <CheckCircle2 className="w-7 h-7" />
+              <div className="text-center py-6 animate-in fade-in duration-200">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 text-[#15803D] flex items-center justify-center mx-auto mb-3">
+                  <Check className="w-6 h-6 stroke-[2.5]" />
                 </div>
-
-                <div>
-                  <h3 className="font-serif text-[22px] font-medium text-[#1C1917]">
-                    Your measurement request has been received.
-                  </h3>
-                  <p className="text-[13px] text-[#57534E] mt-1.5 max-w-sm mx-auto leading-relaxed">
-                    Thank you, <strong>{measName}</strong>. Our team will contact you to confirm the visit for <strong>{product.displayName || product.name}</strong>.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-white border border-[#EDE8DE] text-left text-[12px] space-y-1.5 shadow-2xs">
-                  {measRequestNumber && (
-                    <div className="flex justify-between items-center text-[#78716C] pb-1.5 mb-1.5 border-b border-[#F0EBE1]">
-                      <span className="font-semibold text-[#1C1917]">Request Number:</span>
-                      <span className="font-mono font-bold text-[#9A7B56]">{measRequestNumber}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-[#78716C]">
-                    <span>Address / Location:</span>
-                    <span className="font-medium text-[#1C1917] truncate max-w-[200px]">{measAddress}</span>
-                  </div>
-                  <div className="flex justify-between text-[#78716C]">
-                    <span>Preferred Date:</span>
-                    <span className="font-medium text-[#1C1917]">{measDate}</span>
-                  </div>
-                  <div className="flex justify-between text-[#78716C]">
-                    <span>Preferred Time Slot:</span>
-                    <span className="font-medium text-[#1C1917]">{measTimeSlot}</span>
-                  </div>
-                  <div className="flex justify-between text-[#78716C]">
-                    <span>Contact Phone:</span>
-                    <span className="font-medium text-[#1C1917]">{measPhone}</span>
-                  </div>
-                </div>
-
-                <p className="text-[11.5px] text-[#78716C] leading-relaxed">
-                  Our team will contact you to confirm the visit and schedule. You may also connect via WhatsApp with your request reference.
+                <h3 className="font-serif text-[22px] font-medium text-[#1E3A2F] mb-1">
+                  Measurement Visit Scheduled
+                </h3>
+                <p className="text-[13px] text-[#57534E] mb-2">
+                  Thank you, <strong>{measName}</strong>. Our team will contact you to confirm the appointment.
                 </p>
+                {measRequestNumber && (
+                  <p className="text-[11.5px] text-[#8C827A] mb-5">
+                    Appointment Reference: <strong className="font-mono text-[#1E3A2F]">{measRequestNumber}</strong>
+                  </p>
+                )}
 
-                <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
+                <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
                   <a
                     href={getMeasurementWhatsAppUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 py-3 px-4 rounded-xl border border-[#25D366]/40 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#15803D] text-[12px] font-semibold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                    className="h-10 px-5 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-[11.5px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
-                    <MessageCircle className="w-4 h-4 text-[#25D366] fill-[#25D366]" />
-                    <span>Share Location via WhatsApp</span>
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Send on WhatsApp</span>
                   </a>
-
                   <button
                     type="button"
                     onClick={() => {
                       setIsMeasurementModalOpen(false);
                       setMeasSubmitted(false);
                     }}
-                    className="py-3 px-6 rounded-xl bg-[#1C1917] text-white hover:bg-[#9A7B56] text-[12px] font-semibold uppercase tracking-wider cursor-pointer transition-colors"
+                    className="h-10 px-5 rounded-xl border border-[#D5CCBA] text-[#1E3A2F] hover:bg-[#FAF7F2] text-[11.5px] font-semibold uppercase tracking-wider transition-colors cursor-pointer"
                   >
-                    Done
+                    Close
                   </button>
                 </div>
               </div>
@@ -2010,6 +1816,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
           </div>
         </div>
       )}
+
     </div>
   );
 }

@@ -1,8 +1,11 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getDynamicProducts } from '@/lib/db/catalog';
-import { CURTAIN_TYPES, getCurtainTypeBySlug } from '@/lib/data/curtains';
+import {
+  getDynamicProducts,
+  getDynamicSubcategories,
+  getDynamicSubcategoryBySlug,
+} from '@/lib/db/catalog';
 import { CurtainTypePage } from '@/components/curtains/CurtainTypePage';
 
 interface CurtainTypeRouteProps {
@@ -10,14 +13,15 @@ interface CurtainTypeRouteProps {
 }
 
 export async function generateStaticParams() {
-  return CURTAIN_TYPES.map((t) => ({
+  const subcategories = await getDynamicSubcategories('cat-1');
+  return subcategories.map((t) => ({
     type: t.slug,
   }));
 }
 
 export async function generateMetadata({ params }: CurtainTypeRouteProps): Promise<Metadata> {
   const resolved = await params;
-  const curtainType = getCurtainTypeBySlug(resolved.type);
+  const curtainType = await getDynamicSubcategoryBySlug('cat-1', resolved.type);
 
   if (!curtainType) {
     return {
@@ -27,20 +31,24 @@ export async function generateMetadata({ params }: CurtainTypeRouteProps): Promi
 
   return {
     title: `${curtainType.name} | Zaira Furnishing`,
-    description: curtainType.description,
+    description: curtainType.description || undefined,
   };
 }
 
 export default async function CurtainTypeRoute({ params }: CurtainTypeRouteProps) {
   const resolved = await params;
-  const curtainType = getCurtainTypeBySlug(resolved.type);
+  const curtainType = await getDynamicSubcategoryBySlug('cat-1', resolved.type);
 
   if (!curtainType) {
     notFound();
   }
 
-  // Filter only curtain products from Cloudflare D1
-  const curtainProducts = await getDynamicProducts({ categorySlug: 'curtains-drapes' });
+  // Filter curtain products directly from Cloudflare D1
+  const curtainProducts = await getDynamicProducts({
+    categorySlug: 'curtains-drapes',
+    subcategorySlug: curtainType.slug,
+  });
 
   return <CurtainTypePage curtainType={curtainType} products={curtainProducts} />;
 }
+

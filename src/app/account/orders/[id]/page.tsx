@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
@@ -25,8 +25,11 @@ import {
   HelpCircle,
   Clock,
   ShieldCheck,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { useStore, Order } from '@/lib/context/StoreContext';
+import { ZAIRA_WHATSAPP_NUMBER } from '@/lib/whatsapp';
 
 export default function OrderDetailsPage() {
   const params = useParams();
@@ -36,6 +39,105 @@ export default function OrderDetailsPage() {
   const [copiedRef, setCopiedRef] = useState(false);
   const [remoteOrder, setRemoteOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchOrderDetails = useCallback(async (showRefreshing = false) => {
+    if (!orderId) {
+      setIsLoading(false);
+      return;
+    }
+    if (showRefreshing) setIsRefreshing(true);
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        headers: { 'Cache-Control': 'no-cache' },
+      });
+      if (!res.ok) {
+        if (res.status === 404 || res.status === 401) {
+          setRemoteOrder(null);
+        }
+        return;
+      }
+      const data = await res.json();
+      if (data?.order) {
+        const o = data.order;
+        const mappedItems = (o.items || []).map((it: any) => {
+          let customData: any = undefined;
+          if (it.customization_data) {
+            try {
+              customData = typeof it.customization_data === 'string' ? JSON.parse(it.customization_data) : it.customization_data;
+            } catch {
+              customData = undefined;
+            }
+          }
+          return {
+            id: it.id,
+            productId: it.product_id,
+            name: it.product_name_snapshot,
+            slug: it.product_slug || '',
+            image: it.product_image || '/images/products/curtains/blackout-curtains/main.jpg',
+            variantName: it.variant_name_snapshot || undefined,
+            sku: it.product_id,
+            quantity: it.quantity,
+            unitPrice: it.unit_price_snapshot,
+            totalPrice: it.line_total,
+            customizationData: customData,
+            customDimensions: customData?.customDimensions,
+            sizeLabel: customData?.sizeLabel,
+            headingStyle: customData?.headingStyle,
+          };
+        });
+
+        setRemoteOrder({
+          id: o.order_number || o.id,
+          rawStatus: (o.status || 'CONFIRMED').toUpperCase(),
+          orderSource: o.order_source || 'WEB',
+          landmark: o.landmark || null,
+          paymentStatus: o.payment_status || 'PENDING',
+          statusHistory: o.statusHistory || [],
+          createdAt: o.created_at,
+          items: mappedItems,
+          subtotal: o.subtotal,
+          shippingCost: o.delivery_charge || 0,
+          total: o.total_amount,
+          customer: {
+            fullName: o.customer_name,
+            phone: o.customer_phone,
+            email: o.customer_email,
+          },
+          deliveryAddress: {
+            addressLine1: o.delivery_address,
+            addressLine2: '',
+            city: o.city,
+            state: o.state,
+            pincode: o.pincode,
+            country: 'India',
+          },
+          deliveryOption: (o.delivery_option as any) || 'standard',
+          timeSlot: o.site_visit_time || undefined,
+          paymentMethod: o.payment_method === 'COD' ? 'cod' : 'online_demo',
+          status: (() => {
+            const s = (o.status || '').toUpperCase();
+            if (s === 'PENDING') return 'order_received';
+            if (s === 'CONFIRMED') return 'details_confirmed';
+            if (s === 'PROCESSING') return 'tailoring_preparation';
+            if (s === 'READY') return 'ready_for_dispatch';
+            if (s === 'COMPLETED') return 'delivered_installed';
+            if (s === 'CANCELLED') return 'cancelled';
+            return 'details_confirmed';
+          })(),
+          hasCustomProducts: mappedItems.some(
+            (it: any) => it.customDimensions || it.customizationData
+          ),
+        });
+      }
+    } catch (err) {
+      console.error('Error loading order from D1:', err);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [orderId]);
 
   useEffect(() => {
     setMounted(true);
@@ -49,81 +151,8 @@ export default function OrderDetailsPage() {
       setRemoteOrder(local);
     }
 
-    // Always fetch latest authoritative snapshots from D1
-    fetch(`/api/orders/${orderId}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.order) {
-          const o = data.order;
-          const mappedItems = (o.items || []).map((it: any) => {
-            let customData: any = undefined;
-            if (it.customization_data) {
-              try {
-                customData = typeof it.customization_data === 'string' ? JSON.parse(it.customization_data) : it.customization_data;
-              } catch {
-                customData = undefined;
-              }
-            }
-            return {
-              id: it.id,
-              productId: it.product_id,
-              name: it.product_name_snapshot,
-              slug: it.product_slug || '',
-              image: it.product_image || '/images/products/curtains/blackout-curtains/main.jpg',
-              variantName: it.variant_name_snapshot || undefined,
-              sku: it.product_id,
-              quantity: it.quantity,
-              unitPrice: it.unit_price_snapshot,
-              totalPrice: it.line_total,
-              customizationData: customData,
-              customDimensions: customData?.customDimensions,
-              sizeLabel: customData?.sizeLabel,
-              headingStyle: customData?.headingStyle,
-            };
-          });
-
-          setRemoteOrder({
-            id: o.order_number || o.id,
-            createdAt: o.created_at,
-            items: mappedItems,
-            subtotal: o.subtotal,
-            shippingCost: o.delivery_charge || 0,
-            total: o.total_amount,
-            customer: {
-              fullName: o.customer_name,
-              phone: o.customer_phone,
-              email: o.customer_email,
-            },
-            deliveryAddress: {
-              addressLine1: o.delivery_address,
-              addressLine2: '',
-              city: o.city,
-              state: o.state,
-              pincode: o.pincode,
-              country: 'India',
-            },
-            deliveryOption: (o.delivery_option as any) || 'standard',
-            timeSlot: o.site_visit_time || undefined,
-            paymentMethod: o.payment_method === 'COD' ? 'cod' : 'online_demo',
-            status: (() => {
-              const s = (o.status || '').toUpperCase();
-              if (s === 'PENDING') return 'order_received';
-              if (s === 'CONFIRMED') return 'details_confirmed';
-              if (s === 'PROCESSING') return 'tailoring_preparation';
-              if (s === 'READY') return 'ready_for_dispatch';
-              if (s === 'COMPLETED') return 'delivered_installed';
-              if (s === 'CANCELLED') return 'cancelled';
-              return 'details_confirmed';
-            })(),
-            hasCustomProducts: mappedItems.some(
-              (it: any) => it.customDimensions || it.customizationData
-            ),
-          });
-        }
-      })
-      .catch((err) => console.error('Error loading order from D1:', err))
-      .finally(() => setIsLoading(false));
-  }, [orderId, getOrderById]);
+    fetchOrderDetails();
+  }, [orderId, getOrderById, fetchOrderDetails]);
 
   const order = remoteOrder || getOrderById(orderId);
 
@@ -197,24 +226,115 @@ export default function OrderDetailsPage() {
     }
   };
 
-  const getStatusLabel = (status: Order['status']) => {
+  const currentStatus = (order.rawStatus || '').toUpperCase() || (() => {
+    switch (order.status) {
+      case 'order_received': return 'CONFIRMED';
+      case 'details_confirmed': return 'CONFIRMED';
+      case 'tailoring_preparation': return 'PROCESSING';
+      case 'ready_for_dispatch': return 'READY';
+      case 'delivered_installed': return 'COMPLETED';
+      case 'cancelled': return 'CANCELLED';
+      default: return 'CONFIRMED';
+    }
+  })();
+
+  const isCancelled = currentStatus === 'CANCELLED';
+
+  const ORDER_LIFECYCLE_STEPS = [
+    {
+      key: 'CONFIRMED',
+      label: 'Confirmed',
+      description: 'Order confirmed & specifications recorded',
+    },
+    {
+      key: 'PROCESSING',
+      label: 'Processing',
+      description: order.hasCustomProducts
+        ? 'Custom fabric cutting & hand-tailoring in atelier'
+        : 'Inspection, fabric steaming & batch preparation',
+    },
+    {
+      key: 'READY',
+      label: 'Ready',
+      description: order.deliveryOption === 'service_visit'
+        ? 'Ready for delivery & white-glove fitting visit'
+        : 'Packed & ready for white-glove dispatch',
+    },
+    {
+      key: 'COMPLETED',
+      label: 'Completed',
+      description: 'Delivered and fitted to complete satisfaction',
+    },
+  ] as const;
+
+  const stepIndices: Record<string, number> = {
+    PENDING: 0,
+    CONFIRMED: 0,
+    PROCESSING: 1,
+    READY: 2,
+    COMPLETED: 3,
+  };
+
+  const currentStepIdx = stepIndices[currentStatus] ?? 0;
+
+  const getStatusTimestamp = (statusKey: string): string | null => {
+    if (statusKey === 'CONFIRMED') {
+      const entry = order.statusHistory?.find((h) => h.status === 'CONFIRMED');
+      const ts = entry?.timestamp || order.createdAt;
+      return new Date(ts).toLocaleString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+    const entry = order.statusHistory?.find((h) => h.status === statusKey);
+    if (!entry) return null;
+    return new Date(entry.timestamp).toLocaleString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getStatusBadgeConfig = (status: string) => {
     switch (status) {
-      case 'order_received':
-        return 'Order Received';
-      case 'details_confirmed':
-        return 'Details Confirmed';
-      case 'tailoring_preparation':
-        return 'Preparation / Tailoring';
-      case 'ready_for_dispatch':
-        return 'Ready for Delivery';
-      case 'delivered_installed':
-        return 'Delivered & Installed';
-      case 'cancelled':
-        return 'Cancelled';
+      case 'PROCESSING':
+        return {
+          label: 'Processing',
+          classes: 'bg-amber-50 text-amber-800 border-amber-200',
+          dot: 'bg-amber-600',
+        };
+      case 'READY':
+        return {
+          label: 'Ready',
+          classes: 'bg-blue-50 text-blue-800 border-blue-200',
+          dot: 'bg-blue-600',
+        };
+      case 'COMPLETED':
+        return {
+          label: 'Completed',
+          classes: 'bg-[#1E3A2F]/10 text-[#1E3A2F] border-[#1E3A2F]/20',
+          dot: 'bg-[#1E3A2F]',
+        };
+      case 'CANCELLED':
+        return {
+          label: 'Cancelled',
+          classes: 'bg-rose-50 text-rose-800 border-rose-200',
+          dot: 'bg-rose-600',
+        };
+      case 'CONFIRMED':
       default:
-        return 'Order Processing';
+        return {
+          label: 'Confirmed',
+          classes: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+          dot: 'bg-emerald-600',
+        };
     }
   };
+
+  const statusBadge = getStatusBadgeConfig(currentStatus);
 
   return (
     <div className="bg-[#FAF7F2] min-h-screen pt-6 sm:pt-10 pb-16 sm:pb-24 text-[#1C1917]">
@@ -274,38 +394,179 @@ export default function OrderDetailsPage() {
                   <span>Placed on {formattedDateTime}</span>
                 </span>
                 <span className="text-[#D8CFBF]">·</span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-[#1E3A2F]/10 text-[#1E3A2F]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#1E3A2F]" />
-                  <span>{getStatusLabel(order.status)}</span>
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${statusBadge.classes}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dot}`} />
+                  <span>{statusBadge.label}</span>
                 </span>
+                {order.orderSource === 'WHATSAPP' && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-[#25D366]/10 text-[#128C7E] border border-[#25D366]/25">
+                    <MessageCircle className="w-3 h-3 text-[#25D366]" />
+                    <span>WhatsApp Order</span>
+                  </span>
+                )}
               </div>
             </div>
 
             {/* CTAs */}
             <div className="flex flex-wrap items-center gap-2.5">
-              <Link
-                href={`/account/orders/${order.id}/track`}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-xs"
+              <button
+                type="button"
+                onClick={() => fetchOrderDetails(true)}
+                disabled={isRefreshing}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white border border-[#D8CFBF] hover:border-[#1E3A2F] text-[#1C1917] hover:text-[#1E3A2F] text-[11.5px] uppercase tracking-wider font-semibold transition-all cursor-pointer disabled:opacity-50"
+                title="Refresh order status"
               >
-                <Compass className="w-4 h-4" />
-                <span>Track Order Progress</span>
-              </Link>
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>{isRefreshing ? 'Checking...' : 'Refresh Status'}</span>
+              </button>
 
               <a
-                href={`https://wa.me/916300145763?text=${encodeURIComponent(
-                  `Hello Zaira Furnishing, I am enquiring about my order reference #${order.id} (${order.customer.fullName}).`
+                href={`https://wa.me/${ZAIRA_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                  `Hello Zaira Furnishing, I have a question about my order ${order.id}.`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white border border-[#D8CFBF] hover:border-[#1E3A2F] text-[#1C1917] hover:text-[#1E3A2F] text-[11.5px] uppercase tracking-wider font-semibold transition-all"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-[11.5px] uppercase tracking-wider font-bold transition-all shadow-xs"
               >
-                <MessageCircle className="w-4 h-4 text-[#25D366]" />
-                <span>WhatsApp Concierge</span>
+                <MessageCircle className="w-4 h-4 fill-current" />
+                <span>Chat with Zaira on WhatsApp</span>
               </a>
             </div>
 
           </div>
         </div>
+
+        {/* ─── CANCELLED ORDER ALERT BANNER (IF CANCELLED) ─── */}
+        {isCancelled ? (
+          <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 sm:p-6 mb-6 sm:mb-8 text-left shadow-2xs">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-rose-100 border border-rose-300 flex items-center justify-center shrink-0 text-rose-700 mt-0.5">
+                <AlertCircle className="w-4 h-4 stroke-[2.5]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <h3 className="font-serif text-[17px] font-semibold text-rose-900">
+                    Order Cancelled
+                  </h3>
+                  {getStatusTimestamp('CANCELLED') && (
+                    <span className="text-[11.5px] text-rose-700 font-mono">
+                      · Cancelled on {getStatusTimestamp('CANCELLED')}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[13px] text-rose-800 leading-relaxed font-light">
+                  This order has been cancelled and will not proceed through further fulfillment stages. If you have questions regarding this cancellation or would like to explore alternative fabrics and bespoke furnishings, our concierge is available to assist you.
+                </p>
+                <div className="mt-3.5">
+                  <a
+                    href={`https://wa.me/${ZAIRA_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                      `Hello Zaira Furnishing, I have a question regarding my cancelled order ${order.id}.`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white border border-rose-200 text-rose-900 hover:bg-rose-100 text-[11.5px] font-semibold transition-colors shadow-2xs"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
+                    <span>Inquire on WhatsApp</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ─── LIVE ORDER STATUS TRACKER (FOR ACTIVE ORDERS) ─── */
+          <div className="bg-white rounded-xl sm:rounded-2xl border border-[#EDE8DE] p-5 sm:p-7 shadow-[0_2px_12px_rgba(28,25,23,0.03)] mb-6 sm:mb-8 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 border-b border-[#F2ECE1]">
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-[#866945] block">
+                  Order Status Lifecycle
+                </span>
+                <h2 className="font-serif text-[18px] sm:text-[20px] font-semibold text-[#1C1917]">
+                  Fulfillment Progress
+                </h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11.5px] text-[#78716C]">
+                  Current Status: <strong className="text-[#1E3A2F] uppercase">{currentStatus}</strong>
+                </span>
+              </div>
+            </div>
+
+            {/* Pipeline Tracker */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-2 relative">
+              {ORDER_LIFECYCLE_STEPS.map((step, idx) => {
+                const isPast = idx < currentStepIdx;
+                const isCurrent = idx === currentStepIdx;
+                const timestamp = getStatusTimestamp(step.key);
+
+                return (
+                  <div key={step.key} className="flex sm:flex-col items-start gap-3 sm:gap-2 relative">
+                    {/* Connector line for desktop */}
+                    {idx < ORDER_LIFECYCLE_STEPS.length - 1 && (
+                      <div
+                        className={`hidden sm:block absolute top-[14px] left-[28px] right-[-14px] h-0.5 z-0 ${
+                          idx < currentStepIdx ? 'bg-[#1E3A2F]' : 'bg-[#EDE8DE]'
+                        }`}
+                      />
+                    )}
+
+                    {/* Node icon */}
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 transition-colors ${
+                        isPast
+                          ? 'bg-[#1E3A2F] text-white'
+                          : isCurrent
+                          ? 'bg-[#1E3A2F] text-white ring-4 ring-[#1E3A2F]/20'
+                          : 'bg-white border-2 border-[#D8CFBF] text-[#A8A29E]'
+                      }`}
+                    >
+                      {isPast ? (
+                        <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                      ) : isCurrent ? (
+                        <span className="w-2 h-2 rounded-full bg-white" />
+                      ) : (
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D8CFBF]" />
+                      )}
+                    </div>
+
+                    {/* Step Text */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span
+                          className={`font-serif text-[14px] sm:text-[15px] font-semibold ${
+                            isCurrent ? 'text-[#1E3A2F]' : isPast ? 'text-[#1C1917]' : 'text-[#8C827A]'
+                          }`}
+                        >
+                          {step.label}
+                        </span>
+                        {isCurrent && (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] uppercase font-bold tracking-wider bg-[#1E3A2F] text-white">
+                            Current
+                          </span>
+                        )}
+                        {isPast && (
+                          <span className="text-[10px] text-emerald-700 font-medium">
+                            ✓ Done
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-[11px] text-[#78716C] leading-snug mt-0.5">
+                        {step.description}
+                      </p>
+
+                      {timestamp && (
+                        <span className="inline-block text-[10.5px] font-mono text-[#9A7B56] mt-1 font-medium">
+                          {timestamp}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ─── BESPOKE ORDER NOTICE (IF APPLICABLE) ─── */}
         {order.hasCustomProducts && (
@@ -431,10 +692,17 @@ export default function OrderDetailsPage() {
                   <div>
                     <span className="font-semibold text-[#1C1917] block">Delivery Address</span>
                     <p className="text-[#78716C] leading-relaxed">
-                      {order.deliveryAddress.addressLine1}, {order.deliveryAddress.addressLine2}
+                      {order.deliveryAddress.addressLine1}
+                      {order.deliveryAddress.addressLine2 ? `, ${order.deliveryAddress.addressLine2}` : ''}
                       <br />
                       {order.deliveryAddress.city}, {order.deliveryAddress.state} – {order.deliveryAddress.pincode}
                     </p>
+                    {order.landmark && (
+                      <p className="text-[11.5px] text-[#78716C] mt-1 pt-1 border-t border-[#F8F5EE]">
+                        <span className="text-[#8C827A] font-medium">Landmark:</span>{' '}
+                        <strong className="text-[#1C1917]">{order.landmark}</strong>
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -453,14 +721,34 @@ export default function OrderDetailsPage() {
                 <div className="flex items-start gap-2.5 pt-2 border-t border-[#F8F5EE]">
                   <Banknote className="w-4 h-4 text-[#9A7B56] shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-semibold text-[#1C1917] block">Payment Method</span>
+                    <span className="font-semibold text-[#1C1917] block">Payment Details</span>
                     <span className="text-[#78716C] block">
                       {order.paymentMethod === 'cod'
-                        ? 'Cash on Delivery (COD) / On-Site Inspection'
+                        ? 'Cash on Delivery (COD)'
                         : 'Online Payment (Frontend Demo)'}
+                    </span>
+                    <span className="text-[11.5px] text-[#8C827A] block mt-0.5">
+                      Status:{' '}
+                      <strong className="text-[#1C1917] uppercase">
+                        {order.paymentStatus || 'PENDING'}
+                      </strong>
                     </span>
                   </div>
                 </div>
+
+                {order.orderSource && (
+                  <div className="flex items-start gap-2.5 pt-2 border-t border-[#F8F5EE]">
+                    <MessageCircle className="w-4 h-4 text-[#25D366] shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold text-[#1C1917] block">Order Channel</span>
+                      <span className="text-[#1E3A2F] font-medium text-[12px] block">
+                        {order.orderSource === 'WHATSAPP'
+                          ? 'Order placed via WhatsApp'
+                          : order.orderSource}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

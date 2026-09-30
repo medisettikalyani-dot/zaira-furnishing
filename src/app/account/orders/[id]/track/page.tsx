@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import {
   ChevronRight,
@@ -10,27 +9,17 @@ import {
   ArrowRight,
   Sparkles,
   CheckCircle2,
-  Calendar,
-  MapPin,
-  Clock,
-  Compass,
   FileText,
   MessageCircle,
   HelpCircle,
   Check,
-  Circle,
   Copy,
   Info,
-  Truck,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { useStore, Order } from '@/lib/context/StoreContext';
-
-type StageKey =
-  | 'order_received'
-  | 'details_confirmed'
-  | 'tailoring_preparation'
-  | 'ready_for_dispatch'
-  | 'delivered_installed';
+import { ZAIRA_WHATSAPP_NUMBER } from '@/lib/whatsapp';
 
 export default function OrderTrackingPage() {
   const params = useParams();
@@ -40,8 +29,84 @@ export default function OrderTrackingPage() {
   const [copiedRef, setCopiedRef] = useState(false);
   const [remoteOrder, setRemoteOrder] = useState<Order | null>(null);
   
-  // Local stage override for frontend demonstration/testing
-  const [demoStageOverride, setDemoStageOverride] = useState<StageKey | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchOrderTracking = useCallback(async (showRefreshing = false) => {
+    if (!orderId) return;
+    if (showRefreshing) setIsRefreshing(true);
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        headers: { 'Cache-Control': 'no-cache' },
+      });
+      if (!res.ok) {
+        if (res.status === 404 || res.status === 401) {
+          setRemoteOrder(null);
+        }
+        return;
+      }
+      const data = await res.json();
+      if (data?.order) {
+        const o = data.order;
+        setRemoteOrder({
+          id: o.order_number || o.id,
+          rawStatus: (o.status || 'CONFIRMED').toUpperCase(),
+          orderSource: o.order_source || 'WEB',
+          landmark: o.landmark || null,
+          paymentStatus: o.payment_status || 'PENDING',
+          statusHistory: o.statusHistory || [],
+          createdAt: o.created_at,
+          items: (o.items || []).map((it: any) => ({
+            id: it.id,
+            productId: it.product_id,
+            name: it.product_name_snapshot,
+            slug: it.product_slug || '',
+            image: it.product_image || '/images/products/curtains/blackout-curtains/main.jpg',
+            variantName: it.variant_name_snapshot || undefined,
+            sku: it.product_id,
+            quantity: it.quantity,
+            unitPrice: it.unit_price_snapshot,
+            totalPrice: it.line_total,
+          })),
+          subtotal: o.subtotal,
+          shippingCost: o.delivery_charge || 0,
+          total: o.total_amount,
+          customer: {
+            fullName: o.customer_name,
+            phone: o.customer_phone,
+            email: o.customer_email,
+          },
+          deliveryAddress: {
+            addressLine1: o.delivery_address,
+            addressLine2: '',
+            city: o.city,
+            state: o.state,
+            pincode: o.pincode,
+            country: 'India',
+          },
+          deliveryOption: (o.delivery_option as any) || 'standard',
+          timeSlot: o.site_visit_time || undefined,
+          paymentMethod: o.payment_method === 'COD' ? 'cod' : 'online_demo',
+          status: (() => {
+            const s = (o.status || '').toUpperCase();
+            if (s === 'PENDING') return 'order_received';
+            if (s === 'CONFIRMED') return 'details_confirmed';
+            if (s === 'PROCESSING') return 'tailoring_preparation';
+            if (s === 'READY') return 'ready_for_dispatch';
+            if (s === 'COMPLETED') return 'delivered_installed';
+            if (s === 'CANCELLED') return 'cancelled';
+            return 'details_confirmed';
+          })(),
+          hasCustomProducts: (o.items || []).some(
+            (it: any) => it.customization_data || it.product_type === 'custom_made'
+          ),
+        });
+      }
+    } catch (err) {
+      console.error('Error loading order tracking:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [orderId]);
 
   useEffect(() => {
     setMounted(true);
@@ -52,57 +117,8 @@ export default function OrderTrackingPage() {
       setRemoteOrder(local);
     }
 
-    fetch(`/api/orders/${orderId}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.order) {
-          const o = data.order;
-          setRemoteOrder({
-            id: o.order_number || o.id,
-            createdAt: o.created_at,
-            items: (o.items || []).map((it: any) => ({
-              id: it.id,
-              productId: it.product_id,
-              name: it.product_name_snapshot,
-              slug: it.product_slug || '',
-              image: it.product_image || '/images/products/curtains/blackout-curtains/main.jpg',
-              variantName: it.variant_name_snapshot || undefined,
-              sku: it.product_id,
-              quantity: it.quantity,
-              unitPrice: it.unit_price_snapshot,
-              totalPrice: it.line_total,
-            })),
-            subtotal: o.subtotal,
-            shippingCost: o.delivery_charge || 0,
-            total: o.total_amount,
-            customer: {
-              fullName: o.customer_name,
-              phone: o.customer_phone,
-              email: o.customer_email,
-            },
-            deliveryAddress: {
-              addressLine1: o.delivery_address,
-              addressLine2: '',
-              city: o.city,
-              state: o.state,
-              pincode: o.pincode,
-              country: 'India',
-            },
-            deliveryOption: (o.delivery_option as any) || 'standard',
-            timeSlot: o.site_visit_time || undefined,
-            paymentMethod: o.payment_method === 'COD' ? 'cod' : 'online_demo',
-            status:
-              o.status === 'CONFIRMED' || o.status === 'PENDING'
-                ? 'order_received'
-                : (o.status.toLowerCase() as any),
-            hasCustomProducts: (o.items || []).some(
-              (it: any) => it.customization_data || it.product_type === 'custom_made'
-            ),
-          });
-        }
-      })
-      .catch((err) => console.error('Error loading order tracking:', err));
-  }, [orderId, getOrderById]);
+    fetchOrderTracking();
+  }, [orderId, getOrderById, fetchOrderTracking]);
 
   const order = remoteOrder || getOrderById(orderId);
 
@@ -158,20 +174,29 @@ export default function OrderTrackingPage() {
     );
   }
 
-  // Active status (respecting demo stage override if user tests progression)
-  const currentStatus: StageKey =
-    demoStageOverride ||
-    (order.status === 'cancelled' ? 'order_received' : order.status);
+  const currentStatus = (order.rawStatus || '').toUpperCase() || (() => {
+    switch (order.status) {
+      case 'order_received': return 'CONFIRMED';
+      case 'details_confirmed': return 'CONFIRMED';
+      case 'tailoring_preparation': return 'PROCESSING';
+      case 'ready_for_dispatch': return 'READY';
+      case 'delivered_installed': return 'COMPLETED';
+      case 'cancelled': return 'CANCELLED';
+      default: return 'CONFIRMED';
+    }
+  })();
 
-  const stageKeys: StageKey[] = [
-    'order_received',
-    'details_confirmed',
-    'tailoring_preparation',
-    'ready_for_dispatch',
-    'delivered_installed',
-  ];
+  const isCancelled = currentStatus === 'CANCELLED';
 
-  const currentStageIndex = stageKeys.indexOf(currentStatus);
+  const stageIndices: Record<string, number> = {
+    PENDING: 0,
+    CONFIRMED: 0,
+    PROCESSING: 1,
+    READY: 2,
+    COMPLETED: 3,
+  };
+
+  const currentStageIndex = stageIndices[currentStatus] ?? 0;
 
   const getSlotLabel = (slot?: 'morning' | 'afternoon' | 'evening') => {
     switch (slot) {
@@ -186,51 +211,62 @@ export default function OrderTrackingPage() {
     }
   };
 
-  // Timeline stage definitions customized to product types
+  const getStatusTimestamp = (statusKey: string): string | null => {
+    if (statusKey === 'CONFIRMED') {
+      const entry = order.statusHistory?.find((h) => h.status === 'CONFIRMED');
+      const ts = entry?.timestamp || order.createdAt;
+      return new Date(ts).toLocaleString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+    const entry = order.statusHistory?.find((h) => h.status === statusKey);
+    if (!entry) return null;
+    return new Date(entry.timestamp).toLocaleString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  // Timeline stage definitions customized to canonical lifecycle
   const timelineStages = [
     {
-      key: 'order_received',
-      name: 'Order Received',
-      shortExplanation: 'Your order has been submitted and recorded in our store system.',
-      note: `Reference #${order.id} logged.`,
+      key: 'CONFIRMED',
+      name: 'Order Confirmed',
+      shortExplanation: 'Your order has been recorded with specifications and delivery details.',
+      note: `Reference #${order.id} registered in atelier records.`,
     },
     {
-      key: 'details_confirmed',
-      name: order.hasCustomProducts ? 'Details & Measurements Confirmed' : 'Details Confirmed',
+      key: 'PROCESSING',
+      name: order.hasCustomProducts ? 'Custom Tailoring & Atelier Processing' : 'Preparation & Quality Check',
       shortExplanation: order.hasCustomProducts
-        ? 'Your selected fabrics, window measurements, and pleat styling are recorded.'
-        : 'Catalog product availability and delivery destination verified.',
-      note: order.hasCustomProducts
-        ? 'Tailors will review specifications before cutting fabric.'
-        : 'Preparing order batch for inspection.',
-    },
-    {
-      key: 'tailoring_preparation',
-      name: order.hasCustomProducts ? 'Preparation & Tailoring' : 'Preparation & Quality Check',
-      shortExplanation: order.hasCustomProducts
-        ? 'Your furnishing item will move to preparation and tailoring after final confirmation.'
-        : 'Furnishings are carefully inspected, pressed, and wrapped in protective covers.',
+        ? 'Fabrics cut and hand-stitched by master tailors to your exact measurements.'
+        : 'Furnishings carefully inspected, pressed, steamed, and packaged.',
       note: order.hasCustomProducts
         ? 'Handcrafted to exact dimensions in our atelier.'
-        : 'Packed for safe white-glove transport.',
+        : 'Protected in dust covers for transit.',
     },
     {
-      key: 'ready_for_dispatch',
-      name: order.deliveryOption === 'service_visit' ? 'Ready for Delivery & Fitting' : 'Ready for Delivery',
+      key: 'READY',
+      name: order.deliveryOption === 'service_visit' ? 'Ready for Delivery & Fitting Visit' : 'Ready for Doorstep Delivery',
       shortExplanation: order.deliveryOption === 'service_visit'
-        ? 'Furnishings are ready. Installation specialists will coordinate delivery and on-site fitting.'
-        : 'Order is packaged and prepared for direct doorstep dispatch.',
+        ? 'Furnishings ready. Sizing & installation specialists coordinate arrival.'
+        : 'Order packaged and ready for safe white-glove courier dispatch.',
       note: order.deliveryOption === 'service_visit'
         ? `Scheduled service slot: ${getSlotLabel(order.timeSlot)}`
-        : 'White-glove courier dispatch.',
+        : 'Doorstep dispatch.',
     },
     {
-      key: 'delivered_installed',
-      name: order.deliveryOption === 'service_visit' ? 'Delivered & Installed' : 'Delivered',
+      key: 'COMPLETED',
+      name: order.deliveryOption === 'service_visit' ? 'Delivered & Installed' : 'Delivered Successfully',
       shortExplanation: order.deliveryOption === 'service_visit'
         ? 'Furnishings delivered and fitted on site to your complete satisfaction.'
-        : 'Package delivered safely to your specified address.',
-      note: 'Completion confirmed.',
+        : 'Package delivered safely to your verified address.',
+      note: 'Fulfillment completed.',
     },
   ];
 
@@ -288,6 +324,17 @@ export default function OrderTrackingPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fetchOrderTracking(true)}
+                disabled={isRefreshing}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#FAF7F2] border border-[#D8CFBF] hover:border-[#1E3A2F] text-[#1C1917] hover:text-[#1E3A2F] text-[11px] uppercase tracking-wider font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                title="Refresh order status"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>{isRefreshing ? 'Checking...' : 'Refresh'}</span>
+              </button>
+
               <Link
                 href={`/account/orders/${order.id}`}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#FAF7F2] border border-[#D8CFBF] hover:border-[#1E3A2F] text-[#1C1917] hover:text-[#1E3A2F] text-[11px] uppercase tracking-wider font-semibold transition-colors"
@@ -297,15 +344,15 @@ export default function OrderTrackingPage() {
               </Link>
 
               <a
-                href={`https://wa.me/916300145763?text=${encodeURIComponent(
+                href={`https://wa.me/${ZAIRA_WHATSAPP_NUMBER}?text=${encodeURIComponent(
                   `Hello Zaira Furnishing, I would like to check the progress of order reference #${order.id}.`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-[#D8CFBF] hover:border-[#1E3A2F] text-[#1C1917] hover:text-[#1E3A2F] text-[11px] uppercase tracking-wider font-semibold transition-colors"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#25D366] hover:bg-[#1EBE5D] text-white text-[11px] uppercase tracking-wider font-bold transition-colors shadow-2xs"
               >
-                <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
-                <span>WhatsApp Assistance</span>
+                <MessageCircle className="w-3.5 h-3.5 fill-current" />
+                <span>Chat on WhatsApp</span>
               </a>
             </div>
           </div>
@@ -347,133 +394,139 @@ export default function OrderTrackingPage() {
           </div>
         )}
 
-        {/* ─── VERTICAL TRACKING TIMELINE ─── */}
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#EDE8DE] p-6 sm:p-8 shadow-[0_2px_12px_rgba(28,25,23,0.03)] mb-8">
-          <div className="flex items-center justify-between pb-4 mb-6 border-b border-[#F2ECE1]">
-            <div>
-              <h2 className="font-serif text-[18px] sm:text-[20px] font-semibold text-[#1C1917]">
-                Order Progress Timeline
-              </h2>
-              <p className="text-[12px] text-[#78716C] mt-0.5">
-                Current State: <strong className="text-[#1E3A2F]">{timelineStages[currentStageIndex]?.name}</strong>
-              </p>
+        {/* ─── CANCELLED STATE OR VERTICAL TRACKING TIMELINE ─── */}
+        {isCancelled ? (
+          <div className="bg-rose-50 border border-rose-200 rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-[0_2px_12px_rgba(28,25,23,0.03)] mb-8">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-rose-100 border border-rose-300 flex items-center justify-center shrink-0 text-rose-700 mt-0.5">
+                <AlertCircle className="w-5 h-5 stroke-[2.5]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                  <h2 className="font-serif text-[20px] font-semibold text-rose-900">
+                    Order Cancelled
+                  </h2>
+                  {getStatusTimestamp('CANCELLED') && (
+                    <span className="text-[12px] text-rose-700 font-mono">
+                      ({getStatusTimestamp('CANCELLED')})
+                    </span>
+                  )}
+                </div>
+                <p className="text-[13.5px] text-rose-800 leading-relaxed font-light mb-4">
+                  This order was cancelled and will not progress to preparation, dispatch, or installation.
+                </p>
+                <a
+                  href={`https://wa.me/${ZAIRA_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                    `Hello Zaira Furnishing, I have a question regarding my cancelled order #${order.id}.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-rose-200 text-rose-900 hover:bg-rose-100 text-[12px] font-semibold transition-colors shadow-2xs"
+                >
+                  <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                  <span>Chat with Us on WhatsApp</span>
+                </a>
+              </div>
             </div>
-            <span className="text-[11px] text-[#8C827A] bg-[#FAF7F2] px-2.5 py-1 rounded-md border border-[#EDE8DE]">
-              Stage {currentStageIndex + 1} of 5
-            </span>
           </div>
+        ) : (
+          <div className="bg-white rounded-xl sm:rounded-2xl border border-[#EDE8DE] p-6 sm:p-8 shadow-[0_2px_12px_rgba(28,25,23,0.03)] mb-8">
+            <div className="flex items-center justify-between pb-4 mb-6 border-b border-[#F2ECE1]">
+              <div>
+                <h2 className="font-serif text-[18px] sm:text-[20px] font-semibold text-[#1C1917]">
+                  Order Progress Timeline
+                </h2>
+                <p className="text-[12px] text-[#78716C] mt-0.5">
+                  Current State: <strong className="text-[#1E3A2F]">{timelineStages[currentStageIndex]?.name}</strong>
+                </p>
+              </div>
+              <span className="text-[11px] text-[#8C827A] bg-[#FAF7F2] px-2.5 py-1 rounded-md border border-[#EDE8DE]">
+                Stage {currentStageIndex + 1} of 4
+              </span>
+            </div>
 
-          {/* Vertical Step Sequence */}
-          <div className="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-[11px] sm:before:left-[15px] before:top-3 before:bottom-3 before:w-0.5 before:bg-[#EDE8DE]">
-            {timelineStages.map((stage, idx) => {
-              const isCompleted = idx <= currentStageIndex;
-              const isCurrent = idx === currentStageIndex;
+            {/* Vertical Step Sequence */}
+            <div className="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-[11px] sm:before:left-[15px] before:top-3 before:bottom-3 before:w-0.5 before:bg-[#EDE8DE]">
+              {timelineStages.map((stage, idx) => {
+                const isCompleted = idx <= currentStageIndex;
+                const isCurrent = idx === currentStageIndex;
+                const timestamp = getStatusTimestamp(stage.key);
 
-              return (
-                <div key={stage.key} className="relative flex items-start gap-4">
-                  {/* Timeline Node Symbol */}
-                  <div
-                    className={`absolute -left-6 sm:-left-8 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-colors z-10 ${
-                      isCompleted
-                        ? 'bg-[#1E3A2F] text-white shadow-xs ring-4 ring-white'
-                        : 'bg-white border-2 border-[#D8CFBF] text-[#A8A29E]'
-                    }`}
-                  >
-                    {isCompleted ? (
-                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                    ) : (
-                      <span className="w-2 h-2 rounded-full bg-[#D8CFBF]" />
-                    )}
-                  </div>
-
-                  {/* Stage Text Content */}
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <h3
-                        className={`font-serif text-[15px] sm:text-[16px] font-semibold ${
-                          isCompleted ? 'text-[#1C1917]' : 'text-[#8C827A]'
-                        }`}
-                      >
-                        {stage.name}
-                      </h3>
-                      {isCurrent && (
-                        <span className="px-2 py-0.5 rounded text-[9.5px] uppercase font-bold tracking-wider bg-[#1E3A2F] text-white">
-                          Current Stage
-                        </span>
-                      )}
-                      {isCompleted && !isCurrent && (
-                        <span className="text-[11px] text-emerald-700 font-medium">
-                          ✓ Completed
-                        </span>
-                      )}
-                      {!isCompleted && (
-                        <span className="text-[11px] text-[#A8A29E] font-medium">
-                          ○ Upcoming
-                        </span>
+                return (
+                  <div key={stage.key} className="relative flex items-start gap-4">
+                    {/* Timeline Node Symbol */}
+                    <div
+                      className={`absolute -left-6 sm:-left-8 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-colors z-10 ${
+                        isCompleted
+                          ? 'bg-[#1E3A2F] text-white shadow-xs ring-4 ring-white'
+                          : 'bg-white border-2 border-[#D8CFBF] text-[#A8A29E]'
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                      ) : (
+                        <span className="w-2 h-2 rounded-full bg-[#D8CFBF]" />
                       )}
                     </div>
 
-                    <p className="text-[12.5px] sm:text-[13px] text-[#78716C] leading-relaxed">
-                      {stage.shortExplanation}
-                    </p>
+                    {/* Stage Text Content */}
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <h3
+                          className={`font-serif text-[15px] sm:text-[16px] font-semibold ${
+                            isCompleted ? 'text-[#1C1917]' : 'text-[#8C827A]'
+                          }`}
+                        >
+                          {stage.name}
+                        </h3>
+                        {isCurrent && (
+                          <span className="px-2 py-0.5 rounded text-[9.5px] uppercase font-bold tracking-wider bg-[#1E3A2F] text-white">
+                            Current Stage
+                          </span>
+                        )}
+                        {isCompleted && !isCurrent && (
+                          <span className="text-[11px] text-emerald-700 font-medium">
+                            ✓ Done
+                          </span>
+                        )}
+                        {!isCompleted && (
+                          <span className="text-[11px] text-[#A8A29E] font-medium">
+                            ○ Upcoming
+                          </span>
+                        )}
+                      </div>
 
-                    {stage.note && (
-                      <p className="text-[11px] text-[#8C827A] mt-1 italic">
-                        {stage.note}
+                      <p className="text-[12.5px] sm:text-[13px] text-[#78716C] leading-relaxed">
+                        {stage.shortExplanation}
                       </p>
-                    )}
+
+                      <div className="flex flex-wrap items-center gap-3 mt-1">
+                        {stage.note && (
+                          <span className="text-[11px] text-[#8C827A] italic">
+                            {stage.note}
+                          </span>
+                        )}
+                        {timestamp && (
+                          <span className="text-[11px] font-mono text-[#9A7B56] font-medium">
+                            · {timestamp}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
 
-          {/* Honest Status Language Note */}
-          <div className="mt-8 pt-4 border-t border-[#F2ECE1] flex items-start gap-2.5 text-[11.5px] text-[#78716C]">
-            <Info className="w-4 h-4 text-[#9A7B56] shrink-0 mt-0.5" />
-            <p>
-              <strong>Notice:</strong> This progress timeline represents the standard workflow for Zaira Furnishing orders. In-home tailoring visits and deliveries are confirmed directly via phone or WhatsApp prior to dispatch.
-            </p>
+            {/* Honest Status Language Note */}
+            <div className="mt-8 pt-4 border-t border-[#F2ECE1] flex items-start gap-2.5 text-[11.5px] text-[#78716C]">
+              <Info className="w-4 h-4 text-[#9A7B56] shrink-0 mt-0.5" />
+              <p>
+                <strong>Notice:</strong> This progress timeline directly reflects your order&apos;s real-time atelier status. Sizing visits and deliveries are confirmed directly via WhatsApp.
+              </p>
+            </div>
           </div>
-        </div>
-
-        {/* ─── FRONTEND DEMONSTRATION: STAGE SWITCHER TOOL ─── */}
-        <div className="p-4 sm:p-5 rounded-xl bg-white border border-[#EDE8DE] mb-8 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-bold tracking-wider text-[#866945]">
-              Frontend Demonstration Tool: Preview Stages
-            </span>
-            <span className="text-[10.5px] text-[#8C827A]">
-              Test any stage without affecting real data
-            </span>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {stageKeys.map((stKey, idx) => (
-              <button
-                key={stKey}
-                type="button"
-                onClick={() => setDemoStageOverride(stKey)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-all cursor-pointer ${
-                  currentStatus === stKey
-                    ? 'border-[#1E3A2F] bg-[#1E3A2F] text-white shadow-2xs'
-                    : 'border-[#EDE8DE] bg-[#FAF7F2] text-[#57534E] hover:border-[#9A7B56]'
-                }`}
-              >
-                {idx + 1}. {timelineStages[idx].name}
-              </button>
-            ))}
-            {demoStageOverride && (
-              <button
-                type="button"
-                onClick={() => setDemoStageOverride(null)}
-                className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-              >
-                Reset to Recorded Status
-              </button>
-            )}
-          </div>
-        </div>
+        )}
 
         {/* ─── BOTTOM NAVIGATION ACTIONS ─── */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">

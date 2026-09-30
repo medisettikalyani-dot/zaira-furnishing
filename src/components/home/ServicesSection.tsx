@@ -1,355 +1,307 @@
 'use client';
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { Service } from '@/lib/data/types';
 
-interface ServiceItem {
+interface ProcessStep {
   id: string;
-  heading: string;
+  number: string;
+  phase: string;
+  title: string;
   description: string;
   image: string;
   href: string;
 }
 
-// ─── 8 Verified Zaira Services Accessible Through Carousel ───
-const SERVICES_DATA: ServiceItem[] = [
-  {
-    id: 'free-home-measurement',
-    heading: 'Free In-Home Measurement & Site Visit',
-    description: 'We visit your home and take the right measurements for your furnishings.',
-    image: '/images/services/free-home-measurement.jpg',
-    href: '/services#free-in-home-measurement',
-  },
-  {
-    id: 'fabric-samples-at-home',
-    heading: 'Doorstep Fabric & Sample Demo',
-    description: 'See and compare fabric and furnishing samples at your home.',
-    image: '/images/services/fabric-samples-at-home.jpg',
-    href: '/services#doorstep-fabric-demo',
-  },
-  {
-    id: 'custom-stitching',
-    heading: 'Custom Tailoring & Stitching',
-    description: 'Get curtains and other furnishings made to your required size.',
-    image: '/images/services/custom-stitching.jpg',
-    href: '/services#custom-tailoring-and-stitching',
-  },
-  {
-    id: 'professional-installation',
-    heading: 'Professional Installation',
-    description: 'Our team installs curtains, blinds and other furnishings neatly.',
-    image: '/images/services/professional-installation.jpg',
-    href: '/services#professional-installation',
-  },
-  {
-    id: 'smart-blinds-setup',
-    heading: 'Motorization & Smart Home Setup',
-    description: 'Set up motorized blinds and simple smart controls for your home.',
-    image: '/images/services/smart-blinds-setup.jpg',
-    href: '/services#motorization-smart-home',
-  },
-  {
-    id: 'remote-home-styling',
-    heading: 'NRI Remote Home Styling',
-    description: 'Get furnishing guidance even when you are not at home.',
-    image: '/images/services/remote-home-styling.jpg',
-    href: '/services#nri-remote-home-styling',
-  },
-  {
-    id: 'office-commercial-furnishing',
-    heading: 'Corporate & Institutional Furnishings',
-    description: 'Furnishing support for offices and other commercial spaces.',
-    image: '/images/services/office-commercial-furnishing.jpg',
-    href: '/services#corporate-institutional-furnishings',
-  },
-  {
-    id: 'warranty-and-support',
-    heading: 'Warranty & After-Sales',
-    description: 'We provide support after your furnishing work is completed.',
-    image: '/images/services/warranty-and-support.jpg',
-    href: '/services#warranty-after-sales',
-  },
-];
+const PHASE_MAP: Record<string, string> = {
+  'doorstep-fabric-demo': 'DISCOVER',
+  'fabric-samples-at-home': 'DISCOVER',
+  'free-in-home-measurement': 'MEASURE',
+  'custom-tailoring-and-stitching': 'CREATE',
+  'professional-installation': 'INSTALL',
+  'motorization-smart-home': 'AUTOMATE',
+  'nri-remote-home-styling': 'STYLE',
+  'corporate-institutional-furnishings': 'CONTRACT',
+  'warranty-after-sales': 'CARE',
+};
 
-export function ServicesSection() {
-  const scrollRef = useRef<HTMLDivElement>(null);
+interface ServicesSectionProps {
+  services?: Service[];
+}
+
+export function ServicesSection({ services = [] }: ServicesSectionProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
 
-  // Mouse drag state
-  const [isMouseDown, setIsMouseDown] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [initialScrollLeft, setInitialScrollLeft] = useState(0);
-  const [hasDragged, setHasDragged] = useState(false);
+  // Map D1 services into the 4 presentation steps
+  const processSteps: ProcessStep[] = services.slice(0, 4).map((s, idx) => ({
+    id: s.id,
+    number: String(idx + 1).padStart(2, '0'),
+    phase: PHASE_MAP[s.slug] || `STEP 0${idx + 1}`,
+    title: s.title,
+    description: s.shortDesc,
+    image: s.image || '/images/hero/curtains.jpg',
+    href: `/services#${s.slug}`,
+  }));
 
-  // Measure dynamic card step (card width + gap)
-  const getCardStep = useCallback(() => {
-    if (!scrollRef.current) return 320;
-    const firstCard = scrollRef.current.children[0] as HTMLElement | undefined;
-    const secondCard = scrollRef.current.children[1] as HTMLElement | undefined;
-    if (firstCard && secondCard) {
-      return secondCard.offsetLeft - firstCard.offsetLeft;
-    }
-    if (firstCard) {
-      return firstCard.offsetWidth + 24;
-    }
-    return scrollRef.current.clientWidth;
-  }, []);
+  if (processSteps.length === 0) {
+    return null;
+  }
 
-  // Update scroll navigation and active dot
-  const updateScrollState = useCallback(() => {
-    if (!scrollRef.current) return;
-    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-    setCanScrollLeft(scrollLeft > 8);
-    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 8);
+  // Helper to render an interactive photo card
+  const renderPhotoCard = (stepIndex: number, heightClass: string) => {
+    const step = processSteps[stepIndex];
+    if (!step) return null;
+    const isActive = stepIndex === activeIndex;
 
-    const step = getCardStep();
-    if (step > 0) {
-      const idx = Math.min(
-        SERVICES_DATA.length - 1,
-        Math.max(0, Math.round(scrollLeft / step))
-      );
-      setActiveIndex(idx);
-    }
-  }, [getCardStep]);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    updateScrollState();
-    el.addEventListener('scroll', updateScrollState, { passive: true });
-    window.addEventListener('resize', updateScrollState);
-
-    return () => {
-      el.removeEventListener('scroll', updateScrollState);
-      window.removeEventListener('resize', updateScrollState);
-    };
-  }, [updateScrollState]);
-
-  // Arrow button click handlers
-  const scroll = (direction: 'left' | 'right') => {
-    if (!scrollRef.current) return;
-    const step = getCardStep();
-    scrollRef.current.scrollBy({
-      left: direction === 'left' ? -step : step,
-      behavior: 'smooth',
-    });
-  };
-
-  // Dot click handler
-  const scrollToCard = (index: number) => {
-    if (!scrollRef.current) return;
-    const step = getCardStep();
-    scrollRef.current.scrollTo({
-      left: index * step,
-      behavior: 'smooth',
-    });
-  };
-
-  // Mouse Drag Handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!scrollRef.current) return;
-    setIsMouseDown(true);
-    setHasDragged(false);
-    setStartX(e.pageX - scrollRef.current.offsetLeft);
-    setInitialScrollLeft(scrollRef.current.scrollLeft);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isMouseDown || !scrollRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = x - startX;
-    if (Math.abs(walk) > 6) {
-      setHasDragged(true);
-    }
-    scrollRef.current.scrollLeft = initialScrollLeft - walk;
-  };
-
-  const handleMouseUp = () => {
-    setIsMouseDown(false);
-    setTimeout(() => setHasDragged(false), 80);
-  };
-
-  const handleMouseLeave = () => {
-    setIsMouseDown(false);
-    setTimeout(() => setHasDragged(false), 80);
+    return (
+      <button
+        key={step.id}
+        type="button"
+        onClick={() => setActiveIndex(stepIndex)}
+        aria-label={`Select ${step.title}`}
+        className={`relative w-full ${heightClass} rounded-xl overflow-hidden bg-[#F4EFE6] transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E3A2F] motion-reduce:transition-none text-left cursor-pointer ${
+          isActive
+            ? 'ring-2 ring-[#9A7B56] shadow-[0_8px_24px_rgba(30,58,47,0.16)] scale-[1.02] opacity-100 z-10'
+            : 'border border-[#EAE4D8]/90 shadow-[0_3px_12px_rgba(30,58,47,0.05)] opacity-80 hover:opacity-100 hover:scale-[1.01]'
+        }`}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={step.image}
+          alt={step.title}
+          className="w-full h-full object-cover object-center block"
+          loading="eager"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src = '/images/hero/curtains.jpg';
+          }}
+        />
+      </button>
+    );
   };
 
   return (
-    <section className="relative bg-[#F4EDE2] overflow-hidden">
-      {/* ─── Organic Deckled Paper Top Edge ─── */}
-      <div className="w-full overflow-hidden leading-none select-none pointer-events-none -mt-px text-white">
-        <svg
-          viewBox="0 0 1440 32"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
-          className="w-full h-5 sm:h-7 lg:h-8 block"
-        >
-          <path
-            d="M0,0 L1440,0 L1440,14 C1410,19 1375,12 1335,18 C1290,25 1250,11 1205,17 C1160,23 1120,9 1075,19 C1030,26 990,13 945,18 C900,23 860,8 815,16 C770,24 730,10 685,18 C640,25 600,12 555,17 C510,22 470,7 425,16 C380,24 340,11 295,18 C250,23 210,8 165,17 C120,25 80,12 35,16 L0,14 Z"
-            fill="currentColor"
-          />
-        </svg>
-      </div>
+    <section
+      className="py-10 sm:py-12 lg:py-14 bg-[#FDFBF7] border-t border-[#EAE4D8] overflow-hidden"
+      aria-label="How We Create Your Space"
+    >
+      {/* ─── Embedded Scoped Responsive CSS (Guarantees Visibility Across Viewports) ─── */}
+      <style>{`
+        .zaira-collage-desktop {
+          display: block;
+          width: 100%;
+        }
+        .zaira-collage-mobile {
+          display: none;
+        }
+        @media (max-width: 1023px) {
+          .zaira-collage-desktop {
+            display: none !important;
+          }
+          .zaira-collage-mobile {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 22px;
+          }
+        }
+      `}</style>
 
-      <div className="pt-10 sm:pt-14 pb-16 sm:pb-20 lg:pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* ─── Centered Section Header ─── */}
-        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
-          <h2 className="font-serif text-[32px] sm:text-[40px] lg:text-[46px] text-[#1C1917] font-medium tracking-tight mb-2.5">
-            Our Services
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* ─── Section Header ─── */}
+        <div className="max-w-xl mx-auto text-center mb-8 sm:mb-9 lg:mb-10">
+          <span className="text-[11px] sm:text-[12px] uppercase tracking-[0.24em] font-semibold text-[#9A7B56] block mb-2">
+            THE ZAIRA PROCESS
+          </span>
+          <h2 className="font-serif text-[26px] sm:text-[32px] lg:text-[36px] text-[#1E3A2F] font-normal tracking-tight leading-[1.2] mb-2">
+            HOW WE CREATE YOUR SPACE
           </h2>
-          <p className="text-[14px] sm:text-[15px] text-[#78716C] leading-relaxed">
-            From choosing the right materials to installation, we help bring your furnishing vision together.
+          <p className="text-[13.5px] sm:text-[15px] text-[#6B655C] leading-relaxed font-normal">
+            From choosing your style to the final detail.
           </p>
         </div>
 
-        {/* ─── 4-Card Carousel Controls & Track ─── */}
-        <div className="relative">
-          {/* Subtle Left Arrow Button */}
-          <button
-            type="button"
-            onClick={() => scroll('left')}
-            disabled={!canScrollLeft}
-            aria-label="Previous service"
-            className={`hidden md:flex absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full items-center justify-center border transition-all duration-300 shadow-md ${
-              canScrollLeft
-                ? 'border-[#EAE0D0] bg-white text-[#1C1917] hover:bg-[#7D5E38] hover:text-white hover:border-[#7D5E38] cursor-pointer'
-                : 'border-[#EAE0D0] bg-white/70 text-[#C4B9A1] opacity-40 cursor-not-allowed'
-            }`}
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
+        {/* ─── Split Layout: Balanced Photo Mosaic (Left 50%) + Interactive Service List (Right 50%) ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-14 items-start">
 
-          {/* Subtle Right Arrow Button */}
-          <button
-            type="button"
-            onClick={() => scroll('right')}
-            disabled={!canScrollRight}
-            aria-label="Next service"
-            className={`hidden md:flex absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full items-center justify-center border transition-all duration-300 shadow-md ${
-              canScrollRight
-                ? 'border-[#EAE0D0] bg-white text-[#1C1917] hover:bg-[#7D5E38] hover:text-white hover:border-[#7D5E38] cursor-pointer'
-                : 'border-[#EAE0D0] bg-white/70 text-[#C4B9A1] opacity-40 cursor-not-allowed'
-            }`}
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-
-          {/* ─── Horizontal Carousel Track (4 Cards Visible on Desktop) ─── */}
-          <div
-            ref={scrollRef}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            className={`flex gap-5 sm:gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory select-none pb-4 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
-              isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
-            }`}
-          >
-            {SERVICES_DATA.map((service) => (
-              <div
-                key={service.id}
-                className="w-[82vw] sm:w-[calc(50%-12px)] lg:w-[calc((100%-72px)/4)] shrink-0 snap-start"
-              >
-                {/* ─── Rounded White Card ─── */}
-                <div className="group relative h-full rounded-[30px] sm:rounded-[34px] overflow-hidden bg-white border border-[#EDE4D6] shadow-[0_10px_28px_rgba(50,38,25,0.06)] hover:shadow-[0_20px_42px_rgba(50,38,25,0.12)] hover:-translate-y-1 transition-all duration-400 p-4 sm:p-5 flex flex-col justify-between text-center">
-                  <div>
-                    {/* Top Image Container (Clean, no badges) */}
-                    <div className="relative w-full aspect-[4/3] rounded-[22px] sm:rounded-[24px] overflow-hidden bg-[#FAF7F2] mb-4">
-                      <Image
-                        src={service.image}
-                        alt={service.heading}
-                        fill
-                        sizes="(max-width: 640px) 82vw, (max-width: 1024px) 45vw, 25vw"
-                        className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-                      />
-                    </div>
-
-                    {/* Card Heading */}
-                    <h3 className="font-serif text-[17px] sm:text-[18px] text-[#1C1917] font-medium leading-snug tracking-tight mb-2 px-1">
-                      {service.heading}
-                    </h3>
-
-                    {/* Card Description */}
-                    <p className="text-[12.5px] sm:text-[13px] text-[#78716C] leading-relaxed line-clamp-2 px-2 mb-4">
-                      {service.description}
-                    </p>
+          {/* LEFT: Compact Editorial Photo Mosaic (lg:col-span-6) */}
+          <div className="w-full lg:col-span-6 flex justify-center lg:justify-start">
+            <div className="w-full max-w-[480px]">
+              {/* Desktop Staggered Editorial Mosaic */}
+              <div className="zaira-collage-desktop">
+                <div className="grid grid-cols-2 gap-3 sm:gap-3.5 w-full items-start">
+                  {/* Column 1 (Left): 01 DISCOVER (Top, 180px) + 03 CREATE (Bottom, 160px) */}
+                  <div className="flex flex-col gap-3 sm:gap-3.5">
+                    {renderPhotoCard(0, 'h-[180px]')}
+                    {renderPhotoCard(2, 'h-[160px]')}
                   </div>
 
-                  {/* ─── Subtle "Learn More →" Link ─── */}
-                  <div className="pt-2">
-                    <Link
-                      href={service.href}
-                      onClick={(e) => {
-                        if (hasDragged) e.preventDefault();
-                      }}
-                      className="inline-flex items-center justify-center gap-1.5 text-[12.5px] sm:text-[13px] font-medium text-[#7D5E38] hover:text-[#1C1917] transition-colors duration-200 group/link mx-auto"
-                    >
-                      <span>Learn More</span>
-                      <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-1" />
-                    </Link>
+                  {/* Column 2 (Right): 02 MEASURE (Top, 160px) + 04 INSTALL (Bottom, 180px) — Gently Staggered */}
+                  <div className="flex flex-col gap-3 sm:gap-3.5 pt-4">
+                    {renderPhotoCard(1, 'h-[160px]')}
+                    {renderPhotoCard(3, 'h-[180px]')}
                   </div>
                 </div>
               </div>
-            ))}
+
+              {/* Mobile 2x2 Grid (Compact) */}
+              <div className="zaira-collage-mobile max-w-sm mx-auto">
+                {processSteps.map((step, idx) => (
+                  <button
+                    key={step.id}
+                    type="button"
+                    onClick={() => setActiveIndex(idx)}
+                    aria-label={`Select ${step.title}`}
+                    className={`relative aspect-[16/11] rounded-lg overflow-hidden bg-[#F4EFE6] border transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1E3A2F] motion-reduce:transition-none text-left cursor-pointer ${
+                      idx === activeIndex
+                        ? 'ring-2 ring-[#9A7B56] border-transparent scale-[1.02] opacity-100 shadow-md z-10'
+                        : 'border-[#EAE4D8] opacity-80 hover:opacity-95'
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={step.image}
+                      alt={step.title}
+                      className="w-full h-full object-cover object-center block"
+                      loading={idx === 0 ? 'eager' : 'lazy'}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = '/images/hero/curtains.jpg';
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
+
+          {/* RIGHT: Interactive Service List (lg:col-span-6) */}
+          <div className="w-full lg:col-span-6">
+            <div
+              role="tablist"
+              aria-label="Furnishing Process Steps"
+              className="flex flex-col"
+            >
+              {processSteps.map((step, idx) => {
+                const isActive = idx === activeIndex;
+                const isLast = idx === processSteps.length - 1;
+
+                return (
+                  <div
+                    key={step.id}
+                    className={`py-3.5 sm:py-4 ${
+                      !isLast ? 'border-b border-[#EAE4D8]' : ''
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      role="tab"
+                      id={`service-tab-${step.id}`}
+                      aria-selected={isActive}
+                      aria-controls={`service-panel-${step.id}`}
+                      onClick={() => setActiveIndex(idx)}
+                      className="w-full text-left group/btn focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1E3A2F] rounded p-0.5 cursor-pointer"
+                    >
+                      {/* Top Header Line: [● / ○] [Number] [Phase] ... [− / +] */}
+                      <div className="flex items-center justify-between gap-3 mb-1.5">
+                        <div className="flex items-center gap-2.5">
+                          {/* Subtle Progress Indicator Dot */}
+                          <span
+                            aria-hidden="true"
+                            className={`inline-block w-2.5 h-2.5 rounded-full transition-all duration-200 ${
+                              isActive
+                                ? 'bg-[#1E3A2F] ring-2 ring-[#9A7B56]/40 scale-110'
+                                : 'border border-[#C4B9A1] bg-[#FDFBF7] group-hover/btn:border-[#9A7B56]'
+                            }`}
+                          />
+                          {/* Number */}
+                          <span className="font-mono text-[11.5px] sm:text-[12px] font-semibold text-[#1E3A2F]/70 tracking-widest">
+                            {step.number}
+                          </span>
+                          {/* Phase Label */}
+                          <span
+                            className={`text-[10.5px] sm:text-[11px] uppercase tracking-[0.2em] font-semibold transition-colors duration-200 ${
+                              isActive
+                                ? 'text-[#9A7B56]'
+                                : 'text-[#8C8275] group-hover/btn:text-[#1E3A2F]'
+                            }`}
+                          >
+                            {step.phase}
+                          </span>
+                        </div>
+
+                        {/* Accordion State Indicator: − for active, + for inactive */}
+                        <span
+                          aria-hidden="true"
+                          className={`font-mono text-[15px] sm:text-[16px] leading-none transition-colors duration-200 ${
+                            isActive
+                              ? 'text-[#1E3A2F] font-medium'
+                              : 'text-[#8C8275] group-hover/btn:text-[#1E3A2F]'
+                          }`}
+                        >
+                          {isActive ? '−' : '+'}
+                        </span>
+                      </div>
+
+                      {/* Service Title */}
+                      <div className="pl-5 sm:pl-5.5">
+                        <h3
+                          className={`text-[15.5px] sm:text-[17px] tracking-tight transition-colors duration-200 ${
+                            isActive
+                              ? 'font-serif text-[#1E3A2F] font-normal leading-snug'
+                              : 'text-[#57534E] font-normal group-hover/btn:text-[#1E3A2F] leading-snug'
+                          }`}
+                        >
+                          {step.title}
+                        </h3>
+                      </div>
+                    </button>
+
+                    {/* Active Details: Short Description & Subtle Link */}
+                    <div
+                      id={`service-panel-${step.id}`}
+                      role="tabpanel"
+                      aria-labelledby={`service-tab-${step.id}`}
+                      className={`grid transition-all duration-300 ease-in-out ${
+                        isActive
+                          ? 'grid-rows-[1fr] opacity-100 mt-2.5 pl-5 sm:pl-5.5'
+                          : 'grid-rows-[0fr] opacity-0 pointer-events-none'
+                      }`}
+                    >
+                      <div className="overflow-hidden">
+                        <p className="text-[13px] sm:text-[13.5px] text-[#6B655C] leading-relaxed mb-3 font-normal max-w-md">
+                          {step.description}
+                        </p>
+
+                        <Link
+                          href={step.href}
+                          className="inline-flex items-center gap-1.5 text-[11px] sm:text-[11.5px] uppercase tracking-[0.16em] font-semibold text-[#1E3A2F] hover:text-[#9A7B56] transition-colors group/link"
+                          aria-label={`Explore ${step.title}`}
+                        >
+                          <span>EXPLORE SERVICE</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-[#9A7B56] transition-transform duration-200 group-hover/link:translate-x-1" />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
         </div>
 
-        {/* ─── Mobile Prev / Next Controls & Dots ─── */}
-        <div className="flex items-center justify-between sm:justify-center gap-3 mt-8 sm:mt-10">
-          {/* Mobile Prev Arrow */}
-          <button
-            type="button"
-            onClick={() => scroll('left')}
-            disabled={!canScrollLeft}
-            aria-label="Previous service"
-            className={`md:hidden w-9 h-9 rounded-full flex items-center justify-center border transition-all ${
-              canScrollLeft
-                ? 'border-[#D8CFBF] bg-white text-[#1C1917]'
-                : 'border-[#EAE0D0] bg-white/60 text-[#C4B9A1] opacity-40'
-            }`}
+        {/* ─── Integrated Bottom Link to /services ─── */}
+        <div className="mt-8 sm:mt-9 text-center pt-5 border-t border-[#EAE4D8]/80">
+          <Link
+            href="/services"
+            className="inline-flex items-center gap-2 text-[11px] sm:text-[11.5px] uppercase tracking-[0.18em] font-semibold text-[#1E3A2F] hover:text-[#9A7B56] transition-colors group"
           >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-
-          {/* Carousel Pagination Dots */}
-          <div className="flex items-center gap-2">
-            {SERVICES_DATA.map((service, idx) => (
-              <button
-                key={service.id}
-                type="button"
-                onClick={() => scrollToCard(idx)}
-                aria-label={`Go to service ${idx + 1}`}
-                className={`transition-all duration-300 rounded-full h-1.5 cursor-pointer ${
-                  activeIndex === idx
-                    ? 'w-6 bg-[#7D5E38]'
-                    : 'w-1.5 bg-[#D8CFBF] hover:bg-[#A89D89]'
-                }`}
-              />
-            ))}
-          </div>
-
-          {/* Mobile Next Arrow */}
-          <button
-            type="button"
-            onClick={() => scroll('right')}
-            disabled={!canScrollRight}
-            aria-label="Next service"
-            className={`md:hidden w-9 h-9 rounded-full flex items-center justify-center border transition-all ${
-              canScrollRight
-                ? 'border-[#D8CFBF] bg-white text-[#1C1917]'
-                : 'border-[#EAE0D0] bg-white/60 text-[#C4B9A1] opacity-40'
-            }`}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+            <span>EXPLORE ALL SERVICES</span>
+            <ArrowRight className="w-3.5 h-3.5 text-[#9A7B56] transition-transform duration-200 group-hover:translate-x-1" />
+          </Link>
         </div>
 
       </div>

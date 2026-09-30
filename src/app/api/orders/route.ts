@@ -101,7 +101,22 @@ export async function POST(req: NextRequest) {
       notes,
       idempotencyKey,
       paymentMethod = 'COD',
+      order_source,
+      orderSource,
     } = body;
+
+    // Validate order source (WEB, WHATSAPP, QUOTE, MEASUREMENT) - defaults to WEB
+    const ALLOWED_ORDER_SOURCES = ['WEB', 'WHATSAPP', 'QUOTE', 'MEASUREMENT'] as const;
+    type AllowedOrderSource = (typeof ALLOWED_ORDER_SOURCES)[number];
+
+    const rawSource = (order_source || orderSource || 'WEB').toString().trim().toUpperCase();
+    if (!ALLOWED_ORDER_SOURCES.includes(rawSource as AllowedOrderSource)) {
+      return NextResponse.json(
+        { error: `Invalid order source: "${rawSource}". Allowed values are: ${ALLOWED_ORDER_SOURCES.join(', ')}` },
+        { status: 400 }
+      );
+    }
+    const finalOrderSource: AllowedOrderSource = rawSource as AllowedOrderSource;
 
     // 1. Validate required customer information
     if (!customerName || typeof customerName !== 'string' || customerName.trim().length < 2) {
@@ -162,11 +177,17 @@ export async function POST(req: NextRequest) {
           order: {
             ...existingOrder,
             orderNumber: existingOrder.order_number,
+            orderSource: existingOrder.order_source,
+            subtotal: existingOrder.subtotal,
+            discount: existingOrder.discount,
             totalAmount: existingOrder.total_amount,
             deliveryCharge: existingOrder.delivery_charge,
             customerName: existingOrder.customer_name,
             customerPhone: existingOrder.customer_phone,
             customerEmail: existingOrder.customer_email,
+            deliveryAddress: existingOrder.delivery_address,
+            deliveryOption: existingOrder.delivery_option,
+            siteVisitTime: existingOrder.site_visit_time,
             items: existingItems,
           },
           isDuplicateSubmission: true,
@@ -175,22 +196,41 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Fetch Customer Cart from D1
-    const cart = await db.queryOne<DbCart>(
+    let cart = await db.queryOne<DbCart>(
       'SELECT * FROM carts WHERE user_id = ?',
       [customer.id]
     );
 
-    if (!cart) {
-      return NextResponse.json(
-        { error: 'No active cart found for this account.' },
-        { status: 400 }
+    let cartItems: DbCartItem[] = [];
+    if (cart) {
+      cartItems = await db.query<DbCartItem>(
+        'SELECT * FROM cart_items WHERE cart_id = ?',
+        [cart.id]
       );
     }
 
-    const cartItems = await db.query<DbCartItem>(
-      'SELECT * FROM cart_items WHERE cart_id = ?',
-      [cart.id]
-    );
+    // Support items payload passed from checkout body (e.g. fresh client bag synchronization)
+    if ((!cartItems || cartItems.length === 0) && Array.isArray(body.items) && body.items.length > 0) {
+      if (!cart) {
+        const cartId = `cart-${customer.id}`;
+        await db.execute(
+          "INSERT INTO carts (id, user_id, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))",
+          [cartId, customer.id]
+        );
+        cart = { id: cartId, user_id: customer.id, created_at: '', updated_at: '' };
+      }
+      cartItems = body.items.map((it: any) => ({
+        id: it.id || `item-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        cart_id: cart!.id,
+        product_id: it.productId || it.product_id,
+        variant_id: it.variantId || it.variant_id || null,
+        quantity: Math.max(1, parseInt(it.quantity, 10) || 1),
+        unit_price_snapshot: 0,
+        customization_data: typeof it.customizationData === 'object' ? JSON.stringify(it.customizationData) : it.customization_data || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }));
+    }
 
     if (!cartItems || cartItems.length === 0) {
       return NextResponse.json(
@@ -290,8 +330,8 @@ export async function POST(req: NextRequest) {
           customer_name, customer_email, customer_phone, delivery_address,
           city, state, pincode, landmark, delivery_option, site_visit_required,
           site_visit_date, site_visit_time, subtotal, discount, delivery_charge,
-          total_amount, notes, idempotency_key, created_at, updated_at
-        ) VALUES (?, ?, ?, 'CONFIRMED', 'COD', 'PENDING', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+          total_amount, notes, idempotency_key, order_source, created_at, updated_at
+        ) VALUES (?, ?, ?, 'CONFIRMED', 'COD', 'PENDING', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
         [
           orderId,
           orderNumber,
@@ -314,6 +354,7 @@ export async function POST(req: NextRequest) {
           totalAmount,
           notes ? notes.trim() : null,
           idempotencyKey ? idempotencyKey.trim() : null,
+          finalOrderSource,
         ]
       );
 
@@ -342,9 +383,11 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Clear customer's purchased cart items
-      await db.execute('DELETE FROM cart_items WHERE cart_id = ?', [cart.id]);
-      await db.execute("UPDATE carts SET updated_at = datetime('now') WHERE id = ?", [cart.id]);
+      // Clear customer's purchased cart items if cart exists
+      if (cart) {
+        await db.execute('DELETE FROM cart_items WHERE cart_id = ?', [cart.id]);
+        await db.execute("UPDATE carts SET updated_at = datetime('now') WHERE id = ?", [cart.id]);
+      }
 
       // Commit transaction
       await db.execute('COMMIT');
@@ -396,6 +439,8 @@ export async function POST(req: NextRequest) {
         discount,
         deliveryCharge,
         totalAmount,
+        orderSource: finalOrderSource,
+        order_source: finalOrderSource,
         notes: notes ? notes.trim() : null,
         createdAt: new Date().toISOString(),
         items: validatedItems,

@@ -3,7 +3,7 @@
 
 import { DatabaseSync } from 'node:sqlite';
 
-const BASE_URL = 'http://localhost:3009';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY;
 
 let passed = 0;

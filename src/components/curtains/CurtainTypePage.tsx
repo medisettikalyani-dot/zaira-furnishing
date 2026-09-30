@@ -4,11 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, ArrowLeft, ArrowUpDown } from 'lucide-react';
 import { Product } from '@/lib/data/types';
-import { CurtainType } from '@/lib/data/curtains';
+import { DbSubcategory } from '@/lib/db/types';
 import { ProductCard } from '@/components/ui/ProductCard';
 
 interface CurtainTypePageProps {
-  curtainType: CurtainType;
+  curtainType: DbSubcategory;
   products: Product[];
 }
 
@@ -18,9 +18,9 @@ export function CurtainTypePage({ curtainType, products }: CurtainTypePageProps)
   // Strict, reliable filter: must belong to curtains-drapes category and match this exact curtain type
   const typeProducts = products.filter(
     (p) =>
-      p.categorySlug === 'curtains-drapes' &&
-      (p.curtainType === curtainType.slug ||
-        p.slug === curtainType.productSlug ||
+      (p.categorySlug === 'curtains-drapes' || p.categorySlug === 'curtains') &&
+      (!curtainType.slug ||
+        p.curtainType === curtainType.slug ||
         (p.curtainType && p.curtainType.toLowerCase() === curtainType.slug.toLowerCase()))
   );
 

@@ -5,10 +5,69 @@ import { Sparkles } from 'lucide-react';
 
 export function ConsultationForm() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [serviceRequested, setServiceRequested] = useState('Free In-Home Measurement / Site Visit');
+  const [preferredTimeframe, setPreferredTimeframe] = useState('');
+  const [siteLocationAndScope, setSiteLocationAndScope] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setErrorMessage(null);
+    setIsSubmitting(true);
+
+    try {
+      const idempotencyKey = `cons_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const cleanPhone = phone.replace(/\D/g, '');
+
+      if (!cleanPhone || cleanPhone.length < 10) {
+        setErrorMessage('Please enter a valid phone number with at least 10 digits.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const address = siteLocationAndScope.trim() || 'Showroom Consultation (Site location to be confirmed via phone)';
+      const preferredDate = preferredTimeframe.trim() || 'Flexible / Coordinator Scheduled';
+      const preferredTimeSlot = 'Showroom Coordinated';
+      const customerNotes = `Service: ${serviceRequested}\nTimeframe: ${preferredTimeframe.trim() || 'Flexible'}\nProject Scope & Location: ${siteLocationAndScope.trim() || 'Not specified'}`;
+
+      const res = await fetch('/api/measurement-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: name.trim(),
+          customerPhone: cleanPhone,
+          serviceRequested,
+          address,
+          preferredDate,
+          preferredTimeSlot,
+          customerNotes,
+          idempotencyKey,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMessage(data.error || 'Failed to submit consultation request. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      setSubmitted(true);
+      setName('');
+      setPhone('');
+      setPreferredTimeframe('');
+      setSiteLocationAndScope('');
+      setServiceRequested('Free In-Home Measurement / Site Visit');
+    } catch (err: any) {
+      console.error('Consultation form submission error:', err);
+      setErrorMessage('A network error occurred. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -25,8 +84,11 @@ export function ConsultationForm() {
         </p>
         <button
           type="button"
-          onClick={() => setSubmitted(false)}
-          className="px-6 py-2.5 text-[11px] uppercase tracking-wider font-medium bg-[#1C1917] text-white"
+          onClick={() => {
+            setSubmitted(false);
+            setErrorMessage(null);
+          }}
+          className="px-6 py-2.5 text-[11px] uppercase tracking-wider font-medium bg-[#1C1917] text-white cursor-pointer"
         >
           Book Another Appointment
         </button>
@@ -36,6 +98,12 @@ export function ConsultationForm() {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-4">
+      {errorMessage && (
+        <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-[12px] leading-relaxed">
+          {errorMessage}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-[12px] uppercase tracking-wider text-[#1C1917] font-medium mb-1.5">
@@ -44,8 +112,11 @@ export function ConsultationForm() {
           <input
             type="text"
             required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={isSubmitting}
             placeholder="Your full name"
-            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917]"
+            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60"
           />
         </div>
         <div>
@@ -55,8 +126,11 @@ export function ConsultationForm() {
           <input
             type="tel"
             required
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            disabled={isSubmitting}
             placeholder="Your mobile number"
-            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917]"
+            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60"
           />
         </div>
       </div>
@@ -66,7 +140,12 @@ export function ConsultationForm() {
           <label className="block text-[12px] uppercase tracking-wider text-[#1C1917] font-medium mb-1.5">
             Service Requested
           </label>
-          <select className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917]">
+          <select
+            value={serviceRequested}
+            onChange={(e) => setServiceRequested(e.target.value)}
+            disabled={isSubmitting}
+            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60"
+          >
             <option>Free In-Home Measurement / Site Visit</option>
             <option>Doorstep Fabric / Sample Demo</option>
             <option>Custom Tailoring & Stitching</option>
@@ -81,8 +160,11 @@ export function ConsultationForm() {
           </label>
           <input
             type="text"
+            value={preferredTimeframe}
+            onChange={(e) => setPreferredTimeframe(e.target.value)}
+            disabled={isSubmitting}
             placeholder="e.g. This Weekend / Next Tuesday"
-            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917]"
+            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60"
           />
         </div>
       </div>
@@ -93,16 +175,20 @@ export function ConsultationForm() {
         </label>
         <textarea
           rows={3}
+          value={siteLocationAndScope}
+          onChange={(e) => setSiteLocationAndScope(e.target.value)}
+          disabled={isSubmitting}
           placeholder="Describe your rooms, number of windows, or specific fabric styles you wish to view..."
-          className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917]"
+          className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60"
         />
       </div>
 
       <button
         type="submit"
-        className="w-full py-4 bg-[#1C1917] text-[#FDFBF7] text-[12px] uppercase tracking-[0.2em] font-medium hover:bg-[#9A7B56] transition-colors"
+        disabled={isSubmitting}
+        className="w-full py-4 bg-[#1C1917] text-[#FDFBF7] text-[12px] uppercase tracking-[0.2em] font-medium hover:bg-[#9A7B56] transition-colors disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
       >
-        Submit Consultation Request
+        {isSubmitting ? 'Submitting Request...' : 'Submit Consultation Request'}
       </button>
     </form>
   );

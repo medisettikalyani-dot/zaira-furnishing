@@ -19,6 +19,8 @@ export interface CartItem {
   unitPrice: number;
   totalPrice: number;
   customizationData?: Record<string, any>;
+  productType?: string;
+  isAvailable?: boolean;
 }
 
 export interface CustomerUser {
@@ -30,7 +32,12 @@ export interface CustomerUser {
 }
 
 export interface Order {
-  id: string; // e.g. "ZF-842915"
+  id: string; // e.g. "ZF-842915" or "ZAI-2026-000001"
+  rawStatus?: string; // Canonical D1 status: 'CONFIRMED' | 'PROCESSING' | 'READY' | 'COMPLETED' | 'CANCELLED' | 'PENDING'
+  orderSource?: string; // 'WHATSAPP' | 'WEB' | 'QUOTE' | 'MEASUREMENT'
+  landmark?: string | null;
+  paymentStatus?: string;
+  statusHistory?: Array<{ status: string; timestamp: string }>;
   createdAt: string; // ISO date string
   items: CartItem[];
   subtotal: number;
@@ -205,6 +212,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
           return {
             id: o.order_number, // User-facing human-readable reference, e.g. "ZAI-2026-000001"
+            rawStatus: (o.status || 'CONFIRMED').toUpperCase(),
+            orderSource: o.order_source || 'WEB',
+            landmark: o.landmark || null,
+            paymentStatus: o.payment_status || 'PENDING',
             createdAt: o.created_at,
             items,
             subtotal: o.subtotal,

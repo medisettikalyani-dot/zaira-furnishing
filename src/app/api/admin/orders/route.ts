@@ -62,7 +62,8 @@ export async function GET(req: NextRequest) {
         o.*,
         (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count,
         (SELECT product_name_snapshot FROM order_items WHERE order_id = o.id LIMIT 1) as first_product_name,
-        (SELECT MAX(CASE WHEN customization_data IS NOT NULL OR product_type = 'custom_made' THEN 1 ELSE 0 END) FROM order_items WHERE order_id = o.id) as has_custom_items
+        (SELECT MAX(CASE WHEN customization_data IS NOT NULL OR product_type = 'custom_made' THEN 1 ELSE 0 END) FROM order_items WHERE order_id = o.id) as has_custom_items,
+        (SELECT MAX(CASE WHEN recipient_type = 'ADMIN' AND event_type = 'NEW_ORDER_ADMIN' AND (is_read = 0 OR is_read IS NULL) THEN 1 ELSE 0 END) FROM order_notifications WHERE order_id = o.id) as has_unread_notification
       FROM orders o
       ${whereClause}
       ORDER BY o.created_at DESC
@@ -74,6 +75,7 @@ export async function GET(req: NextRequest) {
         item_count: number;
         first_product_name: string | null;
         has_custom_items: number;
+        has_unread_notification: number;
       }
     >(ordersSql, [...params, limit, offset]);
 

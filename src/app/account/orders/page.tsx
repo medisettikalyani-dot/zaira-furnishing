@@ -14,6 +14,7 @@ import {
   Clock,
   CheckCircle2,
   Calendar,
+  MessageCircle,
 } from 'lucide-react';
 import { useStore, Order } from '@/lib/context/StoreContext';
 
@@ -26,43 +27,67 @@ export default function MyOrdersPage() {
     refreshOrders();
   }, [refreshOrders]);
 
-  const getStatusBadge = (status: Order['status'], hasCustom: boolean) => {
-    switch (status) {
+  const getStatusBadge = (order: Order) => {
+    const raw = (order.rawStatus || '').toUpperCase();
+    if (raw === 'PROCESSING') {
+      return {
+        label: 'Processing',
+        classes: 'bg-amber-50 text-amber-800 border-amber-200',
+        dot: 'bg-amber-600',
+      };
+    }
+    if (raw === 'READY') {
+      return {
+        label: 'Ready',
+        classes: 'bg-blue-50 text-blue-800 border-blue-200',
+        dot: 'bg-blue-600',
+      };
+    }
+    if (raw === 'COMPLETED') {
+      return {
+        label: 'Completed',
+        classes: 'bg-[#1E3A2F]/10 text-[#1E3A2F] border-[#1E3A2F]/20',
+        dot: 'bg-[#1E3A2F]',
+      };
+    }
+    if (raw === 'CANCELLED') {
+      return {
+        label: 'Cancelled',
+        classes: 'bg-rose-50 text-rose-800 border-rose-200',
+        dot: 'bg-rose-600',
+      };
+    }
+    if (raw === 'CONFIRMED') {
+      return {
+        label: 'Confirmed',
+        classes: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        dot: 'bg-emerald-600',
+      };
+    }
+    if (raw === 'PENDING') {
+      return {
+        label: 'Pending',
+        classes: 'bg-stone-50 text-stone-700 border-stone-200',
+        dot: 'bg-stone-500',
+      };
+    }
+
+    // Fallback to legacy status if rawStatus isn't set
+    switch (order.status) {
       case 'order_received':
-        return {
-          label: 'Order Received',
-          classes: 'bg-[#FAF7F2] text-[#866945] border-[#E8DCCB]',
-        };
+        return { label: 'Order Received', classes: 'bg-[#FAF7F2] text-[#866945] border-[#E8DCCB]', dot: 'bg-[#866945]' };
       case 'details_confirmed':
-        return {
-          label: hasCustom ? 'Details Confirmed' : 'Order Confirmed',
-          classes: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-        };
+        return { label: 'Confirmed', classes: 'bg-emerald-50 text-emerald-800 border-emerald-200', dot: 'bg-emerald-600' };
       case 'tailoring_preparation':
-        return {
-          label: hasCustom ? 'Bespoke Tailoring' : 'Preparation',
-          classes: 'bg-amber-50 text-amber-800 border-amber-200',
-        };
+        return { label: 'Processing', classes: 'bg-amber-50 text-amber-800 border-amber-200', dot: 'bg-amber-600' };
       case 'ready_for_dispatch':
-        return {
-          label: 'Ready for Dispatch',
-          classes: 'bg-blue-50 text-blue-800 border-blue-200',
-        };
+        return { label: 'Ready', classes: 'bg-blue-50 text-blue-800 border-blue-200', dot: 'bg-blue-600' };
       case 'delivered_installed':
-        return {
-          label: 'Delivered & Installed',
-          classes: 'bg-[#1E3A2F]/10 text-[#1E3A2F] border-[#1E3A2F]/20',
-        };
+        return { label: 'Completed', classes: 'bg-[#1E3A2F]/10 text-[#1E3A2F] border-[#1E3A2F]/20', dot: 'bg-[#1E3A2F]' };
       case 'cancelled':
-        return {
-          label: 'Cancelled',
-          classes: 'bg-rose-50 text-rose-800 border-rose-200',
-        };
+        return { label: 'Cancelled', classes: 'bg-rose-50 text-rose-800 border-rose-200', dot: 'bg-rose-600' };
       default:
-        return {
-          label: 'Order Processing',
-          classes: 'bg-[#FAF7F2] text-[#78716C] border-[#EDE8DE]',
-        };
+        return { label: 'Processing', classes: 'bg-[#FAF7F2] text-[#78716C] border-[#EDE8DE]', dot: 'bg-[#78716C]' };
     }
   };
 
@@ -141,7 +166,7 @@ export default function MyOrdersPage() {
         ) : (
           <div className="space-y-4 sm:space-y-5">
             {orders.map((order) => {
-              const statusInfo = getStatusBadge(order.status, order.hasCustomProducts);
+              const statusInfo = getStatusBadge(order);
               const formattedDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
                 day: 'numeric',
                 month: 'short',
@@ -172,6 +197,12 @@ export default function MyOrdersPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {order.orderSource === 'WHATSAPP' && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold bg-[#25D366]/10 text-[#128C7E] border border-[#25D366]/25">
+                          <MessageCircle className="w-3 h-3 text-[#25D366]" />
+                          <span>WhatsApp Order</span>
+                        </span>
+                      )}
                       {order.hasCustomProducts && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold bg-[#FAF0E6] text-[#866945] border border-[#E8DCCB]">
                           <Sparkles className="w-3 h-3" />
@@ -179,9 +210,9 @@ export default function MyOrdersPage() {
                         </span>
                       )}
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-medium border ${statusInfo.classes}`}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium border ${statusInfo.classes}`}
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dot || 'bg-current'}`} />
                         <span>{statusInfo.label}</span>
                       </span>
                     </div>

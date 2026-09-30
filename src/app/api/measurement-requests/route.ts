@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
 
     const resolvedPhone = customerPhone || phone;
     const resolvedEmail = customerEmail || email;
+    const isConsultation = Boolean(body.serviceRequested || !productId);
 
     // 1. Validate customer name
     if (!customerName || typeof customerName !== 'string' || customerName.trim().length === 0) {
@@ -46,8 +47,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Validate address/location
-    if (!address || typeof address !== 'string' || address.trim().length === 0) {
+    // 3. Validate address/location (provide fallback for consultation form if not entered)
+    const resolvedAddress = address && typeof address === 'string' && address.trim().length > 0
+      ? address.trim()
+      : (isConsultation ? 'Showroom Consultation (Site location to be confirmed via phone)' : '');
+
+    if (!resolvedAddress) {
       return NextResponse.json(
         { error: 'Address or location is required for measurement visit.' },
         { status: 400 }
@@ -55,14 +60,22 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Validate preferred date and time
-    if (!preferredDate || typeof preferredDate !== 'string' || preferredDate.trim().length === 0) {
+    const resolvedDate = preferredDate && typeof preferredDate === 'string' && preferredDate.trim().length > 0
+      ? preferredDate.trim()
+      : (isConsultation ? 'Flexible / Showroom Coordinator Scheduled' : '');
+
+    if (!resolvedDate) {
       return NextResponse.json(
         { error: 'Preferred date is required.' },
         { status: 400 }
       );
     }
 
-    if (!preferredTimeSlot || typeof preferredTimeSlot !== 'string' || preferredTimeSlot.trim().length === 0) {
+    const resolvedTimeSlot = preferredTimeSlot && typeof preferredTimeSlot === 'string' && preferredTimeSlot.trim().length > 0
+      ? preferredTimeSlot.trim()
+      : (isConsultation ? 'Showroom Coordinated' : '');
+
+    if (!resolvedTimeSlot) {
       return NextResponse.json(
         { error: 'Preferred time slot is required.' },
         { status: 400 }
@@ -86,9 +99,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 6. Server-side product & variant resolution
+    const targetProductId = (productId && typeof productId === 'string' && productId.trim().length > 0)
+      ? productId.trim()
+      : 'prod-curt-10'; // Flagship custom made-to-measure product
+
     let productCtx;
     try {
-      productCtx = await resolveProductAndVariant(db, productId, variantId);
+      productCtx = await resolveProductAndVariant(db, targetProductId, variantId);
     } catch (err: any) {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }
@@ -111,6 +128,18 @@ export async function POST(req: NextRequest) {
     const id = `mr-${crypto.randomUUID()}`;
     const requestNumber = await generateMeasurementRequestNumber(db);
 
+    const productNameSnapshot = body.serviceRequested && typeof body.serviceRequested === 'string'
+      ? body.serviceRequested.trim()
+      : (product.display_name || product.name);
+
+    const categoryNameSnapshot = body.serviceRequested && typeof body.serviceRequested === 'string'
+      ? 'Showroom Consultation Service'
+      : categoryName;
+
+    const categorySlugSnapshot = body.serviceRequested && typeof body.serviceRequested === 'string'
+      ? 'services'
+      : categorySlug;
+
     // 10. Insert measurement request with genuine snapshots
     await db.execute(
       `INSERT INTO measurement_requests (
@@ -129,15 +158,15 @@ export async function POST(req: NextRequest) {
         cleanPhone,
         resolvedEmail?.trim() || null,
         product.id,
-        product.display_name || product.name,
+        productNameSnapshot,
         variant?.sku || product.id,
-        categoryName,
-        categorySlug,
+        categoryNameSnapshot,
+        categorySlugSnapshot,
         variant?.id || null,
         variant?.name || null,
-        address.trim(),
-        preferredDate.trim(),
-        preferredTimeSlot.trim(),
+        resolvedAddress,
+        resolvedDate,
+        resolvedTimeSlot,
         dimensions?.trim() || null,
         customerNotes?.trim() || null,
         idempotencyKey?.trim() || null,

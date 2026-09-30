@@ -10,7 +10,7 @@ import {
   DbCmsContent,
 } from './types';
 import { Product, ProductVariation, ProductSpecification, Category, Service } from '@/lib/data/types';
-import { CATEGORIES, normalizeCategorySlug } from '@/lib/data/categories';
+import { normalizeCategorySlug } from '@/lib/data/categories';
 
 /**
  * Maps D1 category record to frontend Category model
@@ -48,6 +48,7 @@ export function mapDbServiceToFrontend(s: DbService): Service {
     title: s.name,
     shortDesc: s.short_desc,
     fullDesc: s.full_desc || '',
+    image: s.image || '',
     iconName: s.icon_name,
     highlights: parsedHighlights,
     requiresSiteVisit: s.requires_site_visit === 1,
@@ -58,7 +59,7 @@ export function mapDbServiceToFrontend(s: DbService): Service {
  * Maps D1 full product record to frontend Product model
  */
 export function mapDbProductToFrontend(
-  p: DbProduct & { category_slug?: string },
+  p: DbProduct & { category_slug?: string; subcategory_slug?: string; subcategory_name?: string },
   images: DbProductImage[],
   variants: DbProductVariant[],
   specs: DbProductSpecification[],
@@ -108,12 +109,12 @@ export function mapDbProductToFrontend(
 
   // Resolve subcategory types for legacy route compatibility
   const resolvedCategorySlug = p.category_slug || normalizeCategorySlug(p.category_id);
-  const subcategory = p.subcategory_id || undefined;
-  const isCurtain = resolvedCategorySlug === 'curtains-drapes';
-  const isBlind = resolvedCategorySlug === 'window-blinds-shades';
-  const isSofa = resolvedCategorySlug === 'sofa-fabrics-upholstery';
-  const isWallpaper = resolvedCategorySlug === 'wallpapers-wall-coverings';
-  const isCarpet = resolvedCategorySlug === 'carpets-rugs';
+  const subcategory = p.subcategory_slug || p.subcategory_id || undefined;
+  const isCurtain = resolvedCategorySlug === 'curtains-drapes' || p.category_id === 'cat-1';
+  const isBlind = resolvedCategorySlug === 'window-blinds-shades' || p.category_id === 'cat-2';
+  const isSofa = resolvedCategorySlug === 'sofa-fabrics-upholstery' || p.category_id === 'cat-3';
+  const isWallpaper = resolvedCategorySlug === 'wallpapers-wall-coverings' || p.category_id === 'cat-4';
+  const isCarpet = resolvedCategorySlug === 'carpets-rugs' || p.category_id === 'cat-6';
 
   return {
     id: p.id,
@@ -122,13 +123,16 @@ export function mapDbProductToFrontend(
     displayName: p.display_name || p.name,
     categorySlug: resolvedCategorySlug,
     categoryName: categoryName || p.category_id,
+    subcategorySlug: p.subcategory_slug || undefined,
+    subcategoryName: p.subcategory_name || undefined,
     shortDescription: p.short_description || '',
     description: p.description,
     productType: p.product_type,
     price: p.base_price,
     startingPrice: p.starting_price === 1,
-    currency: p.currency || '₹',
+    image: mainImg?.image_url || '/images/hero/living_room.jpg',
     mainImage: mainImg?.image_url || '/images/hero/living_room.jpg',
+    additionalImages: sortedImages.filter((img) => img.image_url !== mainImg?.image_url).map((img) => img.image_url),
     galleryImages: gallery.length > 0 ? gallery : [mainImg?.image_url || '/images/hero/living_room.jpg'],
     variations: mappedVariants,
     specifications: mappedSpecs,
@@ -186,8 +190,8 @@ export async function getDynamicSubcategories(categoryId?: string): Promise<DbSu
     let sql = 'SELECT * FROM subcategories WHERE active = 1';
     const params: unknown[] = [];
     if (categoryId) {
-      sql += ' AND category_id = ?';
-      params.push(categoryId);
+      sql += ' AND (category_id = ? OR category_id = (SELECT id FROM categories WHERE slug = ?))';
+      params.push(categoryId, categoryId);
     }
     sql += ' ORDER BY display_order ASC';
     return await db.query<DbSubcategory>(sql, params);
@@ -198,19 +202,43 @@ export async function getDynamicSubcategories(categoryId?: string): Promise<DbSu
 }
 
 /**
+ * Fetch a single subcategory by category identifier (ID or slug) and subcategory slug from Cloudflare D1
+ */
+export async function getDynamicSubcategoryBySlug(
+  categoryIdentifier: string,
+  subcategorySlug: string
+): Promise<DbSubcategory | null> {
+  try {
+    const db = getDatabase();
+    const row = await db.queryOne<DbSubcategory>(
+      `SELECT s.* FROM subcategories s
+       LEFT JOIN categories c ON s.category_id = c.id
+       WHERE (s.category_id = ? OR c.slug = ?) AND s.slug = ? AND s.active = 1`,
+      [categoryIdentifier, categoryIdentifier, subcategorySlug]
+    );
+    return row || null;
+  } catch (err) {
+    console.error(`Error fetching subcategory ${subcategorySlug} from D1:`, err);
+    return null;
+  }
+}
+
+/**
  * Fetch all products from Cloudflare D1 with relational joins
  */
 export async function getDynamicProducts(filters?: {
   categorySlug?: string;
+  subcategorySlug?: string;
   featured?: boolean;
   search?: string;
 }): Promise<Product[]> {
   try {
     const db = getDatabase();
     let sql = `
-      SELECT p.*, c.name as category_name, c.slug as category_slug
+      SELECT p.*, c.name as category_name, c.slug as category_slug, s.slug as subcategory_slug, s.name as subcategory_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN subcategories s ON p.subcategory_id = s.id
       WHERE p.active = 1
     `;
     const params: unknown[] = [];
@@ -218,6 +246,11 @@ export async function getDynamicProducts(filters?: {
     if (filters?.categorySlug) {
       sql += ' AND (p.category_id = ? OR c.slug = ?)';
       params.push(filters.categorySlug, filters.categorySlug);
+    }
+
+    if (filters?.subcategorySlug) {
+      sql += ' AND (p.subcategory_id = ? OR s.slug = ?)';
+      params.push(filters.subcategorySlug, filters.subcategorySlug);
     }
 
     if (filters?.featured !== undefined) {
@@ -232,7 +265,7 @@ export async function getDynamicProducts(filters?: {
 
     sql += ' ORDER BY p.display_order ASC';
 
-    const products = await db.query<DbProduct & { category_name?: string }>(sql, params);
+    const products = await db.query<DbProduct & { category_name?: string; category_slug?: string; subcategory_slug?: string; subcategory_name?: string }>(sql, params);
     if (!products || products.length === 0) return [];
 
     // Fetch images, variants, and specifications in batch
@@ -293,10 +326,11 @@ export async function getDynamicProducts(filters?: {
 export async function getDynamicProductBySlug(slug: string): Promise<Product | null> {
   try {
     const db = getDatabase();
-    const product = await db.queryOne<DbProduct & { category_name?: string; category_slug?: string }>(
-      `SELECT p.*, c.name as category_name, c.slug as category_slug
+    const product = await db.queryOne<DbProduct & { category_name?: string; category_slug?: string; subcategory_slug?: string; subcategory_name?: string }>(
+      `SELECT p.*, c.name as category_name, c.slug as category_slug, s.slug as subcategory_slug, s.name as subcategory_name
        FROM products p
        LEFT JOIN categories c ON p.category_id = c.id
+       LEFT JOIN subcategories s ON p.subcategory_id = s.id
        WHERE p.slug = ? AND p.active = 1`,
       [slug]
     );
@@ -391,5 +425,105 @@ export async function getDynamicAllCmsSections(): Promise<Record<string, DbCmsCo
   } catch (err) {
     console.error('Error fetching all CMS sections from D1:', err);
     return {};
+  }
+}
+
+export interface CategoryDiscoveryItem {
+  id: string;
+  name: string;
+  image: string;
+  href: string;
+}
+
+export interface DiscoveryCategory {
+  id: string;
+  slug: string;
+  tabLabel: string;
+  items: CategoryDiscoveryItem[];
+}
+
+function getCategoryTabLabel(cat: { name: string; slug: string }): string {
+  if (cat.slug === 'curtains-drapes') return 'Curtains';
+  if (cat.slug === 'window-blinds-shades') return 'Window Blinds';
+  if (cat.slug === 'sofa-fabrics-upholstery') return 'Sofa Fabrics';
+  if (cat.slug === 'wallpapers-wall-coverings') return 'Wallpapers';
+  if (cat.slug === 'mattresses-sleep-systems') return 'Mattresses';
+  if (cat.slug === 'carpets-rugs') return 'Carpets & Rugs';
+  if (cat.slug === 'wooden-flooring-sports-floor') return 'Flooring';
+  if (cat.slug === 'bed-linen-bath') return 'Bed Linen';
+  if (cat.slug === 'cushions-pillows') return 'Cushions';
+  return cat.name.split('&')[0].trim();
+}
+
+function getCategoryBasePath(slug: string): string {
+  if (slug === 'curtains-drapes') return '/categories/curtains';
+  if (slug === 'window-blinds-shades') return '/categories/blinds';
+  if (slug === 'sofa-fabrics-upholstery') return '/categories/sofa-fabrics';
+  if (slug === 'wallpapers-wall-coverings') return '/categories/wallpapers';
+  if (slug === 'carpets-rugs') return '/categories/carpets';
+  return `/categories/${slug}`;
+}
+
+/**
+ * Fetch dynamic category discovery list for homepage BrowseByCategories
+ */
+export async function getDynamicCategoryDiscovery(): Promise<DiscoveryCategory[]> {
+  try {
+    const db = getDatabase();
+    const categories = await db.query<DbCategory>(
+      'SELECT * FROM categories WHERE active = 1 ORDER BY display_order ASC'
+    );
+    if (!categories || categories.length === 0) return [];
+
+    const subcategories = await db.query<DbSubcategory>(
+      'SELECT * FROM subcategories WHERE active = 1 ORDER BY display_order ASC'
+    );
+
+    // Fetch active products to display for categories that don't have subcategories
+    const products = await db.query<DbProduct & { main_image?: string }>(
+      `SELECT p.*, pi.image_url as main_image FROM products p
+       LEFT JOIN product_images pi ON pi.product_id = p.id AND pi.is_main = 1
+       WHERE p.active = 1 ORDER BY p.display_order ASC`
+    );
+
+    const result: DiscoveryCategory[] = [];
+
+    for (const cat of categories) {
+      const catSubcats = subcategories.filter((s) => s.category_id === cat.id);
+      let items: CategoryDiscoveryItem[] = [];
+
+      if (catSubcats.length > 0) {
+        items = catSubcats.map((s) => ({
+          id: s.id,
+          name: s.name,
+          image: s.image || cat.image || '/images/hero/curtains.jpg',
+          href: `${getCategoryBasePath(cat.slug)}/${s.slug}`,
+        }));
+      } else {
+        const catProds = products.filter((p) => p.category_id === cat.id);
+        if (catProds.length > 0) {
+          items = catProds.map((p) => ({
+            id: p.id,
+            name: p.display_name || p.name,
+            image: p.main_image || cat.image || '/images/hero/living_room.jpg',
+            href: `/products/${p.slug}`,
+          }));
+        }
+      }
+
+      if (items.length > 0) {
+        result.push({
+          id: `disc-${cat.slug}`,
+          slug: cat.slug,
+          tabLabel: getCategoryTabLabel(cat),
+          items,
+        });
+      }
+    }
+
+    return result;
+  } catch (err) {
+    console.error('Error fetching dynamic category discovery from D1:', err);
+    return [];
   }
 }

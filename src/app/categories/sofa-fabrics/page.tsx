@@ -2,7 +2,7 @@ import React from 'react';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { SofaFabricsLanding } from '@/components/sofa-fabrics/SofaFabricsLanding';
-import { getSofaFabricTypeBySlug } from '@/lib/data/sofa-fabrics';
+import { getDynamicSubcategories, getDynamicSubcategoryBySlug } from '@/lib/db/catalog';
 
 export const metadata: Metadata = {
   title: 'Sofa Fabrics & Upholstery | Bespoke Textiles & Re-Upholstery | Zaira Furnishing',
@@ -17,11 +17,13 @@ interface SofaFabricsPageProps {
 export default async function SofaFabricsCategoryPage({ searchParams }: SofaFabricsPageProps) {
   const resolved = await searchParams;
   if (resolved?.type && resolved.type !== 'all') {
-    const matched = getSofaFabricTypeBySlug(resolved.type);
+    const matched = await getDynamicSubcategoryBySlug('cat-3', resolved.type);
     if (matched) {
       redirect(`/categories/sofa-fabrics/${matched.slug}`);
     }
   }
 
-  return <SofaFabricsLanding />;
+  const subcategories = await getDynamicSubcategories('cat-3');
+
+  return <SofaFabricsLanding subcategories={subcategories} />;
 }

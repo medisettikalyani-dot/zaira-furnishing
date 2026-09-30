@@ -1,8 +1,11 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getDynamicProducts } from '@/lib/db/catalog';
-import { BLIND_TYPES, getBlindTypeBySlug } from '@/lib/data/blinds';
+import {
+  getDynamicProducts,
+  getDynamicSubcategories,
+  getDynamicSubcategoryBySlug,
+} from '@/lib/db/catalog';
 import { BlindTypePage } from '@/components/blinds/BlindTypePage';
 
 interface BlindTypeRouteProps {
@@ -10,14 +13,15 @@ interface BlindTypeRouteProps {
 }
 
 export async function generateStaticParams() {
-  return BLIND_TYPES.map((t) => ({
+  const subcategories = await getDynamicSubcategories('cat-2');
+  return subcategories.map((t) => ({
     type: t.slug,
   }));
 }
 
 export async function generateMetadata({ params }: BlindTypeRouteProps): Promise<Metadata> {
   const resolved = await params;
-  const blindType = getBlindTypeBySlug(resolved.type);
+  const blindType = await getDynamicSubcategoryBySlug('cat-2', resolved.type);
 
   if (!blindType) {
     return {
@@ -27,20 +31,24 @@ export async function generateMetadata({ params }: BlindTypeRouteProps): Promise
 
   return {
     title: `${blindType.name} | Window Blinds & Shades | Zaira Furnishing`,
-    description: blindType.description,
+    description: blindType.description || undefined,
   };
 }
 
 export default async function BlindTypeRoute({ params }: BlindTypeRouteProps) {
   const resolved = await params;
-  const blindType = getBlindTypeBySlug(resolved.type);
+  const blindType = await getDynamicSubcategoryBySlug('cat-2', resolved.type);
 
   if (!blindType) {
     notFound();
   }
 
-  // Filter only window blinds products from Cloudflare D1
-  const blindProducts = await getDynamicProducts({ categorySlug: 'window-blinds-shades' });
+  // Filter window blinds products directly from Cloudflare D1
+  const blindProducts = await getDynamicProducts({
+    categorySlug: 'window-blinds-shades',
+    subcategorySlug: blindType.slug,
+  });
 
   return <BlindTypePage blindType={blindType} products={blindProducts} />;
 }
+

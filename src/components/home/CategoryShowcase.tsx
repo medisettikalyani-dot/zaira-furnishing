@@ -2,7 +2,13 @@
 
 import React from 'react';
 import { BrowseByCategories } from '@/components/home/BrowseByCategories';
+import { DiscoveryCategory } from '@/lib/db/catalog';
 
-export function CategoryShowcase() {
-  return <BrowseByCategories id="categories" />;
+interface CategoryShowcaseProps {
+  categories?: DiscoveryCategory[];
 }
+
+export function CategoryShowcase({ categories }: CategoryShowcaseProps) {
+  return <BrowseByCategories id="categories" categories={categories} />;
+}
+

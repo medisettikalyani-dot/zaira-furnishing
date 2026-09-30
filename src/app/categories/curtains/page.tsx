@@ -2,7 +2,7 @@ import React from 'react';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { CurtainsLanding } from '@/components/curtains/CurtainsLanding';
-import { getCurtainTypeBySlug } from '@/lib/data/curtains';
+import { getDynamicSubcategories, getDynamicSubcategoryBySlug } from '@/lib/db/catalog';
 
 export const metadata: Metadata = {
   title: 'Curtains & Drapes | Bespoke Window Treatments | Zaira Furnishing',
@@ -17,11 +17,13 @@ interface CurtainsPageProps {
 export default async function CurtainsCategoryPage({ searchParams }: CurtainsPageProps) {
   const resolved = await searchParams;
   if (resolved?.type && resolved.type !== 'all') {
-    const matched = getCurtainTypeBySlug(resolved.type);
+    const matched = await getDynamicSubcategoryBySlug('cat-1', resolved.type);
     if (matched) {
       redirect(`/categories/curtains/${matched.slug}`);
     }
   }
 
-  return <CurtainsLanding />;
+  const subcategories = await getDynamicSubcategories('cat-1');
+
+  return <CurtainsLanding subcategories={subcategories} />;
 }

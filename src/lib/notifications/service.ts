@@ -2,7 +2,7 @@
 
 import crypto from 'crypto';
 import { getDatabase } from '@/lib/db';
-import { DbOrder, DbOrderNotification, NotificationEventType, NotificationRecipientType } from '@/lib/db/types';
+import { DbOrder, DbOrderNotification, DbOrderStatusHistory, NotificationEventType, NotificationRecipientType } from '@/lib/db/types';
 import { getNotificationProvider, DefaultNotificationProvider } from './provider';
 import {
   generateCustomerOrderConfirmationEmail,
@@ -188,6 +188,8 @@ export async function triggerNewOrderNotifications(
     idempotencyKey: `order_${order.id}_new_order_admin`,
     payloadSummary: {
       orderNumber: order.order_number,
+      orderSource: order.order_source || 'WEB',
+      customerName: order.customer_name,
       totalAmount: order.total_amount,
       customerPhone: order.customer_phone,
       customerEmail: order.customer_email,
@@ -241,6 +243,43 @@ export async function getOrderNotifications(orderId: string): Promise<DbOrderNot
   const db = getDatabase();
   return db.query<DbOrderNotification>(
     `SELECT * FROM order_notifications WHERE order_id = ? ORDER BY created_at DESC`,
+    [orderId]
+  );
+}
+
+/**
+ * Record a status change in the order_status_history audit trail.
+ */
+export async function recordStatusHistory(
+  orderId: string,
+  oldStatus: string,
+  newStatus: string,
+  changedBy: string = 'ADMIN'
+): Promise<DbOrderStatusHistory> {
+  const db = getDatabase();
+  const historyId = `osh-${crypto.randomUUID()}`;
+
+  await db.execute(
+    `INSERT INTO order_status_history (id, order_id, old_status, new_status, changed_by, created_at)
+     VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+    [historyId, orderId, oldStatus, newStatus, changedBy]
+  );
+
+  const record = await db.queryOne<DbOrderStatusHistory>(
+    'SELECT * FROM order_status_history WHERE id = ?',
+    [historyId]
+  );
+
+  return record!;
+}
+
+/**
+ * Retrieve status change history for an order.
+ */
+export async function getOrderStatusHistory(orderId: string): Promise<DbOrderStatusHistory[]> {
+  const db = getDatabase();
+  return db.query<DbOrderStatusHistory>(
+    `SELECT * FROM order_status_history WHERE order_id = ? ORDER BY created_at ASC`,
     [orderId]
   );
 }
@@ -355,3 +394,111 @@ export async function retryNotification(
     message: res.success ? 'Notification delivered successfully.' : res.error,
   };
 }
+
+/**
+ * Count unread admin notifications for new WhatsApp orders.
+ */
+export async function getUnreadAdminWhatsAppOrdersCount(): Promise<number> {
+  const db = getDatabase();
+  const row = await db.queryOne<{ count: number }>(`
+    SELECT COUNT(*) as count
+    FROM order_notifications n
+    JOIN orders o ON n.order_id = o.id
+    WHERE n.recipient_type = 'ADMIN'
+      AND n.event_type = 'NEW_ORDER_ADMIN'
+      AND o.order_source = 'WHATSAPP'
+      AND (n.is_read = 0 OR n.is_read IS NULL)
+  `);
+  return row?.count || 0;
+}
+
+/**
+ * Retrieve admin order notifications with order metadata.
+ */
+export async function getAdminOrderNotifications(options?: {
+  unreadOnly?: boolean;
+  limit?: number;
+}): Promise<any[]> {
+  const db = getDatabase();
+  const limit = options?.limit || 20;
+  const whereClauses = [
+    "n.recipient_type = 'ADMIN'",
+    "n.event_type = 'NEW_ORDER_ADMIN'",
+    "o.order_source = 'WHATSAPP'",
+  ];
+
+  if (options?.unreadOnly) {
+    whereClauses.push('(n.is_read = 0 OR n.is_read IS NULL)');
+  }
+
+  const sql = `
+    SELECT
+      n.id,
+      n.order_id,
+      n.subject,
+      n.status,
+      n.is_read,
+      n.read_at,
+      n.payload_summary,
+      n.created_at,
+      o.order_number,
+      o.customer_name,
+      o.customer_phone,
+      o.total_amount,
+      o.order_source,
+      o.status as order_status
+    FROM order_notifications n
+    JOIN orders o ON n.order_id = o.id
+    WHERE ${whereClauses.join(' AND ')}
+    ORDER BY n.created_at DESC
+    LIMIT ?
+  `;
+
+  return db.query(sql, [limit]);
+}
+
+/**
+ * Mark a specific notification as read.
+ */
+export async function markNotificationAsRead(notificationId: string): Promise<boolean> {
+  const db = getDatabase();
+  const res = await db.execute(
+    "UPDATE order_notifications SET is_read = 1, read_at = datetime('now'), updated_at = datetime('now') WHERE id = ?",
+    [notificationId]
+  );
+  return res.changes > 0;
+}
+
+/**
+ * Mark all unread admin notifications for a specific order as read.
+ */
+export async function markOrderNotificationsAsRead(orderIdentifier: string): Promise<boolean> {
+  const db = getDatabase();
+  const res = await db.execute(
+    `UPDATE order_notifications
+     SET is_read = 1, read_at = datetime('now'), updated_at = datetime('now')
+     WHERE recipient_type = 'ADMIN'
+       AND (is_read = 0 OR is_read IS NULL)
+       AND (
+         order_id = ? OR
+         order_id = (SELECT id FROM orders WHERE order_number = ?)
+       )`,
+    [orderIdentifier, orderIdentifier]
+  );
+  return res.changes > 0;
+}
+
+/**
+ * Mark all unread admin WhatsApp order notifications as read.
+ */
+export async function markAllAdminNotificationsAsRead(): Promise<boolean> {
+  const db = getDatabase();
+  const res = await db.execute(
+    `UPDATE order_notifications
+     SET is_read = 1, read_at = datetime('now'), updated_at = datetime('now')
+     WHERE recipient_type = 'ADMIN'
+       AND (is_read = 0 OR is_read IS NULL)`
+  );
+  return res.changes > 0;
+}
+

@@ -4,9 +4,13 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight, ArrowRight, Sparkles, MessageCircle } from 'lucide-react';
-import { CARPET_TYPES } from '@/lib/data/carpets';
+import { DbSubcategory } from '@/lib/db/types';
 
-export function CarpetsLanding() {
+interface CarpetsLandingProps {
+  subcategories: DbSubcategory[];
+}
+
+export function CarpetsLanding({ subcategories }: CarpetsLandingProps) {
   return (
     <div className="bg-[#FAF7F2] min-h-screen text-[#1C1917] selection:bg-[#9A7B56] selection:text-white">
       {/* ─── 1. BREADCRUMB ─── */}
@@ -44,7 +48,7 @@ export function CarpetsLanding() {
       <section className="pb-16 sm:pb-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-5 lg:gap-6">
-            {CARPET_TYPES.map((type) => (
+            {subcategories.map((type) => (
               <Link
                 key={type.id}
                 href={`/categories/carpets/${type.slug}`}

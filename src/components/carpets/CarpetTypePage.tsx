@@ -4,11 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, ArrowLeft, ArrowUpDown } from 'lucide-react';
 import { Product } from '@/lib/data/types';
-import { CarpetType } from '@/lib/data/carpets';
+import { DbSubcategory } from '@/lib/db/types';
 import { ProductCard } from '@/components/ui/ProductCard';
 
 interface CarpetTypePageProps {
-  carpetType: CarpetType;
+  carpetType: DbSubcategory;
   products: Product[];
 }
 
@@ -18,9 +18,9 @@ export function CarpetTypePage({ carpetType, products }: CarpetTypePageProps) {
   // Strict, reliable filter: must belong to carpets-rugs category and match this exact carpet type
   const typeProducts = products.filter(
     (p) =>
-      p.categorySlug === 'carpets-rugs' &&
-      (p.carpetType === carpetType.slug ||
-        p.slug === carpetType.productSlug ||
+      (p.categorySlug === 'carpets-rugs' || p.categorySlug === 'carpets') &&
+      (!carpetType.slug ||
+        p.carpetType === carpetType.slug ||
         (p.carpetType && p.carpetType.toLowerCase() === carpetType.slug.toLowerCase()))
   );
 

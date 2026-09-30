@@ -4,11 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, ArrowLeft, ArrowUpDown } from 'lucide-react';
 import { Product } from '@/lib/data/types';
-import { SofaFabricType } from '@/lib/data/sofa-fabrics';
+import { DbSubcategory } from '@/lib/db/types';
 import { ProductCard } from '@/components/ui/ProductCard';
 
 interface SofaFabricTypePageProps {
-  sofaFabricType: SofaFabricType;
+  sofaFabricType: DbSubcategory;
   products: Product[];
 }
 
@@ -18,9 +18,9 @@ export function SofaFabricTypePage({ sofaFabricType, products }: SofaFabricTypeP
   // Strict, reliable filter: must belong to sofa-fabrics-upholstery category and match this exact fabric type
   const typeProducts = products.filter(
     (p) =>
-      p.categorySlug === 'sofa-fabrics-upholstery' &&
-      (p.sofaFabricType === sofaFabricType.slug ||
-        p.slug === sofaFabricType.productSlug ||
+      (p.categorySlug === 'sofa-fabrics-upholstery' || p.categorySlug === 'sofa-fabrics') &&
+      (!sofaFabricType.slug ||
+        p.sofaFabricType === sofaFabricType.slug ||
         (p.sofaFabricType && p.sofaFabricType.toLowerCase() === sofaFabricType.slug.toLowerCase()))
   );
 

@@ -16,13 +16,16 @@ export const PRODUCTS: Product[] = [
     productType: 'custom_made',
     price: 3850,
     startingPrice: true,
-    currency: '₹',
+    image: '/images/products/curtains/blackout-curtains/main.jpg',
     mainImage: '/images/products/curtains/blackout-curtains/main.jpg',
+    additionalImages: [
+      '/images/products/curtains/blackout-curtains/room-view.jpg',
+      '/images/products/curtains/blackout-curtains/fabric-detail.jpg',
+    ],
     galleryImages: [
       '/images/products/curtains/blackout-curtains/main.jpg',
-      '/images/products/curtains/blackout-curtains/warm-beige.jpg',
-      '/images/products/curtains/blackout-curtains/oatmeal-warm.jpg',
-      '/images/products/curtains/blackout-curtains/dove-grey.jpg',
+      '/images/products/curtains/blackout-curtains/room-view.jpg',
+      '/images/products/curtains/blackout-curtains/fabric-detail.jpg',
     ],
     variations: [
       {

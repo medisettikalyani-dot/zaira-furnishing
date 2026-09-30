@@ -3,17 +3,8 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
-import { getProductBySlug } from '@/lib/data/products';
 import { Product } from '@/lib/data/types';
 import { FeaturedProductCard } from './FeaturedProductCard';
-
-const FEATURED_SHOWCASE_SLUGS = [
-  'blackout-curtains',
-  'roma-textured-boucle-upholstery',
-  'roller-blinds',
-  'solis-hand-tufted-wool-silk-rug',
-  'monaco-crush-resistant-matte-velvet',
-];
 
 interface FeaturedCollectionProps {
   products?: Product[];
@@ -22,7 +13,7 @@ interface FeaturedCollectionProps {
 }
 
 export function FeaturedCollection({
-  products,
+  products = [],
   title = 'Featured Furnishings',
   subtitle = 'Explore selected furnishings from Zaira.',
 }: FeaturedCollectionProps) {
@@ -31,11 +22,7 @@ export function FeaturedCollection({
   const [canScrollRight, setCanScrollRight] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const featuredProducts = products && products.length > 0
-    ? products
-    : FEATURED_SHOWCASE_SLUGS
-        .map((slug) => getProductBySlug(slug))
-        .filter((p): p is Product => p !== undefined);
+  const featuredProducts = products;
 
   const checkScrollState = useCallback(() => {
     if (!scrollRef.current) return;

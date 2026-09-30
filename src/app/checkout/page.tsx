@@ -26,7 +26,11 @@ import {
   Compass,
 } from 'lucide-react';
 import { useStore, Order } from '@/lib/context/StoreContext';
-import { PRODUCTS } from '@/lib/data/products';
+import {
+  ZAIRA_WHATSAPP_NUMBER,
+  ZAIRA_WHATSAPP_DISPLAY,
+  buildOrderWhatsAppUrl,
+} from '@/lib/whatsapp';
 
 export default function CheckoutPage() {
   const {
@@ -69,6 +73,8 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [idempotencyKey, setIdempotencyKey] = useState<string>('');
+  const [whatsappUrl, setWhatsappUrl] = useState<string>('');
+  const [whatsappOpened, setWhatsappOpened] = useState<boolean>(false);
 
   // Auto-populate customer info when logged in
   useEffect(() => {
@@ -79,6 +85,11 @@ export default function CheckoutPage() {
     }
   }, [customer, fullName, phone, email]);
 
+  // Refresh cart session on mount to ensure fresh D1 prices and availability
+  useEffect(() => {
+    refreshSession();
+  }, [refreshSession]);
+
   // Ensure unique idempotency key
   useEffect(() => {
     if (!idempotencyKey) {
@@ -86,14 +97,15 @@ export default function CheckoutPage() {
     }
   }, [idempotencyKey]);
 
-  // Detect custom-made products in the cart
+  // Detect custom-made products in the cart from D1 productType or customization
   const hasCustomProducts = cart.some((item) => {
     if (item.customDimensions || (item.sizeLabel && item.sizeLabel.toLowerCase().includes('custom'))) {
       return true;
     }
-    const matchedProduct = PRODUCTS.find((p) => p.id === item.productId || p.slug === item.slug);
-    return matchedProduct?.productType === 'custom_made';
+    return item.productType === 'custom_made' || item.customizationData?.productType === 'custom_made';
   });
+
+  const hasUnavailableItems = cart.some((item) => item.isAvailable === false);
 
   const shippingCost = 0; // Complimentary white-glove delivery
   const totalPayable = cartTotal + shippingCost;
@@ -153,6 +165,11 @@ export default function CheckoutPage() {
     if (isSubmitting) return;
     setSubmitError(null);
 
+    if (hasUnavailableItems) {
+      setSubmitError('One or more items in your cart are currently unavailable. Please modify your bag before placing your order.');
+      return;
+    }
+
     // If guest clicks place order, prompt for authentication
     if (!customer) {
       setAuthModalOpen(true);
@@ -183,6 +200,13 @@ export default function CheckoutPage() {
           notes: specialInstructions.trim() || undefined,
           paymentMethod: 'COD',
           idempotencyKey,
+          order_source: 'WHATSAPP',
+          items: cart.map((it) => ({
+            productId: it.productId,
+            variantId: it.variantId,
+            quantity: it.quantity,
+            customizationData: it.customizationData,
+          })),
         }),
       });
 
@@ -196,6 +220,23 @@ export default function CheckoutPage() {
 
       const realOrder = data.order;
       const orderRef = realOrder.orderNumber || realOrder.id;
+
+      // ─── Generate Standardized WhatsApp Confirmation URL from actual DB Order ───
+      const generatedWaUrl = buildOrderWhatsAppUrl(realOrder);
+      setWhatsappUrl(generatedWaUrl);
+
+      // Attempt to open WhatsApp automatically in a new tab
+      let opened = false;
+      try {
+        const newWin = window.open(generatedWaUrl, '_blank');
+        if (newWin && !newWin.closed && typeof newWin.closed !== 'undefined') {
+          opened = true;
+        }
+      } catch (openErr) {
+        console.warn('Automatic WhatsApp popup blocked or prevented:', openErr);
+        opened = false;
+      }
+      setWhatsappOpened(opened);
 
       const orderForDisplay: Order = {
         id: orderRef,
@@ -220,7 +261,11 @@ export default function CheckoutPage() {
         deliveryOption,
         timeSlot: deliveryOption === 'service_visit' ? timeSlot : undefined,
         paymentMethod: 'cod',
+        paymentStatus: 'PENDING',
         status: 'order_received',
+        rawStatus: (realOrder.status || 'CONFIRMED').toUpperCase(),
+        orderSource: realOrder.orderSource || 'WHATSAPP',
+        landmark: specialInstructions.trim() || undefined,
         hasCustomProducts,
       };
 
@@ -275,30 +320,30 @@ export default function CheckoutPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <div className="bg-white rounded-2xl border border-[#EDE8DE] p-6 sm:p-10 shadow-[0_4px_24px_rgba(28,25,23,0.04)] space-y-8">
             
-            {/* 1. TOP SECTION: Status & Prominent Order Reference */}
+            {/* 1. TOP SECTION: Status, Order Reference & WhatsApp Confirmation CTA */}
             <div className="text-center pb-6 border-b border-[#F2ECE1]">
-              <div className="w-14 h-14 rounded-full bg-[#1E3A2F]/10 text-[#1E3A2F] flex items-center justify-center mx-auto mb-4 border border-[#1E3A2F]/20">
-                <Check className="w-7 h-7 stroke-[2.5]" />
+              <div className="w-16 h-16 rounded-full bg-[#25D366]/10 text-[#128C7E] flex items-center justify-center mx-auto mb-4 border border-[#25D366]/30 shadow-2xs">
+                <MessageCircle className="w-8 h-8 text-[#25D366]" />
               </div>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] uppercase tracking-wider font-semibold bg-[#1E3A2F]/10 text-[#1E3A2F] mb-3">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Order Confirmed
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11.5px] uppercase tracking-wider font-semibold bg-[#25D366]/10 text-[#128C7E] border border-[#25D366]/25 mb-3">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#25D366]" />
+                Order Placed Successfully
               </span>
 
               <h1 className="font-serif text-[26px] sm:text-[34px] text-[#1C1917] font-semibold mb-2 leading-tight">
-                Thank You for Choosing Zaira Furnishing
+                Your Order Has Been Recorded
               </h1>
 
-              <p className="text-[13px] sm:text-[14px] text-[#78716C] max-w-lg mx-auto leading-relaxed mb-6 font-light">
-                Your order has been recorded in our store system. A record of your order details and items has been saved to your account.
+              <p className="text-[13.5px] sm:text-[14px] text-[#78716C] max-w-lg mx-auto leading-relaxed mb-6 font-light">
+                Please confirm your order with Zaira on WhatsApp to verify measurements, fabric specifications, and schedule tailoring.
               </p>
 
               {/* Prominent Order Reference Card */}
-              <div className="inline-flex flex-col sm:flex-row items-center gap-3 bg-[#FAF7F2] border border-[#E8DCCB] px-5 py-3.5 rounded-xl shadow-xs">
+              <div className="inline-flex flex-col sm:flex-row items-center gap-3 bg-[#FAF7F2] border border-[#E8DCCB] px-5 py-3.5 rounded-xl shadow-xs mb-6">
                 <div className="text-left sm:border-r sm:border-[#EDE8DE] sm:pr-4">
                   <span className="text-[10px] uppercase font-bold tracking-widest text-[#866945] block">
-                    Order Reference
+                    Order ID Reference
                   </span>
                   <span className="font-mono text-[18px] sm:text-[20px] font-bold text-[#1C1917] tracking-wide">
                     #{orderId}
@@ -323,10 +368,43 @@ export default function CheckoutPage() {
                       </>
                     )}
                   </button>
-                  <span className="text-[11px] text-[#8C827A] hidden sm:inline">
-                    · Frontend Demonstration
-                  </span>
                 </div>
+              </div>
+
+              {/* Primary WhatsApp Action Box */}
+              <div className="bg-[#25D366]/5 border border-[#25D366]/30 rounded-2xl p-5 sm:p-6 max-w-lg mx-auto text-center space-y-3">
+                <div className="text-[13px] text-[#1C1917] font-medium leading-relaxed">
+                  {whatsappOpened ? (
+                    <span>
+                      WhatsApp opened in a new tab. If you closed it or need to resend, click below to confirm:
+                    </span>
+                  ) : (
+                    <span>
+                      Your order has been recorded. Please click the button below to confirm your order with our atelier on WhatsApp:
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <a
+                    href={
+                      whatsappUrl ||
+                      `https://wa.me/${ZAIRA_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                        `Hello Zaira Furnishing, I just placed order #${orderId}. Please confirm my order.`
+                      )}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-[13px] uppercase tracking-wider font-bold shadow-md hover:shadow-lg transition-all cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0"
+                  >
+                    <MessageCircle className="w-5 h-5 fill-current" />
+                    <span>Continue on WhatsApp</span>
+                  </a>
+                </div>
+
+                <p className="text-[11.5px] text-[#78716C] pt-1">
+                  Connects directly to our official atelier line: <strong>{ZAIRA_WHATSAPP_DISPLAY}</strong>
+                </p>
               </div>
             </div>
 
@@ -518,15 +596,18 @@ export default function CheckoutPage() {
               </Link>
 
               <a
-                href={`https://wa.me/916300145763?text=${encodeURIComponent(
-                  `Hello Zaira Furnishing, I just placed order #${orderId} (${fullName}). Please provide status on my order.`
-                )}`}
+                href={
+                  whatsappUrl ||
+                  `https://wa.me/${ZAIRA_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                    `Hello Zaira Furnishing, I just placed order #${orderId} (${fullName}). Please provide status on my order.`
+                  )}`
+                }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white border border-[#D8CFBF] text-[#1C1917] hover:border-[#1E3A2F] hover:text-[#1E3A2F] text-[11.5px] uppercase tracking-wider font-semibold transition-all"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-xs"
               >
-                <MessageCircle className="w-4 h-4 text-[#25D366]" />
-                <span>WhatsApp Assistance</span>
+                <MessageCircle className="w-4 h-4 fill-current" />
+                <span>Continue on WhatsApp</span>
               </a>
 
               <Link
@@ -1120,6 +1201,14 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
+                {/* Unavailable Items Banner */}
+                {hasUnavailableItems && (
+                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[12px]">
+                    <span className="font-semibold block mb-0.5">Item Availability Notice:</span>
+                    <span>One or more items in your cart are currently unavailable in our catalog. Please modify your bag before placing your order.</span>
+                  </div>
+                )}
+
                 {/* Submission Error Banner */}
                 {submitError && (
                   <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-[12px]">
@@ -1139,7 +1228,7 @@ export default function CheckoutPage() {
                   </button>
                   <button
                     type="button"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || hasUnavailableItems}
                     onClick={handlePlaceOrder}
                     className="flex-1 py-4 rounded-xl font-semibold text-[12.5px] uppercase tracking-widest bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-75 disabled:cursor-not-allowed"
                   >

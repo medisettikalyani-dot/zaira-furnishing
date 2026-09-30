@@ -4,9 +4,13 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight, ArrowRight, Sparkles, MessageCircle } from 'lucide-react';
-import { CURTAIN_TYPES } from '@/lib/data/curtains';
+import { DbSubcategory } from '@/lib/db/types';
 
-export function CurtainsLanding() {
+interface CurtainsLandingProps {
+  subcategories: DbSubcategory[];
+}
+
+export function CurtainsLanding({ subcategories }: CurtainsLandingProps) {
   return (
     <div className="bg-[#FAF7F2] min-h-screen text-[#1C1917] selection:bg-[#9A7B56] selection:text-white">
       {/* ─── 1. BREADCRUMB ─── */}
@@ -44,7 +48,7 @@ export function CurtainsLanding() {
       <section className="pb-16 sm:pb-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-5 lg:gap-6">
-            {CURTAIN_TYPES.map((type) => (
+            {subcategories.map((type) => (
               <Link
                 key={type.id}
                 href={`/categories/curtains/${type.slug}`}
@@ -53,7 +57,7 @@ export function CurtainsLanding() {
                 {/* Beautiful Subcategory Image */}
                 <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#F2EDE2]">
                   <Image
-                    src={type.image}
+                    src={type.image || '/images/hero/curtains.jpg'}
                     alt={type.name}
                     fill
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"

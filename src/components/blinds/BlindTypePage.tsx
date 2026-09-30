@@ -4,11 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, ArrowLeft, ArrowUpDown } from 'lucide-react';
 import { Product } from '@/lib/data/types';
-import { BlindType } from '@/lib/data/blinds';
+import { DbSubcategory } from '@/lib/db/types';
 import { ProductCard } from '@/components/ui/ProductCard';
 
 interface BlindTypePageProps {
-  blindType: BlindType;
+  blindType: DbSubcategory;
   products: Product[];
 }
 
@@ -18,9 +18,9 @@ export function BlindTypePage({ blindType, products }: BlindTypePageProps) {
   // Strict, reliable filter: must belong to window-blinds-shades category and match this exact blind type
   const typeProducts = products.filter(
     (p) =>
-      p.categorySlug === 'window-blinds-shades' &&
-      (p.blindType === blindType.slug ||
-        p.slug === blindType.productSlug ||
+      (p.categorySlug === 'window-blinds-shades' || p.categorySlug === 'blinds') &&
+      (!blindType.slug ||
+        p.blindType === blindType.slug ||
         (p.blindType && p.blindType.toLowerCase() === blindType.slug.toLowerCase()))
   );
 

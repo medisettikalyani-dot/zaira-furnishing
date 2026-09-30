@@ -49,6 +49,9 @@ export async function GET(req: NextRequest) {
       variant_sku: string | null;
       variant_image: string | null;
       main_image: string | null;
+      product_type: string | null;
+      variant_price_adjustment: number | null;
+      variant_active: number | null;
     }>(
       `SELECT
         ci.id,
@@ -61,10 +64,13 @@ export async function GET(req: NextRequest) {
         p.name as product_name,
         p.slug as product_slug,
         p.base_price as product_base_price,
+        p.product_type as product_type,
         p.active as product_active,
         pv.name as variant_name,
         pv.sku as variant_sku,
         pv.preview_image as variant_image,
+        pv.price_adjustment as variant_price_adjustment,
+        pv.active as variant_active,
         (SELECT image_url FROM product_images WHERE product_id = p.id AND active = 1 ORDER BY is_main DESC, display_order ASC LIMIT 1) as main_image
        FROM cart_items ci
        JOIN carts c ON ci.cart_id = c.id
@@ -78,40 +84,51 @@ export async function GET(req: NextRequest) {
     let total = 0;
     let count = 0;
 
-    const items = rows.map((r) => {
-      let customObj: Record<string, any> = {};
-      if (r.customization_data) {
-        try {
-          customObj = JSON.parse(r.customization_data);
-        } catch {
-          customObj = {};
+    const items = await Promise.all(
+      rows.map(async (r) => {
+        let customObj: Record<string, any> = {};
+        if (r.customization_data) {
+          try {
+            customObj = JSON.parse(r.customization_data);
+          } catch {
+            customObj = {};
+          }
         }
-      }
 
-      const itemTotal = r.unit_price_snapshot * r.quantity;
-      total += itemTotal;
-      count += r.quantity;
+        // Live calculation from current catalog truth in D1
+        const currentUnitPrice = Math.max(0, Number(r.product_base_price) + Number(r.variant_price_adjustment || 0));
+        if (r.unit_price_snapshot !== currentUnitPrice) {
+          await db.execute('UPDATE cart_items SET unit_price_snapshot = ? WHERE id = ?', [currentUnitPrice, r.id]);
+        }
 
-      const img = r.variant_image || r.main_image || '/images/hero/living_room.jpg';
+        const isAvailable = r.product_active === 1 && (r.variant_id == null || r.variant_active === 1);
+        const itemTotal = currentUnitPrice * r.quantity;
+        total += itemTotal;
+        count += r.quantity;
 
-      return {
-        id: r.id,
-        productId: r.product_id,
-        name: r.product_name,
-        slug: r.product_slug,
-        image: img,
-        variantId: r.variant_id || undefined,
-        variantName: r.variant_name || undefined,
-        sku: r.variant_sku || r.product_slug,
-        sizeLabel: customObj.sizeLabel || undefined,
-        headingStyle: customObj.headingStyle || undefined,
-        customDimensions: customObj.customDimensions || undefined,
-        customizationData: customObj,
-        quantity: r.quantity,
-        unitPrice: r.unit_price_snapshot,
-        totalPrice: itemTotal,
-      };
-    });
+        const img = r.variant_image || r.main_image || '/images/hero/living_room.jpg';
+
+        return {
+          id: r.id,
+          productId: r.product_id,
+          name: r.product_name,
+          slug: r.product_slug,
+          image: img,
+          variantId: r.variant_id || undefined,
+          variantName: r.variant_name || undefined,
+          sku: r.variant_sku || r.product_slug,
+          sizeLabel: customObj.sizeLabel || undefined,
+          headingStyle: customObj.headingStyle || undefined,
+          customDimensions: customObj.customDimensions || undefined,
+          customizationData: customObj,
+          productType: r.product_type || 'standard',
+          quantity: r.quantity,
+          unitPrice: currentUnitPrice,
+          totalPrice: itemTotal,
+          isAvailable,
+        };
+      })
+    );
 
     return NextResponse.json({
       cartId: cart.id,

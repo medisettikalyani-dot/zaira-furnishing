@@ -18,6 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useStore } from '@/lib/context/StoreContext';
+import { ZAIRA_WHATSAPP_NUMBER } from '@/lib/whatsapp';
 
 export default function CartPage() {
   const { cart, cartCount, cartTotal, removeFromCart, updateQuantity, clearCart } = useStore();
@@ -102,7 +103,7 @@ export default function CartPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <a
-                href={`https://wa.me/916300145763?text=${encodeURIComponent(
+                href={`https://wa.me/${ZAIRA_WHATSAPP_NUMBER}?text=${encodeURIComponent(
                   `Hello Zaira Furnishing, I just placed order #${orderId} for Cash on Delivery. Please confirm delivery/tailoring details.`
                 )}`}
                 target="_blank"
@@ -484,7 +485,7 @@ export default function CartPage() {
 
                     {/* Secondary Action: WhatsApp Order Assist */}
                     <a
-                      href={`https://wa.me/916300145763?text=${encodeURIComponent(
+                      href={`https://wa.me/${ZAIRA_WHATSAPP_NUMBER}?text=${encodeURIComponent(
                         `Hello Zaira Furnishing, I have ${cartCount} items in my cart totaling ₹${cartTotal.toLocaleString(
                           'en-IN'
                         )}. I would like assistance with my order.`

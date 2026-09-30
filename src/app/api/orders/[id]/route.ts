@@ -44,10 +44,22 @@ export async function GET(req: NextRequest, context: RouteContext) {
       [order.id]
     );
 
+    // Query customer-safe status history (strictly new_status and created_at, no admin or internal info)
+    const rawHistory = await db.query<{ new_status: string; created_at: string }>(
+      'SELECT new_status, created_at FROM order_status_history WHERE order_id = ? ORDER BY created_at ASC',
+      [order.id]
+    );
+
+    const statusHistory = rawHistory.map((h) => ({
+      status: h.new_status,
+      timestamp: h.created_at,
+    }));
+
     return NextResponse.json({
       order: {
         ...order,
         items,
+        statusHistory,
       },
     });
   } catch (error) {

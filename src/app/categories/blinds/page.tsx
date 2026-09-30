@@ -2,7 +2,7 @@ import React from 'react';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { BlindsLanding } from '@/components/blinds/BlindsLanding';
-import { getBlindTypeBySlug } from '@/lib/data/blinds';
+import { getDynamicSubcategories, getDynamicSubcategoryBySlug } from '@/lib/db/catalog';
 
 export const metadata: Metadata = {
   title: 'Window Blinds & Shades | Architectural Window Solutions | Zaira Furnishing',
@@ -17,11 +17,13 @@ interface BlindsPageProps {
 export default async function BlindsCategoryPage({ searchParams }: BlindsPageProps) {
   const resolved = await searchParams;
   if (resolved?.type && resolved.type !== 'all') {
-    const matched = getBlindTypeBySlug(resolved.type);
+    const matched = await getDynamicSubcategoryBySlug('cat-2', resolved.type);
     if (matched) {
       redirect(`/categories/blinds/${matched.slug}`);
     }
   }
 
-  return <BlindsLanding />;
+  const subcategories = await getDynamicSubcategories('cat-2');
+
+  return <BlindsLanding subcategories={subcategories} />;
 }

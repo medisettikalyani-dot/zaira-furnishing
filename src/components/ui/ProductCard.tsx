@@ -26,7 +26,6 @@ export function ProductCard({
   const isFav = isWishlisted(product.id);
   const activeImage = product.mainImage;
   const isCustom = product.productType === 'custom_made';
-  const isFeatured = product.featured;
 
   // Aspect ratio mapping
   const aspectClass =
@@ -35,16 +34,6 @@ export function ProductCard({
       : aspectRatio === '3/4'
         ? 'aspect-[3/4]'
         : 'aspect-[4/5]';
-
-  // Extract a clean 1-2 line descriptive snippet
-  const materialSpec = product.specifications?.find(
-    (s) =>
-      s.label.toLowerCase().includes('fabric') ||
-      s.label.toLowerCase().includes('material') ||
-      s.label.toLowerCase().includes('composition')
-  )?.value;
-
-  const descriptionSnippet = product.shortDescription || materialSpec || product.categoryName;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -61,6 +50,7 @@ export function ProductCard({
       sizeLabel: 'Standard',
       quantity: 1,
       unitPrice: product.price,
+      productType: product.productType,
     });
 
     setAdded(true);
@@ -69,10 +59,10 @@ export function ProductCard({
 
   return (
     <div
-      className={`group relative flex flex-col h-full bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-[#EDE8DE] shadow-[0_2px_10px_rgba(28,25,23,0.03)] hover:shadow-[0_16px_36px_rgba(28,25,23,0.08)] hover:border-[#D5CBB9] transition-all duration-300 ease-out hover:-translate-y-1 ${className}`}
+      className={`group relative flex flex-col h-full bg-white rounded-xl overflow-hidden border border-[#EDE8DE] hover:border-[#D5CBB9] shadow-2xs hover:shadow-xs transition-all duration-200 ${className}`}
     >
-      {/* ─── 1. Image Container ─── */}
-      <div className={`relative ${aspectClass} w-full overflow-hidden bg-gradient-to-b from-[#F7F4EE] to-[#EDE7DC]`}>
+      {/* ─── 1. Image Container (Main Visual Focus) ─── */}
+      <div className={`relative ${aspectClass} w-full overflow-hidden bg-[#F7F4EE]`}>
         <Link
           href={`/products/${product.slug}`}
           className="absolute inset-0 block w-full h-full"
@@ -83,25 +73,9 @@ export function ProductCard({
             alt={product.displayName || product.name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+            className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03]"
           />
-          {/* Subtle soft gradient overlay */}
-          <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/[0.04] via-transparent to-transparent pointer-events-none" />
         </Link>
-
-        {/* Product Badges — top-left */}
-        <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 z-10 flex flex-col gap-1.5 pointer-events-none">
-          {isCustom && (
-            <span className="inline-flex items-center px-2 sm:px-2.5 py-1 text-[8.5px] sm:text-[9px] uppercase tracking-[0.15em] font-semibold bg-[#1C1917]/85 text-[#FDFBF7] backdrop-blur-md rounded-sm border border-white/10 shadow-xs leading-none">
-              Custom Made
-            </span>
-          )}
-          {isFeatured && !isCustom && (
-            <span className="inline-flex items-center px-2 sm:px-2.5 py-1 text-[8.5px] sm:text-[9px] uppercase tracking-[0.15em] font-semibold bg-[#9A7B56]/90 text-white backdrop-blur-md rounded-sm border border-white/10 shadow-xs leading-none">
-              Featured
-            </span>
-          )}
-        </div>
 
         {/* Wishlist Heart — top-right */}
         <button
@@ -112,100 +86,82 @@ export function ProductCard({
             toggleWishlist(product.id);
           }}
           aria-label={isFav ? 'Remove from Wishlist' : 'Add to Wishlist'}
-          className={`absolute top-2.5 right-2.5 sm:top-3 sm:right-3 z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
+          className={`absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
             isFav
-              ? 'bg-white shadow-[0_2px_8px_rgba(28,25,23,0.12)] border border-[#EAE4D8] opacity-100 scale-100'
-              : 'bg-white/90 backdrop-blur-md border border-white/60 shadow-[0_2px_8px_rgba(28,25,23,0.06)] opacity-95 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-white hover:scale-105 active:scale-95'
+              ? 'bg-white shadow-xs border border-[#EAE4D8] opacity-100 scale-100'
+              : 'bg-white/90 backdrop-blur-xs border border-white/80 shadow-2xs opacity-90 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-white hover:scale-105 active:scale-95'
           }`}
         >
           <Heart
-            className={`w-[14px] h-[14px] sm:w-[15px] sm:h-[15px] transition-all duration-200 ${
-              isFav
-                ? 'fill-[#B43D3D] text-[#B43D3D] scale-110'
-                : 'text-[#57534E] hover:text-[#B43D3D]'
+            className={`w-3.5 h-3.5 transition-colors ${
+              isFav ? 'fill-[#B43D3D] text-[#B43D3D]' : 'text-[#57534E] hover:text-[#B43D3D]'
             }`}
           />
         </button>
       </div>
 
-      {/* ─── 2. Product Information Hierarchy ─── */}
-      <div className="p-3 sm:p-4 flex flex-col flex-1">
-        {/* Category / Type */}
+      {/* ─── 2. Product Information ─── */}
+      <div className="p-3.5 flex flex-col flex-1">
+        {/* Category */}
         {showCategory && (
-          <div className="mb-1 sm:mb-1.5 flex items-center justify-between gap-1">
-            <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.16em] font-semibold text-[#9A7B56] truncate">
-              {product.categoryName}
-            </span>
-            {isCustom && (
-              <span className="text-[8.5px] sm:text-[9px] text-[#A8A29E] uppercase tracking-wider font-medium hidden sm:inline">
-                Bespoke
-              </span>
-            )}
-          </div>
+          <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-[#9A7B56] mb-1 truncate">
+            {product.categoryName}
+          </span>
         )}
 
         {/* Product Name */}
-        <Link href={`/products/${product.slug}`} className="block mb-1 sm:mb-1.5 group/title">
-          <h3 className="font-serif text-[13.5px] sm:text-[15.5px] font-semibold text-[#1C1917] leading-[1.3] line-clamp-1 sm:line-clamp-2 min-h-[1.3rem] sm:min-h-[2.6rem] group-hover/title:text-[#9A7B56] transition-colors duration-200">
+        <Link href={`/products/${product.slug}`} className="block mb-2 group/title">
+          <h3 className="font-serif text-[14px] sm:text-[15px] font-medium text-[#1C1917] leading-[1.3] line-clamp-2 min-h-[2.6rem] group-hover/title:text-[#1E3A2F] transition-colors">
             {product.displayName || product.name}
           </h3>
         </Link>
 
-        {/* Short Material / Style Description */}
-        <p className="text-[11px] sm:text-[11.5px] text-[#78716C] line-clamp-1 sm:line-clamp-2 leading-relaxed min-h-[1rem] sm:min-h-[2rem] mb-3 sm:mb-3.5">
-          {descriptionSnippet}
-        </p>
-
-        {/* ─── 3. Pinned Footer: Price & Primary Action ─── */}
-        <div className="mt-auto pt-1 sm:pt-2">
+        {/* ─── 3. Footer: Price & Clean Action ─── */}
+        <div className="mt-auto pt-1 flex items-center justify-between gap-2 border-t border-[#F2ECE1]">
           {/* Price */}
-          <div className="mb-2.5 sm:mb-3">
-            {isCustom ? (
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-[10px] sm:text-[11px] font-medium text-[#78716C] uppercase tracking-wider">
-                  From
-                </span>
-                <span className="font-serif text-[15.5px] sm:text-[17.5px] font-bold text-[#1C1917] tracking-tight">
+          <div className="min-w-0">
+            {isCustom && product.startingPrice ? (
+              <div className="flex items-baseline gap-1 text-[11px] text-[#78716C]">
+                <span>From</span>
+                <span className="font-serif text-[14.5px] sm:text-[15.5px] font-semibold text-[#1E3A2F]">
                   {product.currency}{product.price.toLocaleString('en-IN')}
                 </span>
               </div>
             ) : (
-              <div className="flex items-baseline">
-                <span className="font-serif text-[15.5px] sm:text-[17.5px] font-bold text-[#1C1917] tracking-tight">
-                  {product.currency}{product.price.toLocaleString('en-IN')}
-                </span>
-              </div>
+              <span className="font-serif text-[14.5px] sm:text-[15.5px] font-semibold text-[#1E3A2F]">
+                {product.currency}{product.price.toLocaleString('en-IN')}
+              </span>
             )}
           </div>
 
-          {/* Primary Action Button */}
+          {/* Quick Action */}
           {isCustom ? (
             <Link
               href={`/products/${product.slug}`}
-              className="w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 sm:py-2.5 rounded-lg text-[10.5px] sm:text-[11px] uppercase tracking-[0.12em] font-semibold transition-all duration-200 bg-[#1C1917] text-[#FAF7F2] hover:bg-[#9A7B56] hover:text-white shadow-xs active:scale-[0.98] min-h-[38px] sm:min-h-[40px]"
+              className="inline-flex items-center gap-1 text-[11px] uppercase tracking-wider font-semibold text-[#1E3A2F] hover:text-[#9A7B56] transition-colors py-1"
             >
-              <span>Enquire Now</span>
-              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+              <span>Enquire</span>
+              <ArrowRight className="w-3 h-3" />
             </Link>
           ) : (
             <button
               type="button"
               onClick={handleAddToCart}
-              className={`w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 sm:py-2.5 rounded-lg text-[10.5px] sm:text-[11px] uppercase tracking-[0.12em] font-semibold transition-all duration-200 cursor-pointer active:scale-[0.98] min-h-[38px] sm:min-h-[40px] ${
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] uppercase tracking-wider font-semibold transition-all cursor-pointer ${
                 added
-                  ? 'bg-[#15803D] text-white shadow-xs'
-                  : 'bg-[#1C1917] text-[#FAF7F2] hover:bg-[#9A7B56] hover:text-white shadow-xs'
+                  ? 'bg-[#15803D] text-white'
+                  : 'bg-[#1E3A2F]/10 hover:bg-[#1E3A2F] text-[#1E3A2F] hover:text-white'
               }`}
             >
               {added ? (
                 <>
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Added to Cart</span>
+                  <Check className="w-3 h-3" />
+                  <span>Added</span>
                 </>
               ) : (
                 <>
-                  <ShoppingBag className="w-3.5 h-3.5" />
-                  <span>Add to Cart</span>
+                  <ShoppingBag className="w-3 h-3" />
+                  <span>Add</span>
                 </>
               )}
             </button>

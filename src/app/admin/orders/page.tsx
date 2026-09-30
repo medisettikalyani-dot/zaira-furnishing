@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Banknote,
   Eye,
+  MessageCircle,
 } from 'lucide-react';
 
 interface AdminOrderSummary {
@@ -42,6 +43,8 @@ interface AdminOrderSummary {
   item_count: number;
   first_product_name: string | null;
   has_custom_items: number;
+  order_source?: string;
+  has_unread_notification?: number;
   created_at: string;
   updated_at: string;
 }
@@ -152,6 +155,37 @@ export default function AdminOrdersPage() {
         return {
           label: paymentStatus,
           classes: 'bg-stone-50 text-stone-700 border-stone-200',
+        };
+    }
+  };
+
+  const getOrderSourceBadge = (source?: string) => {
+    const s = (source || 'WEB').toUpperCase();
+    switch (s) {
+      case 'WHATSAPP':
+        return {
+          label: 'WhatsApp Order',
+          classes: 'bg-[#25D366]/10 text-[#128C7E] border-[#25D366]/30 font-semibold',
+          isWhatsApp: true,
+        };
+      case 'QUOTE':
+        return {
+          label: 'Quote',
+          classes: 'bg-[#9A7B56]/10 text-[#866945] border-[#9A7B56]/20 font-medium',
+          isWhatsApp: false,
+        };
+      case 'MEASUREMENT':
+        return {
+          label: 'Measurement',
+          classes: 'bg-blue-50 text-blue-700 border-blue-200 font-medium',
+          isWhatsApp: false,
+        };
+      case 'WEB':
+      default:
+        return {
+          label: 'WEB',
+          classes: 'bg-[#FAF7F2] text-[#78716C] border-[#E7DFD5] font-medium',
+          isWhatsApp: false,
         };
     }
   };
@@ -331,6 +365,7 @@ export default function AdminOrdersPage() {
                 {orders.map((o) => {
                   const statusBadge = getStatusBadge(o.status);
                   const payBadge = getPaymentBadge(o.payment_status);
+                  const sourceBadge = getOrderSourceBadge(o.order_source);
                   const formattedDate = new Date(o.created_at).toLocaleDateString('en-IN', {
                     day: 'numeric',
                     month: 'short',
@@ -345,13 +380,26 @@ export default function AdminOrdersPage() {
                     <tr key={o.id} className="hover:bg-[#FAF9F5] transition-colors">
                       {/* Order Reference & Date */}
                       <td className="py-4 px-4 sm:px-6 align-top">
-                        <Link
-                          href={`/admin/orders/${o.order_number || o.id}`}
-                          className="font-mono text-[14px] font-bold text-[#1C1917] hover:text-[#9A7B56] transition-colors block"
-                        >
-                          #{o.order_number || o.id}
-                        </Link>
-                        <div className="text-[11px] text-[#78716C] flex items-center gap-1.5 mt-0.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Link
+                            href={`/admin/orders/${o.order_number || o.id}`}
+                            className="font-mono text-[14px] font-bold text-[#1C1917] hover:text-[#9A7B56] transition-colors"
+                          >
+                            #{o.order_number || o.id}
+                          </Link>
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] border ${sourceBadge.classes}`}
+                          >
+                            {sourceBadge.isWhatsApp && <MessageCircle className="w-2.5 h-2.5 text-[#25D366]" />}
+                            <span>{sourceBadge.label}</span>
+                          </span>
+                          {o.order_source === 'WHATSAPP' && o.has_unread_notification === 1 && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-600 text-white tracking-wider">
+                              NEW
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-[#78716C] flex items-center gap-1.5 mt-1">
                           <Calendar className="w-3 h-3 text-[#A8A29E]" />
                           <span>{formattedDate}</span>
                           <span className="text-[#D8CFBF]">·</span>
