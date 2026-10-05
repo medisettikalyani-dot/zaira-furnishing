@@ -76,21 +76,29 @@ export function FeaturedCollection({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* ─── 1. Header with Title & Navigation Controls ─── */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-12">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF3E6] border border-[#D4AF37]/40 text-[#823423] text-[10.5px] font-bold uppercase tracking-[0.2em] mb-2.5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF3E6] border border-[#D4AF37]/40 text-[#823423] text-[10px] sm:text-[10.5px] font-bold uppercase tracking-[0.2em] mb-2">
               <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
               <span>Trending In Hyderabad</span>
             </div>
-            <h2 className="font-serif text-[28px] sm:text-[36px] lg:text-[40px] text-[#1C1917] font-medium tracking-tight mb-2 leading-[1.18]">
+            <h2 className="font-serif text-[24px] sm:text-[36px] lg:text-[40px] text-[#1C1917] font-medium tracking-tight mb-1.5 leading-[1.18]">
               {title}
             </h2>
-            <p className="text-[13.5px] sm:text-[14.5px] text-[#78716C] leading-relaxed max-w-lg">
+            <p className="text-[13px] sm:text-[14.5px] text-[#78716C] leading-relaxed max-w-lg">
               {subtitle}
             </p>
+            {/* Mobile-Only Explore All Link */}
+            <Link
+              href="/categories"
+              className="sm:hidden inline-flex items-center gap-1.5 text-[11.5px] font-bold tracking-wider uppercase text-[#823423] hover:text-[#1C1917] transition-colors mt-2.5"
+            >
+              <span>Explore All Collections</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between sm:justify-end gap-4">
             <Link
               href="/categories"
               className="hidden sm:inline-flex items-center gap-1.5 text-[12px] font-semibold tracking-wider uppercase text-[#1C1917] hover:text-[#9A7B56] transition-colors"
@@ -99,7 +107,7 @@ export function FeaturedCollection({
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
 
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
               <button
                 type="button"
                 onClick={handlePrev}

@@ -207,7 +207,7 @@ export function EcommerceHeroBanner() {
             </div>
 
             {/* Mobile Editorial Floating Overlay (Clean, Cinematic, No cramped ring box) */}
-            <div className="sm:hidden relative z-10 w-full px-4 pt-6 pb-12 flex flex-col justify-end">
+            <div className="sm:hidden relative z-10 w-full px-4 pt-6 pb-14 flex flex-col justify-end">
               {/* Minimal Luxury Pill */}
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1C1714]/80 backdrop-blur-md border border-[#D4AF37]/50 text-[#F5E6CC] text-[10px] font-bold uppercase tracking-[0.2em] mb-2.5 w-fit shadow-md">
                 <Sparkles className="w-3 h-3 text-[#D4AF37]" />
@@ -218,7 +218,7 @@ export function EcommerceHeroBanner() {
               <p className="font-serif italic text-[15px] text-[#D4AF37] font-normal leading-tight mb-1 drop-shadow-sm">
                 Curating Refined Spaces
               </p>
-              <h1 className="text-[28px] font-serif font-normal text-white leading-[1.12] tracking-tight mb-1.5 drop-shadow-md">
+              <h1 className="text-[26px] font-serif font-normal text-white leading-[1.12] tracking-tight mb-1.5 drop-shadow-md">
                 Experience Bespoke Luxury
               </h1>
               <p className="text-[12px] text-[#EAE4D9]/90 font-light leading-snug mb-3.5 max-w-xs drop-shadow-xs">
@@ -226,7 +226,7 @@ export function EcommerceHeroBanner() {
               </p>
 
               {/* Location Badge */}
-              <div className="flex items-center gap-2 text-[11px] text-[#EAE4D9] font-medium mb-4">
+              <div className="flex items-center gap-2 text-[11px] text-[#EAE4D9] font-medium mb-3.5">
                 <span className="text-[#D4AF37] font-serif italic">Puppalguda &bull; Financial District</span>
               </div>
 
@@ -372,7 +372,7 @@ export function EcommerceHeroBanner() {
             </div>
 
             {/* Mobile Editorial Floating Overlay (Clean, Cinematic, No giant card) */}
-            <div className="sm:hidden relative z-10 w-full px-4 pt-6 pb-12 flex flex-col justify-end">
+            <div className="sm:hidden relative z-10 w-full px-4 pt-6 pb-14 flex flex-col justify-end">
               {/* Minimal Luxury Pill */}
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1C1714]/80 backdrop-blur-md border border-[#D4AF37]/50 text-[#F5E6CC] text-[10px] font-bold uppercase tracking-[0.2em] mb-2.5 w-fit shadow-md">
                 <Plane className="w-3 h-3 text-[#D4AF37]" />
@@ -383,7 +383,7 @@ export function EcommerceHeroBanner() {
               <p className="font-serif italic text-[15px] text-[#D4AF37] font-normal leading-tight mb-1 drop-shadow-sm">
                 Global Homeowners Concierge
               </p>
-              <h2 className="text-[28px] font-serif font-normal text-white leading-[1.12] tracking-tight mb-1.5 drop-shadow-md">
+              <h2 className="text-[26px] font-serif font-normal text-white leading-[1.12] tracking-tight mb-1.5 drop-shadow-md">
                 Bespoke Window Styling
               </h2>
               <p className="text-[12px] text-[#EAE4D9]/90 font-light leading-snug mb-3.5 max-w-xs drop-shadow-xs">
@@ -391,7 +391,7 @@ export function EcommerceHeroBanner() {
               </p>
 
               {/* 3 Micro Perks */}
-              <div className="flex items-center gap-2.5 text-[10.5px] text-[#EAE4D9] font-medium mb-4">
+              <div className="flex items-center gap-2.5 text-[10.5px] text-[#EAE4D9] font-medium mb-3.5">
                 <span className="flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3 text-[#D4AF37]" />
                   <span>Direct Pricing</span>
@@ -539,7 +539,7 @@ export function EcommerceHeroBanner() {
             </div>
 
             {/* Mobile Editorial Floating Overlay (Clean, Cinematic, No heavy card box) */}
-            <div className="sm:hidden relative z-10 w-full px-4 pt-6 pb-12 flex flex-col justify-end">
+            <div className="sm:hidden relative z-10 w-full px-4 pt-6 pb-14 flex flex-col justify-end">
               {/* Minimal Luxury Pill */}
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1C1714]/80 backdrop-blur-md border border-[#D4AF37]/50 text-[#F5E6CC] text-[10px] font-bold uppercase tracking-[0.2em] mb-2.5 w-fit shadow-md">
                 <Sparkles className="w-3 h-3 text-[#D4AF37]" />
@@ -550,7 +550,7 @@ export function EcommerceHeroBanner() {
               <p className="font-serif italic text-[15px] text-[#D4AF37] font-normal leading-tight mb-1 drop-shadow-sm">
                 Experience Zaira at Home
               </p>
-              <h1 className="text-[28px] font-serif font-normal text-white leading-[1.12] tracking-tight mb-1.5 drop-shadow-md">
+              <h1 className="text-[26px] font-serif font-normal text-white leading-[1.12] tracking-tight mb-1.5 drop-shadow-md">
                 Bespoke Window Styling
               </h1>
               <p className="text-[12px] text-[#EAE4D9]/90 font-light leading-snug mb-3.5 max-w-xs drop-shadow-xs">
@@ -558,7 +558,7 @@ export function EcommerceHeroBanner() {
               </p>
 
               {/* 3 Micro Perks */}
-              <div className="flex items-center gap-2.5 text-[10.5px] text-[#EAE4D9] font-medium mb-4">
+              <div className="flex items-center gap-2.5 text-[10.5px] text-[#EAE4D9] font-medium mb-3.5">
                 <span className="flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3 text-[#D4AF37]" />
                   <span>Free Laser Check</span>
@@ -648,15 +648,16 @@ export function EcommerceHeroBanner() {
         </button>
 
         {/* ─── Carousel Indicator Dots ─── */}
-        <div className="absolute bottom-2.5 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-[#1C1714]/70 backdrop-blur-md px-3 py-1 rounded-full border border-white/15">
+        <div className="absolute bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-[#1C1714]/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/15">
           {[0, 1, 2].map((idx) => (
             <button
               key={idx}
               type="button"
               onClick={() => setCurrentSlide(idx)}
               aria-label={`Go to slide ${idx + 1}`}
-              className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 cursor-pointer ${currentSlide === idx ? 'w-6 sm:w-8 bg-[#C5A059]' : 'w-1.5 sm:w-2 bg-white/50 hover:bg-white'
-                }`}
+              className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                currentSlide === idx ? 'w-6 sm:w-8 bg-[#C5A059]' : 'w-1.5 sm:w-2 bg-white/50 hover:bg-white'
+              }`}
             />
           ))}
         </div>

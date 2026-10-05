@@ -71,23 +71,23 @@ export function FaqSection() {
   };
 
   return (
-    <section className="py-20 sm:py-24 lg:py-28 bg-[#FDFBF7] border-t border-[#EBE5DA]">
+    <section className="py-12 sm:py-20 lg:py-28 bg-[#FDFBF7] border-t border-[#EBE5DA]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-          {/* ─── Left Column: Heading + Intro + Furnishing Image (Desktop) ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
+          {/* ─── Left Column: Heading + Intro + Furnishing Image (Desktop Only) ─── */}
           <div className="lg:col-span-5 lg:sticky lg:top-28">
-            <span className="text-[11px] uppercase tracking-[0.25em] text-[#7D5E38] font-bold block mb-2">
-              Help & Information
+            <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.25em] text-[#7D5E38] font-bold block mb-1.5 sm:mb-2">
+              Help &amp; Information
             </span>
-            <h2 className="font-serif text-[30px] sm:text-[38px] lg:text-[44px] text-[#1C1917] font-medium tracking-tight mb-3 leading-tight">
+            <h2 className="font-serif text-[24px] sm:text-[36px] lg:text-[44px] text-[#1C1917] font-medium tracking-tight mb-2 sm:mb-3 leading-tight">
               Frequently Asked Questions
             </h2>
-            <p className="text-[14px] sm:text-[15px] text-[#78716C] leading-relaxed mb-6">
-              Quick answers about our products and services.
+            <p className="text-[13px] sm:text-[15px] text-[#78716C] leading-relaxed mb-4 sm:mb-6">
+              Quick answers about our made-to-measure furnishings and white-glove services.
             </p>
 
-            {/* Simple Furnishing Showcase Image */}
-            <div className="relative aspect-[16/10] w-full rounded-[24px] sm:rounded-[28px] overflow-hidden border border-[#EBE5DA] shadow-[0_10px_28px_rgba(28,25,23,0.04)] bg-[#FAF7F2] mb-6">
+            {/* Furnishing Showcase Image (Hidden on Mobile, Visible on Desktop) */}
+            <div className="hidden lg:block relative aspect-[16/10] w-full rounded-[24px] sm:rounded-[28px] overflow-hidden border border-[#EBE5DA] shadow-[0_10px_28px_rgba(28,25,23,0.04)] bg-[#FAF7F2] mb-6">
               <CloudflareImage
                 src="/images/about/about-main-living.jpg"
                 alt="Zaira Furnishing Living Interior"
@@ -99,10 +99,10 @@ export function FaqSection() {
             </div>
 
             {/* Contact Team Link */}
-            <div className="pt-2">
+            <div className="pt-0 sm:pt-2">
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.16em] font-semibold text-[#7D5E38] hover:text-[#1C1917] transition-colors group"
+                className="inline-flex items-center gap-2 text-[11.5px] sm:text-[12px] uppercase tracking-[0.16em] font-semibold text-[#7D5E38] hover:text-[#1C1917] transition-colors group"
               >
                 <span>Have more questions? Contact our team</span>
                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />

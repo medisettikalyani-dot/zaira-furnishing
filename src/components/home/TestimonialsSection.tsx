@@ -96,94 +96,118 @@ export function TestimonialsSection() {
       <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* ─── Header: Customer Reviews ─── */}
-        <div className="text-center mb-8 sm:mb-10">
-          <span className="text-[10.5px] uppercase tracking-[0.25em] text-[#D4AF37] font-bold block mb-2">
+        <div className="text-center mb-6 sm:mb-10">
+          <span className="text-[10px] sm:text-[10.5px] uppercase tracking-[0.25em] text-[#D4AF37] font-bold block mb-1.5 sm:mb-2">
             Verified Experiences
           </span>
-          <h2 className="font-serif text-[28px] sm:text-[36px] lg:text-[42px] text-white tracking-tight drop-shadow-md">
+          <h2 className="font-serif text-[24px] sm:text-[36px] lg:text-[42px] text-white tracking-tight drop-shadow-md">
             Customer Reviews
           </h2>
         </div>
 
-        {/* ─── Floating Review Card with Carousel Controls ─── */}
+        {/* ─── Floating Review Card with Desktop Side Arrows ─── */}
         <div className="relative w-full max-w-3xl mx-auto">
 
-          {/* Left Arrow Button */}
+          {/* Desktop Left Arrow Button */}
           <button
             type="button"
             onClick={handlePrev}
             aria-label="Previous home story"
-            className="absolute -left-2 sm:-left-6 lg:-left-8 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/95 hover:bg-white text-[#1C1714] hover:text-[#823423] shadow-lg hover:shadow-xl flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
+            className="hidden sm:flex absolute -left-5 lg:-left-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 lg:w-11 lg:h-11 rounded-full bg-white/95 hover:bg-white text-[#1C1714] hover:text-[#823423] shadow-lg hover:shadow-xl items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
           >
             <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
 
           {/* Floating White Card */}
-          <div className="bg-white rounded-2xl sm:rounded-xl shadow-2xl p-5 sm:p-8 sm:py-7 border border-white/80 transition-all duration-300">
+          <div className="bg-white rounded-2xl sm:rounded-xl shadow-2xl p-4 sm:p-8 sm:py-7 border border-white/80 transition-all duration-300">
 
             {/* Card Header: Avatar + Author & Rating + Luxury Verified Checkmark */}
-            <div className="flex items-center justify-between pb-3.5 sm:pb-4 border-b border-[#F0EAE1]">
-              <div className="flex items-center gap-3 sm:gap-3.5">
+            <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-[#F0EAE1]">
+              <div className="flex items-center gap-2.5 sm:gap-3.5">
                 {/* User Avatar Circle */}
-                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#E5E0D8] text-[#7A7570] flex items-center justify-center font-bold text-sm shrink-0">
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-[#9A948D]">
+                <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-[#E5E0D8] text-[#7A7570] flex items-center justify-center font-bold text-xs sm:text-sm shrink-0">
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 sm:w-6 sm:h-6 text-[#9A948D]">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                   </svg>
                 </div>
 
                 <div>
-                  <h3 className="font-serif text-[14px] sm:text-[17px] font-bold text-[#823423] tracking-wide uppercase leading-tight">
+                  <h3 className="font-serif text-[13px] sm:text-[17px] font-bold text-[#823423] tracking-wide uppercase leading-tight">
                     {currentStory.author}
                   </h3>
                   <div className="flex items-center gap-0.5 mt-0.5">
                     {[...Array(currentStory.rating)].map((_, i) => (
-                      <Star key={i} className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-[#F5A623] text-[#F5A623]" />
+                      <Star key={i} className="w-3 h-3 sm:w-4 sm:h-4 fill-[#F5A623] text-[#F5A623]" />
                     ))}
                   </div>
                 </div>
               </div>
 
-              {/* Luxury Verified Review Badge (Brown & Gold Theme) */}
+              {/* Luxury Verified Review Badge */}
               <div
-                className="flex items-center justify-center w-6 h-6 rounded-full bg-[#823423] text-[#D4AF37] shadow-xs shrink-0"
+                className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#823423] text-[#D4AF37] shadow-xs shrink-0"
                 title="Verified Customer Review"
               >
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[3]" />
               </div>
             </div>
 
             {/* Review Content */}
-            <p className="pt-3.5 sm:pt-4 text-[13px] sm:text-[15px] text-[#4A423B] leading-relaxed font-sans">
-              {currentStory.content}
+            <p className="pt-3 sm:pt-4 text-[12.5px] sm:text-[15px] text-[#4A423B] leading-relaxed font-sans">
+              &ldquo;{currentStory.content}&rdquo;
             </p>
           </div>
 
-          {/* Right Arrow Button */}
+          {/* Desktop Right Arrow Button */}
           <button
             type="button"
             onClick={handleNext}
             aria-label="Next home story"
-            className="absolute -right-2 sm:-right-6 lg:-right-8 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/95 hover:bg-white text-[#1C1714] hover:text-[#823423] shadow-lg hover:shadow-xl flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
+            className="hidden sm:flex absolute -right-5 lg:-right-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 lg:w-11 lg:h-11 rounded-full bg-white/95 hover:bg-white text-[#1C1714] hover:text-[#823423] shadow-lg hover:shadow-xl items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
           >
             <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
 
         </div>
 
-        {/* ─── Dot Indicators ─── */}
-        <div className="flex items-center justify-center gap-2 mt-5 sm:mt-6">
-          {STORIES.map((_, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => setCurrentIndex(idx)}
-              aria-label={`Go to story ${idx + 1}`}
-              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${idx === currentIndex
-                  ? 'w-7 bg-white shadow-sm'
-                  : 'w-2 bg-white/40 hover:bg-white/70'
+        {/* ─── Controls & Dot Indicators (Clean Mobile Arrow Flanked) ─── */}
+        <div className="flex items-center justify-center gap-3 mt-4 sm:mt-6">
+          {/* Mobile Prev Arrow */}
+          <button
+            type="button"
+            onClick={handlePrev}
+            aria-label="Previous home story"
+            className="sm:hidden w-8 h-8 rounded-full bg-white/90 text-[#1C1714] flex items-center justify-center shadow-md active:scale-90 transition-all cursor-pointer"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          {/* Dots */}
+          <div className="flex items-center gap-1.5">
+            {STORIES.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setCurrentIndex(idx)}
+                aria-label={`Go to story ${idx + 1}`}
+                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                  idx === currentIndex
+                    ? 'w-6 sm:w-7 bg-white shadow-sm'
+                    : 'w-1.5 sm:w-2 bg-white/40 hover:bg-white/70'
                 }`}
-            />
-          ))}
+              />
+            ))}
+          </div>
+
+          {/* Mobile Next Arrow */}
+          <button
+            type="button"
+            onClick={handleNext}
+            aria-label="Next home story"
+            className="sm:hidden w-8 h-8 rounded-full bg-white/90 text-[#1C1714] flex items-center justify-center shadow-md active:scale-90 transition-all cursor-pointer"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
 
       </div>
