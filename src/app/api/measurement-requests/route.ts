@@ -6,6 +6,8 @@ import { getAuthenticatedCustomer } from '@/lib/auth/customer';
 import { DbMeasurementRequest } from '@/lib/db/types';
 import { generateMeasurementRequestNumber, resolveProductAndVariant } from '@/lib/db/requests';
 import { ensureDatabaseSchema } from '@/lib/db/auto-migrate';
+import { triggerNewMeasurementNotification } from '@/lib/notifications/service';
+import { buildMeasurementWhatsAppUrl } from '@/lib/whatsapp';
 
 // ─── POST /api/measurement-requests ───
 export async function POST(req: NextRequest) {
@@ -29,13 +31,14 @@ export async function POST(req: NextRequest) {
       idempotencyKey,
     } = body;
 
-    const resolvedPhone = customerPhone || phone;
-    const resolvedEmail = customerEmail || email;
+    const resolvedCustomerName = (customerName || body.name || body.customer_name || '').trim();
+    const resolvedPhone = customerPhone || phone || body.customer_phone;
+    const resolvedEmail = customerEmail || email || body.customer_email;
     const resolvedNotes = (customerNotes || body.notes || body.requirements || body.message || '').trim() || null;
     const isConsultation = Boolean(body.serviceRequested || !productId);
 
     // 1. Validate customer name
-    if (!customerName || typeof customerName !== 'string' || customerName.trim().length === 0) {
+    if (!resolvedCustomerName) {
       return NextResponse.json(
         { error: 'Customer name is required.' },
         { status: 400 }
@@ -156,7 +159,7 @@ export async function POST(req: NextRequest) {
         id,
         requestNumber,
         userId,
-        customerName.trim(),
+        resolvedCustomerName,
         cleanPhone,
         resolvedEmail?.trim() || null,
         product.id,
@@ -180,8 +183,40 @@ export async function POST(req: NextRequest) {
       [id]
     );
 
+    let whatsappUrl: string | null = null;
+    if (createdRecord) {
+      // 1. Trigger internal admin notifications & email
+      try {
+        await triggerNewMeasurementNotification(createdRecord);
+      } catch (notifErr) {
+        console.error('Failed to trigger measurement notification:', notifErr);
+      }
+
+      // 2. Generate pre-filled WhatsApp alert URL for instant mobile dispatch
+      try {
+        whatsappUrl = buildMeasurementWhatsAppUrl({
+          productName: createdRecord.product_name_snapshot,
+          categoryName: createdRecord.category_name_snapshot || 'In-Home Visit',
+          customerName: createdRecord.customer_name,
+          customerPhone: createdRecord.customer_phone,
+          customerEmail: createdRecord.customer_email,
+          address: createdRecord.address,
+          preferredDate: createdRecord.preferred_date,
+          preferredTime: createdRecord.preferred_time_slot,
+          requirements: createdRecord.customer_notes,
+          requestReference: `#${createdRecord.request_number}`,
+        });
+      } catch (waErr) {
+        console.error('Failed to build measurement WhatsApp URL:', waErr);
+      }
+    }
+
     return NextResponse.json(
-      { success: true, measurementRequest: createdRecord },
+      {
+        success: true,
+        measurementRequest: createdRecord,
+        whatsappUrl,
+      },
       { status: 201 }
     );
   } catch (err: any) {

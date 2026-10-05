@@ -284,6 +284,25 @@ export interface DbOrderStatusHistory {
   created_at: string;
 }
 
+export type AdminNotificationType = 'ORDER' | 'MEASUREMENT' | 'QUOTE' | 'CONSULTATION';
+
+export interface DbAdminNotification {
+  id: string;
+  type: AdminNotificationType;
+  reference_id: string;
+  reference_number: string;
+  title: string;
+  message: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_email?: string | null;
+  amount?: number | null;
+  action_url: string;
+  is_read: number;
+  read_at?: string | null;
+  created_at: string;
+}
+
 // ─── STAGE 3: QUOTE REQUESTS & FREE MEASUREMENT REQUESTS ───
 
 export type QuoteRequestStatus = 'NEW' | 'CONTACTED' | 'QUOTED' | 'CLOSED' | 'CANCELLED';

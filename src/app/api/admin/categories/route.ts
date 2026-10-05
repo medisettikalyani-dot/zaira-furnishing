@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/auth/admin';
 import { getDatabase } from '@/lib/db';
+import { ensureDatabaseSchema } from '@/lib/db/auto-migrate';
+import { CATEGORIES } from '@/lib/data/categories';
 import { DbCategory } from '@/lib/db/types';
 
 export async function GET(req: NextRequest) {
@@ -14,23 +16,46 @@ export async function GET(req: NextRequest) {
     const activeParam = searchParams.get('active');
 
     const db = getDatabase();
+    await ensureDatabaseSchema(db);
+
     let sql = `
       SELECT 
         c.*,
         (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) as product_count,
         (SELECT COUNT(*) FROM subcategories s WHERE s.category_id = c.id) as subcategory_count
       FROM categories c
+      WHERE c.slug NOT LIKE '%-alias'
     `;
     const params: unknown[] = [];
 
     if (activeParam !== null) {
-      sql += ' WHERE c.active = ?';
+      sql += ' AND c.active = ?';
       params.push(activeParam === '1' || activeParam === 'true' ? 1 : 0);
     }
 
     sql += ' ORDER BY c.display_order ASC';
 
-    const categories = await db.query<DbCategory & { product_count: number; subcategory_count: number }>(sql, params);
+    let categories = await db.query<DbCategory & { product_count: number; subcategory_count: number }>(sql, params);
+
+    if (!categories || categories.length === 0) {
+      categories = CATEGORIES.map((cat, idx) => ({
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+        tagline: cat.tagline,
+        description: cat.description,
+        image: cat.image,
+        display_order: idx,
+        active: 1,
+        featured: cat.featured ? 1 : 0,
+        is_customizable: cat.isCustomizable ? 1 : 0,
+        item_count_text: cat.itemCountText,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        product_count: 0,
+        subcategory_count: 0,
+      }));
+    }
 
     return NextResponse.json({ data: categories });
   } catch (error) {

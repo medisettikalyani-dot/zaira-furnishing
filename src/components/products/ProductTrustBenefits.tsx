@@ -65,7 +65,7 @@ export function ProductTrustBenefits() {
 
             {/* Benefit title + short description on the right */}
             <div className="flex-1 min-w-0">
-              <h3 className="text-[14px] sm:text-[14.5px] lg:text-[15px] font-semibold text-[#1C1917] tracking-tight leading-snug mb-1 group-hover:text-[#1E3A2F] transition-colors">
+              <h3 className="text-[14px] sm:text-[14.5px] lg:text-[15px] font-semibold text-[#1C1917] tracking-tight leading-snug mb-1 group-hover:text-[#9A7B56] transition-colors">
                 {benefit.title}
               </h3>
               <p className="text-[12px] sm:text-[12.5px] lg:text-[13px] text-[#6B655C] leading-relaxed font-normal">

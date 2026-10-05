@@ -53,7 +53,7 @@ export function ShowroomsSection() {
   return (
     <section id="showrooms" className="py-14 sm:py-20 bg-[#FDFBF7] border-t border-[#EAE4D9]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between pb-8 sm:pb-12 border-b border-[#EAE4D9] gap-5">
           <div>

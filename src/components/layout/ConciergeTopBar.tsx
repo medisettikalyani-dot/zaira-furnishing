@@ -19,7 +19,7 @@ export function ConciergeTopBar() {
   const { openBookingModal } = useStore();
 
   return (
-    <div className="bg-[#1E1714] text-white border-b border-[#3D302A] text-[11px] sm:text-[11.5px] py-1.5 px-3 sm:px-6 relative z-50">
+    <div className="hidden sm:block bg-[#1E1714] text-white border-b border-[#3D302A] text-[11px] sm:text-[11.5px] py-1.5 px-3 sm:px-6 relative z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
         {/* Left: Hyderabad In-Home Measurement */}
         <div className="flex items-center gap-1.5 sm:gap-2 text-[#E2D9CF] min-w-0">

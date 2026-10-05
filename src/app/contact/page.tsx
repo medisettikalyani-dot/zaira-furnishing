@@ -61,7 +61,7 @@ export default function ContactPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Chat with Zaira Furnishing on WhatsApp"
-                      className="text-[#1E3A2F] font-semibold hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#9A7B56] rounded-xs"
+                      className="text-[#2C221E] font-semibold hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#9A7B56] rounded-xs"
                     >
                       {ZAIRA_WHATSAPP_DISPLAY}
                     </a>
@@ -77,7 +77,7 @@ export default function ContactPage() {
                     <span className="block font-semibold text-[#1C1917] mb-0.5 uppercase tracking-wider text-[11px]">
                       Written Inquiries & Architect RFPs
                     </span>
-                    <a href="mailto:concierge@zairafurnishing.com" className="text-[#1E3A2F] font-medium hover:underline">
+                    <a href="mailto:concierge@zairafurnishing.com" className="text-[#2C221E] font-medium hover:underline">
                       concierge@zairafurnishing.com
                     </a>
                   </div>

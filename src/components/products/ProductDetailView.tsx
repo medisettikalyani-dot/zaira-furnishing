@@ -63,7 +63,7 @@ const COLOR_NAME_HEX_MAP: Record<string, string> = {
   'gray': '#8D99AE',
   'oatmeal slub': '#D2C6B5',
   'oatmeal': '#D2C6B5',
-  'forest green': '#1E3A2F',
+  'forest green': '#2C221E',
   'emerald green': '#154734',
   'emerald': '#154734',
   'olive': '#556B2F',
@@ -103,7 +103,7 @@ export function ProductDetailView({
   initialReviewSummary,
 }: ProductDetailViewProps) {
   const router = useRouter();
-  const { addToCart, isWishlisted, toggleWishlist, customer, setIsCartOpen } = useStore();
+  const { addToCart, isWishlisted, toggleWishlist, customer, setIsCartOpen, openBookingModal } = useStore();
 
   const [reviewSummary, setReviewSummary] = useState(
     initialReviewSummary || { total: 0, averageRating: null }
@@ -765,11 +765,10 @@ export function ProductDetailView({
                         type="button"
                         onClick={() => handleThumbnailClick(img)}
                         aria-label={ariaLabel}
-                        className={`relative w-[70px] h-[70px] sm:w-[76px] sm:h-[76px] lg:w-[82px] lg:h-[82px] rounded-lg overflow-hidden shrink-0 cursor-pointer transition-all duration-200 bg-[#F4EFE6] ${
-                          isSelected
-                            ? 'border-2 border-[#1E3A2F] ring-2 ring-[#1E3A2F]/20 opacity-100 shadow-2xs'
+                        className={`relative w-[70px] h-[70px] sm:w-[76px] sm:h-[76px] lg:w-[82px] lg:h-[82px] rounded-lg overflow-hidden shrink-0 cursor-pointer transition-all duration-200 bg-[#F4EFE6] ${isSelected
+                            ? 'border-2 border-[#2C221E] ring-2 ring-[#2C221E]/20 opacity-100 shadow-2xs'
                             : 'border border-[#E5DEC9] opacity-75 hover:opacity-100 hover:border-[#8C7A6B]'
-                        }`}
+                          }`}
                       >
                         <Image
                           src={img}
@@ -788,8 +787,8 @@ export function ProductDetailView({
               <div
                 onClick={() => setIsLightboxOpen(true)}
                 style={{
-                  minHeight: '480px',
-                  height: 'clamp(480px, 50vw, 640px)',
+                  minHeight: '340px',
+                  height: 'clamp(340px, 48vw, 640px)',
                   width: '100%',
                 }}
                 className="order-1 lg:order-2 relative flex-1 min-w-0 w-full rounded-2xl overflow-hidden bg-[#F4EFE6] border border-[#E8E1D3] cursor-zoom-in group select-none shadow-[0_4px_20px_rgba(28,25,23,0.04)]"
@@ -807,7 +806,7 @@ export function ProductDetailView({
                 {/* Showroom Badge in Top-Left (Real Data Only) */}
                 <div className="absolute top-3.5 left-3.5 z-10 flex flex-col gap-1.5 pointer-events-none">
                   {product.customMeasurementAvailable ? (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1E3A2F]/90 backdrop-blur-md text-[#FAF7F2] text-[10.5px] uppercase tracking-wider font-semibold shadow-xs border border-white/10">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2C221E]/90 backdrop-blur-md text-[#FAF7F2] text-[10.5px] uppercase tracking-wider font-semibold shadow-xs border border-white/10">
                       <Ruler className="w-3.5 h-3.5 text-[#E6C687]" />
                       <span>Free Measurement</span>
                     </div>
@@ -900,7 +899,7 @@ export function ProductDetailView({
 
                 {/* Share Toast */}
                 {copiedLink && (
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 px-3.5 py-1.5 rounded-full bg-[#1E3A2F] text-white text-[11px] font-medium shadow-md">
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 px-3.5 py-1.5 rounded-full bg-[#2C221E] text-white text-[11px] font-medium shadow-md">
                     Link copied to clipboard
                   </div>
                 )}
@@ -943,11 +942,10 @@ export function ProductDetailView({
                     return (
                       <Star
                         key={star}
-                        className={`w-3.5 h-3.5 transition-colors ${
-                          isFilled
+                        className={`w-3.5 h-3.5 transition-colors ${isFilled
                             ? 'fill-[#9A7B56] text-[#9A7B56]'
                             : 'text-[#D8D2C4] group-hover:text-[#C4B9A1]'
-                        }`}
+                          }`}
                       />
                     );
                   })}
@@ -1057,7 +1055,7 @@ export function ProductDetailView({
                 target="_blank"
                 rel="noopener noreferrer"
                 id="cta-order-on-whatsapp"
-                className="w-full h-11 rounded-xl font-semibold text-[12px] uppercase tracking-wider bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all duration-200 flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.99] cursor-pointer"
+                className="w-full h-11 rounded-xl font-semibold text-[12px] uppercase tracking-wider bg-[#1C1714] hover:bg-[#2C221E] text-white transition-all duration-200 flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.99] cursor-pointer"
               >
                 <MessageCircle className="w-4 h-4 text-[#25D366] fill-[#25D366]" />
                 <span>Order on WhatsApp</span>
@@ -1069,11 +1067,10 @@ export function ProductDetailView({
                   type="button"
                   onClick={handleAddToCart}
                   id="cta-add-to-cart"
-                  className={`h-10 rounded-lg font-semibold text-[11px] uppercase tracking-wider border transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs ${
-                    addedNotice
-                      ? 'border-[#15803D] bg-[#15803D]/10 text-[#15803D]'
-                      : 'border-[#D5CCBA] text-[#57534E] bg-white hover:text-[#1C1714] hover:border-[#1E3A2F] hover:bg-[#FAF7F2]'
-                  }`}
+                  className={`h-10 rounded-lg font-semibold text-[11px] uppercase tracking-wider border transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs ${addedNotice
+                      ? 'border-[#15803D] bg-[#15803D]/10 text-[#9A7B56]'
+                      : 'border-[#D5CCBA] text-[#57534E] bg-white hover:text-[#1C1714] hover:border-[#2C221E] hover:bg-[#FAF7F2]'
+                    }`}
                 >
                   {addedNotice ? (
                     <>
@@ -1093,7 +1090,7 @@ export function ProductDetailView({
                   onClick={handleBuyNow}
                   disabled={isBuyingNow}
                   id="cta-buy-now"
-                  className="h-10 rounded-lg font-semibold text-[11px] uppercase tracking-wider border border-[#1E3A2F] text-[#1C1714] bg-white hover:bg-[#FAF7F2] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-75"
+                  className="h-10 rounded-lg font-semibold text-[11px] uppercase tracking-wider border border-[#2C221E] text-[#1C1714] bg-white hover:bg-[#FAF7F2] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-75"
                 >
                   <ArrowRight className="w-3.5 h-3.5 text-[#1C1714]" />
                   <span>{isBuyingNow ? 'Proceeding...' : 'Buy Now'}</span>
@@ -1237,30 +1234,54 @@ export function ProductDetailView({
       {/* ──────────────────────────────────────────────────────────
           11. MOBILE STICKY PURCHASE BAR (WHATSAPP-FIRST)
          ────────────────────────────────────────────────────────── */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EAE4D8] px-4 py-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <span className="block text-[10px] text-[#8C827A] uppercase tracking-wider font-medium truncate">
+      <div
+        style={{ paddingBottom: 'max(0.6rem, env(safe-area-inset-bottom, 0px))' }}
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#FAF8F5]/95 backdrop-blur-xl border-t border-[#EAE4D8] px-4 py-2.5 shadow-[0_-6px_24px_rgba(28,23,20,0.08)] flex items-center justify-between gap-3"
+      >
+        <div className="min-w-0 flex-1">
+          <span className="block text-[10px] text-[#8C827A] uppercase tracking-wider font-semibold truncate">
             {product.displayName || product.name}
           </span>
           <div className="flex items-baseline gap-1">
-            <span className="font-serif text-[17px] font-bold text-[#1C1714]">
+            <span className="font-serif text-[18px] font-bold text-[#1C1714]">
               {product.currency}{effectivePrice.toLocaleString('en-IN')}
             </span>
             {pricingUnit && (
-              <span className="text-[11px] text-[#78716C]">{pricingUnit}</span>
+              <span className="text-[11px] text-[#78716C] font-medium">{pricingUnit}</span>
             )}
           </div>
         </div>
 
         <div className="shrink-0 flex items-center gap-2">
+          {product.customMeasurementAvailable ? (
+            <button
+              type="button"
+              onClick={() => openBookingModal(`Free Measurement — ${product.displayName || product.name}`)}
+              className="h-10 px-3.5 rounded-xl font-bold text-[11px] uppercase tracking-wider bg-[#1C1714] text-white hover:bg-[#2C221E] shadow-sm flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+            >
+              <Ruler className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span>Book Visit</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="h-10 px-4 rounded-xl font-bold text-[11px] uppercase tracking-wider bg-[#1C1714] text-white hover:bg-[#2C221E] shadow-sm flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+            >
+              <ShoppingBag className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span>{addedNotice ? 'Added' : 'Add to Bag'}</span>
+            </button>
+          )}
+
           <a
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="h-10 px-4 rounded-lg font-semibold text-[11.5px] uppercase tracking-wider bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+            className="h-10 w-10 rounded-xl bg-[#25D366] text-white hover:bg-[#20BA5C] shadow-sm flex items-center justify-center active:scale-95 transition-all shrink-0"
+            title="Chat on WhatsApp"
+            aria-label="Order on WhatsApp"
           >
-            <MessageCircle className="w-3.5 h-3.5 text-[#25D366] fill-[#25D366]" />
-            <span>Order on WhatsApp</span>
+            <MessageCircle className="w-4 h-4 fill-white" />
           </a>
         </div>
       </div>
@@ -1404,7 +1425,7 @@ export function ProductDetailView({
                         value={quoteName}
                         onChange={(e) => setQuoteName(e.target.value)}
                         placeholder="Your full name"
-                        className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none"
+                        className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#9A7B56] bg-white text-[12.5px] outline-none"
                       />
                     </div>
                   </div>
@@ -1422,7 +1443,7 @@ export function ProductDetailView({
                           value={quotePhone}
                           onChange={(e) => setQuotePhone(e.target.value)}
                           placeholder="10-digit phone number"
-                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none"
+                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#9A7B56] bg-white text-[12.5px] outline-none"
                         />
                       </div>
                     </div>
@@ -1438,7 +1459,7 @@ export function ProductDetailView({
                           value={quoteEmail}
                           onChange={(e) => setQuoteEmail(e.target.value)}
                           placeholder="name@example.com"
-                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none"
+                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#9A7B56] bg-white text-[12.5px] outline-none"
                         />
                       </div>
                     </div>
@@ -1453,7 +1474,7 @@ export function ProductDetailView({
                       value={quoteMessage}
                       onChange={(e) => setQuoteMessage(e.target.value)}
                       placeholder="Specify dimensions, room type, or specific requirements..."
-                      className="w-full p-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none resize-none"
+                      className="w-full p-3 rounded-xl border border-[#D5CCBA] focus:border-[#9A7B56] bg-white text-[12.5px] outline-none resize-none"
                     />
                   </div>
 
@@ -1461,7 +1482,7 @@ export function ProductDetailView({
                     <button
                       type="submit"
                       disabled={isQuoteSubmitting}
-                      className="w-full h-11 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12px] uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
+                      className="w-full h-11 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[12px] uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
                     >
                       {isQuoteSubmitting ? (
                         <span>Submitting Request...</span>
@@ -1477,7 +1498,7 @@ export function ProductDetailView({
               </>
             ) : (
               <div className="text-center py-6 animate-in fade-in duration-200">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 text-[#15803D] flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-full bg-[#FAF2DD] text-[#9A7B56] border border-[#E8D5A0] flex items-center justify-center mx-auto mb-3">
                   <Check className="w-6 h-6 stroke-[2.5]" />
                 </div>
                 <h3 className="font-serif text-[22px] font-medium text-[#1C1714] mb-1">
@@ -1579,7 +1600,7 @@ export function ProductDetailView({
                         value={measName}
                         onChange={(e) => setMeasName(e.target.value)}
                         placeholder="Your full name"
-                        className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none"
+                        className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#9A7B56] bg-white text-[12.5px] outline-none"
                       />
                     </div>
                   </div>
@@ -1597,7 +1618,7 @@ export function ProductDetailView({
                           value={measPhone}
                           onChange={(e) => setMeasPhone(e.target.value)}
                           placeholder="10-digit phone number"
-                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none"
+                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#9A7B56] bg-white text-[12.5px] outline-none"
                         />
                       </div>
                     </div>
@@ -1613,7 +1634,7 @@ export function ProductDetailView({
                           value={measEmail}
                           onChange={(e) => setMeasEmail(e.target.value)}
                           placeholder="name@example.com"
-                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none"
+                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#9A7B56] bg-white text-[12.5px] outline-none"
                         />
                       </div>
                     </div>
@@ -1631,7 +1652,7 @@ export function ProductDetailView({
                         value={measAddress}
                         onChange={(e) => setMeasAddress(e.target.value)}
                         placeholder="Your residential address or locality"
-                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none resize-none"
+                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#D5CCBA] focus:border-[#9A7B56] bg-white text-[12.5px] outline-none resize-none"
                       />
                     </div>
                   </div>
@@ -1647,7 +1668,7 @@ export function ProductDetailView({
                           type="date"
                           value={measDate}
                           onChange={(e) => setMeasDate(e.target.value)}
-                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none"
+                          className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#D5CCBA] focus:border-[#9A7B56] bg-white text-[12.5px] outline-none"
                         />
                       </div>
                     </div>
@@ -1659,7 +1680,7 @@ export function ProductDetailView({
                       <select
                         value={measTimeSlot}
                         onChange={(e) => setMeasTimeSlot(e.target.value)}
-                        className="w-full h-10 px-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none cursor-pointer"
+                        className="w-full h-10 px-3 rounded-xl border border-[#D5CCBA] focus:border-[#9A7B56] bg-white text-[12.5px] outline-none cursor-pointer"
                       >
                         <option value="Morning (10:00 AM – 1:00 PM)">Morning (10:00 AM – 1:00 PM)</option>
                         <option value="Afternoon (1:00 PM – 4:00 PM)">Afternoon (1:00 PM – 4:00 PM)</option>
@@ -1677,7 +1698,7 @@ export function ProductDetailView({
                       value={measNotes}
                       onChange={(e) => setMeasNotes(e.target.value)}
                       placeholder="Any specific instructions for our specialist..."
-                      className="w-full p-3 rounded-xl border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12.5px] outline-none resize-none"
+                      className="w-full p-3 rounded-xl border border-[#D5CCBA] focus:border-[#9A7B56] bg-white text-[12.5px] outline-none resize-none"
                     />
                   </div>
 
@@ -1685,7 +1706,7 @@ export function ProductDetailView({
                     <button
                       type="submit"
                       disabled={isMeasSubmitting}
-                      className="w-full h-11 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12px] uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
+                      className="w-full h-11 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[12px] uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
                     >
                       {isMeasSubmitting ? (
                         <span>Submitting Request...</span>
@@ -1701,7 +1722,7 @@ export function ProductDetailView({
               </>
             ) : (
               <div className="text-center py-6 animate-in fade-in duration-200">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 text-[#15803D] flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-full bg-[#FAF2DD] text-[#9A7B56] border border-[#E8D5A0] flex items-center justify-center mx-auto mb-3">
                   <Check className="w-6 h-6 stroke-[2.5]" />
                 </div>
                 <h3 className="font-serif text-[22px] font-medium text-[#1C1714] mb-1">
@@ -1737,7 +1758,7 @@ export function ProductDetailView({
                       setIsMeasurementModalOpen(false);
                       setMeasSubmitted(false);
                     }}
-                    className="h-10 px-5 rounded-xl border border-[#D5CCBA] text-[#1E3A2F] hover:bg-[#FAF7F2] text-[11.5px] font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+                    className="h-10 px-5 rounded-xl border border-[#D5CCBA] text-[#2C221E] hover:bg-[#FAF7F2] text-[11.5px] font-semibold uppercase tracking-wider transition-colors cursor-pointer"
                   >
                     Close
                   </button>

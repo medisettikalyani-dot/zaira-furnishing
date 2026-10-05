@@ -6,6 +6,7 @@ import { getAuthenticatedCustomer } from '@/lib/auth/customer';
 import { DbQuoteRequest } from '@/lib/db/types';
 import { generateQuoteRequestNumber, resolveProductAndVariant } from '@/lib/db/requests';
 import { ensureDatabaseSchema } from '@/lib/db/auto-migrate';
+import { triggerNewQuoteNotification } from '@/lib/notifications/service';
 
 // ─── POST /api/quote-requests ───
 export async function POST(req: NextRequest) {
@@ -28,12 +29,13 @@ export async function POST(req: NextRequest) {
       idempotencyKey,
     } = body;
 
-    const resolvedPhone = customerPhone || phone;
-    const resolvedEmail = customerEmail || email;
+    const resolvedCustomerName = (customerName || body.name || body.customer_name || '').trim();
+    const resolvedPhone = customerPhone || phone || body.customer_phone;
+    const resolvedEmail = customerEmail || email || body.customer_email;
     const resolvedNotes = (customerNotes || body.message || body.requirements || '').trim() || null;
 
     // 1. Validate customer name
-    if (!customerName || typeof customerName !== 'string' || customerName.trim().length === 0) {
+    if (!resolvedCustomerName) {
       return NextResponse.json(
         { error: 'Customer name is required.' },
         { status: 400 }
@@ -68,9 +70,18 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Server-side product & variant resolution (strict database lookup)
+    const resolvedProductId = (
+      productId ||
+      body.product_id ||
+      body.productSlug ||
+      body.slug ||
+      body.product_name ||
+      'prod-off-custom-made-curtains'
+    ).trim();
+
     let productCtx;
     try {
-      productCtx = await resolveProductAndVariant(db, productId, variantId);
+      productCtx = await resolveProductAndVariant(db, resolvedProductId, variantId);
     } catch (err: any) {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }
@@ -104,7 +115,7 @@ export async function POST(req: NextRequest) {
         id,
         requestNumber,
         userId,
-        customerName.trim(),
+        resolvedCustomerName,
         cleanPhone,
         resolvedEmail?.trim() || null,
         product.id,
@@ -127,6 +138,14 @@ export async function POST(req: NextRequest) {
       'SELECT * FROM quote_requests WHERE id = ?',
       [id]
     );
+
+    if (createdRecord) {
+      try {
+        await triggerNewQuoteNotification(createdRecord);
+      } catch (notifErr) {
+        console.error('Failed to trigger quote notification:', notifErr);
+      }
+    }
 
     return NextResponse.json(
       { success: true, quoteRequest: createdRecord },

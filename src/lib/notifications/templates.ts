@@ -1,6 +1,6 @@
 // src/lib/notifications/templates.ts
 
-import { DbOrder, DbOrderItem } from '@/lib/db/types';
+import { DbOrder, DbOrderItem, DbMeasurementRequest, DbQuoteRequest } from '@/lib/db/types';
 
 interface OrderItemData extends DbOrderItem {
   product_name_snapshot: string;
@@ -96,7 +96,7 @@ export function generateCustomerOrderConfirmationEmail(
   const siteVisitInfo =
     order.site_visit_required === 1 || order.delivery_option === 'service_visit'
       ? `<div style="background-color: #FAF9F5; border: 1px solid #EDE8DE; border-radius: 8px; padding: 12px; margin-top: 16px;">
-           <strong style="color: #1E3A2F;">Master Measurement & Sizing Visit:</strong>
+           <strong style="color: #2C221E;">Master Measurement & Sizing Visit:</strong>
            <div style="font-size: 13px; color: #78716C; margin-top: 4px;">
              Requested Window: ${order.site_visit_time || 'Standard Slot (10:00 AM – 1:00 PM)'}
            </div>
@@ -113,7 +113,7 @@ export function generateCustomerOrderConfirmationEmail(
 <body style="margin: 0; padding: 0; background-color: #F7F4EE; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1C1917;">
   <div style="max-width: 600px; margin: 30px auto; background-color: #FFFFFF; border: 1px solid #EDE8DE; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
     <!-- Header -->
-    <div style="background-color: #152B23; padding: 30px 24px; text-align: center; color: #FAF7F2;">
+    <div style="background-color: #2C221E; padding: 30px 24px; text-align: center; color: #FAF7F2;">
       <h1 style="margin: 0; font-family: Georgia, serif; font-size: 24px; letter-spacing: 0.1em; text-transform: uppercase; color: #FAF7F2;">ZAIRA FURNISHING</h1>
       <div style="font-size: 11px; letter-spacing: 0.2em; color: #C4B9A1; margin-top: 4px; text-transform: uppercase;">Atelier Order Confirmation</div>
     </div>
@@ -139,7 +139,7 @@ export function generateCustomerOrderConfirmationEmail(
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
           <span style="font-size: 13px; color: #78716C;">Payment Method:</span>
-          <strong style="font-size: 13px; color: #1E3A2F;">Cash on Delivery (COD)</strong>
+          <strong style="font-size: 13px; color: #2C221E;">Cash on Delivery (COD)</strong>
         </div>
         <div style="display: flex; justify-content: space-between;">
           <span style="font-size: 13px; color: #78716C;">Order Status:</span>
@@ -172,7 +172,7 @@ export function generateCustomerOrderConfirmationEmail(
         <div style="margin-bottom: 8px; color: #78716C;">
           Delivery & Atelier Service: <span style="font-family: monospace; color: #1C1917;">${order.delivery_charge === 0 ? 'Complimentary' : formatCurrency(order.delivery_charge)}</span>
         </div>
-        <div style="font-size: 16px; font-weight: bold; color: #1E3A2F; padding-top: 8px; border-top: 1px solid #F2ECE1;">
+        <div style="font-size: 16px; font-weight: bold; color: #2C221E; padding-top: 8px; border-top: 1px solid #F2ECE1;">
           Total Payable on Delivery (COD): <span style="font-family: Georgia, serif; font-size: 18px;">${formatCurrency(order.total_amount)}</span>
         </div>
       </div>
@@ -192,8 +192,8 @@ export function generateCustomerOrderConfirmationEmail(
       <div style="margin-top: 28px; padding: 16px; background-color: #FAF7F2; border-radius: 8px; text-align: center; font-size: 12px; color: #78716C;">
         <div>Need assistance or wish to review bespoke specifications?</div>
         <div style="margin-top: 6px;">
-          Phone / WhatsApp: <a href="tel:${SUPPORT_PHONE.replace(/\s+/g, '')}" style="color: #1E3A2F; font-weight: 600; text-decoration: none;">${SUPPORT_PHONE}</a> · 
-          Email: <a href="mailto:${SUPPORT_EMAIL}" style="color: #1E3A2F; font-weight: 600; text-decoration: none;">${SUPPORT_EMAIL}</a>
+          Phone / WhatsApp: <a href="tel:${SUPPORT_PHONE.replace(/\s+/g, '')}" style="color: #2C221E; font-weight: 600; text-decoration: none;">${SUPPORT_PHONE}</a> · 
+          Email: <a href="mailto:${SUPPORT_EMAIL}" style="color: #2C221E; font-weight: 600; text-decoration: none;">${SUPPORT_EMAIL}</a>
         </div>
         <div style="margin-top: 4px; font-size: 11px; color: #A8A29E;">
           Showroom: ${SHOWROOM_ADDRESS}
@@ -262,7 +262,7 @@ export function generateAdminNewOrderEmail(
 </head>
 <body style="margin: 0; padding: 0; background-color: #F7F4EE; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1C1917;">
   <div style="max-width: 600px; margin: 30px auto; background-color: #FFFFFF; border: 1px solid #EDE8DE; border-radius: 12px; overflow: hidden;">
-    <div style="background-color: #152B23; padding: 20px 24px; color: #FAF7F2;">
+    <div style="background-color: #2C221E; padding: 20px 24px; color: #FAF7F2;">
       <h2 style="margin: 0; font-family: Georgia, serif; font-size: 18px; color: #FAF7F2;">New Customer Order Placed</h2>
       <div style="font-size: 12px; color: #C4B9A1; margin-top: 4px;">Cloudflare D1 Production Ledger</div>
     </div>
@@ -275,13 +275,13 @@ export function generateAdminNewOrderEmail(
         <tr><td style="padding: 6px 0; color: #78716C;">Customer:</td><td style="padding: 6px 0; font-weight: 600;">${order.customer_name}</td></tr>
         <tr><td style="padding: 6px 0; color: #78716C;">Phone:</td><td style="padding: 6px 0;">${order.customer_phone}</td></tr>
         <tr><td style="padding: 6px 0; color: #78716C;">Email:</td><td style="padding: 6px 0;">${order.customer_email}</td></tr>
-        <tr><td style="padding: 6px 0; color: #78716C;">Total Amount:</td><td style="padding: 6px 0; font-weight: bold; color: #1E3A2F;">${formatCurrency(order.total_amount)} (COD)</td></tr>
+        <tr><td style="padding: 6px 0; color: #78716C;">Total Amount:</td><td style="padding: 6px 0; font-weight: bold; color: #2C221E;">${formatCurrency(order.total_amount)} (COD)</td></tr>
         <tr><td style="padding: 6px 0; color: #78716C;">Destination:</td><td style="padding: 6px 0;">${order.city}, ${order.state}</td></tr>
         <tr><td style="padding: 6px 0; color: #78716C;">Service Type:</td><td style="padding: 6px 0;">${order.delivery_option === 'service_visit' ? 'Sizing Visit Requested' : 'Standard Delivery'}</td></tr>
         <tr><td style="padding: 6px 0; color: #78716C;">Products:</td><td style="padding: 6px 0;">${itemsSummary}</td></tr>
       </table>
       <div style="text-align: center; margin-top: 24px;">
-        <a href="${adminOrderDetailUrl}" style="display: inline-block; padding: 12px 24px; background-color: #1E3A2F; color: #FFFFFF; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 600;">Open Order in Admin Atelier</a>
+        <a href="${adminOrderDetailUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2C221E; color: #FFFFFF; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 600;">Open Order in Admin Atelier</a>
       </div>
     </div>
   </div>
@@ -349,7 +349,7 @@ export function generateCustomerStatusUpdateEmail(
 </head>
 <body style="margin: 0; padding: 0; background-color: #F7F4EE; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1C1917;">
   <div style="max-width: 600px; margin: 30px auto; background-color: #FFFFFF; border: 1px solid #EDE8DE; border-radius: 12px; overflow: hidden;">
-    <div style="background-color: #152B23; padding: 24px; text-align: center; color: #FAF7F2;">
+    <div style="background-color: #2C221E; padding: 24px; text-align: center; color: #FAF7F2;">
       <h1 style="margin: 0; font-family: Georgia, serif; font-size: 20px; letter-spacing: 0.1em; text-transform: uppercase;">ZAIRA FURNISHING</h1>
       <div style="font-size: 11px; letter-spacing: 0.2em; color: #C4B9A1; margin-top: 4px; text-transform: uppercase;">Fulfillment Status Update</div>
     </div>
@@ -369,15 +369,15 @@ export function generateCustomerStatusUpdateEmail(
         <div style="font-size: 13px; color: #78716C; text-decoration: line-through; margin-bottom: 6px;">${previousStatusLabel}</div>
         <div style="font-size: 16px; color: #9A7B56; margin: 2px 0;">↓</div>
         <div style="font-size: 11px; color: #8C827A; text-transform: uppercase; letter-spacing: 0.05em;">Current Status</div>
-        <div style="font-size: 15px; font-weight: bold; color: ${newStatus.toUpperCase() === 'CANCELLED' ? '#BE123C' : '#1E3A2F'};">${newStatusLabel}</div>
+        <div style="font-size: 15px; font-weight: bold; color: ${newStatus.toUpperCase() === 'CANCELLED' ? '#BE123C' : '#2C221E'};">${newStatusLabel}</div>
       </div>
 
       <div style="text-align: center; margin: 24px 0;">
-        <a href="${trackingUrl}" style="display: inline-block; padding: 12px 24px; background-color: #1E3A2F; color: #FFFFFF; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 600;">Track Order in Customer Portal</a>
+        <a href="${trackingUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2C221E; color: #FFFFFF; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 600;">Track Order in Customer Portal</a>
       </div>
 
       <div style="padding: 16px; background-color: #FAF7F2; border-radius: 8px; text-align: center; font-size: 12px; color: #78716C;">
-        Questions about your furnishings? WhatsApp our concierge at <a href="tel:${SUPPORT_PHONE.replace(/\s+/g, '')}" style="color: #1E3A2F; font-weight: 600;">${SUPPORT_PHONE}</a> or email <a href="mailto:${SUPPORT_EMAIL}" style="color: #1E3A2F; font-weight: 600;">${SUPPORT_EMAIL}</a>.
+        Questions about your furnishings? WhatsApp our concierge at <a href="tel:${SUPPORT_PHONE.replace(/\s+/g, '')}" style="color: #2C221E; font-weight: 600;">${SUPPORT_PHONE}</a> or email <a href="mailto:${SUPPORT_EMAIL}" style="color: #2C221E; font-weight: 600;">${SUPPORT_EMAIL}</a>.
       </div>
     </div>
   </div>
@@ -407,3 +407,190 @@ Email: ${SUPPORT_EMAIL}
 
   return { subject, html, text };
 }
+
+// ─── 4. Admin Measurement / Consultation Request Alert ───
+export function generateAdminMeasurementRequestEmail(
+  request: DbMeasurementRequest
+): { subject: string; html: string; text: string } {
+  const isConsultation =
+    request.product_name_snapshot?.toLowerCase().includes('consultation') ||
+    request.category_slug_snapshot === 'services';
+  const label = isConsultation ? 'In-Home Consultation' : 'Free Measurement Visit';
+  const subject = `[New ${label} Alert] #${request.request_number} — ${request.customer_name}`;
+  const adminUrl = `${getSiteUrl()}/admin/measurement-requests`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F7F4EE; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1C1917;">
+  <div style="max-width: 600px; margin: 30px auto; background-color: #FFFFFF; border: 1px solid #EDE8DE; border-radius: 12px; overflow: hidden;">
+    <div style="background-color: #2C221E; padding: 24px; text-align: center; color: #FAF7F2;">
+      <h1 style="margin: 0; font-family: Georgia, serif; font-size: 20px; letter-spacing: 0.1em; text-transform: uppercase;">ZAIRA ATELIER ALERT</h1>
+      <div style="font-size: 11px; letter-spacing: 0.2em; color: #C4B9A1; margin-top: 4px; text-transform: uppercase;">
+        New ${label} Received
+      </div>
+    </div>
+    <div style="padding: 24px;">
+      <p style="font-size: 14px; margin-top: 0; color: #57534E;">
+        A new ${label.toLowerCase()} booking has been submitted on the Zaira Furnishing portal.
+      </p>
+
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
+        <tr style="border-bottom: 1px solid #F2ECE1;">
+          <td style="padding: 8px 0; color: #78716C; width: 140px;">Request Ref:</td>
+          <td style="padding: 8px 0; font-family: monospace; font-weight: bold; color: #1C1917;">#${request.request_number}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #F2ECE1;">
+          <td style="padding: 8px 0; color: #78716C;">Customer:</td>
+          <td style="padding: 8px 0; font-weight: 600; color: #1C1917;">${request.customer_name}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #F2ECE1;">
+          <td style="padding: 8px 0; color: #78716C;">Phone:</td>
+          <td style="padding: 8px 0; font-weight: 600; color: #2C221E;">
+            <a href="tel:${request.customer_phone}" style="color: #2C221E; text-decoration: none;">${request.customer_phone}</a>
+            &nbsp;•&nbsp;
+            <a href="https://wa.me/91${request.customer_phone.replace(/\D/g, '')}" style="color: #15803D; text-decoration: none; font-weight: bold;">WhatsApp ↗</a>
+          </td>
+        </tr>
+        ${request.customer_email ? `
+        <tr style="border-bottom: 1px solid #F2ECE1;">
+          <td style="padding: 8px 0; color: #78716C;">Email:</td>
+          <td style="padding: 8px 0; color: #1C1917;">${request.customer_email}</td>
+        </tr>` : ''}
+        <tr style="border-bottom: 1px solid #F2ECE1;">
+          <td style="padding: 8px 0; color: #78716C;">Service / Product:</td>
+          <td style="padding: 8px 0; font-weight: 500; color: #1C1917;">${request.product_name_snapshot}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #F2ECE1;">
+          <td style="padding: 8px 0; color: #78716C;">Preferred Slot:</td>
+          <td style="padding: 8px 0; color: #1C1917;"><strong>${request.preferred_date}</strong> (${request.preferred_time_slot})</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #F2ECE1;">
+          <td style="padding: 8px 0; color: #78716C;">Site Address:</td>
+          <td style="padding: 8px 0; color: #1C1917;">${request.address}</td>
+        </tr>
+        ${request.customer_notes ? `
+        <tr style="border-bottom: 1px solid #F2ECE1;">
+          <td style="padding: 8px 0; color: #78716C; vertical-align: top;">Notes / Scope:</td>
+          <td style="padding: 8px 0; color: #57534E; white-space: pre-wrap;">${request.customer_notes}</td>
+        </tr>` : ''}
+      </table>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${adminUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2C221E; color: #FFFFFF; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 600;">
+          Open in Admin Console →
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  const text = `
+ZAIRA ATELIER ALERT — NEW ${label.toUpperCase()}
+==================================================
+Ref: #${request.request_number}
+Customer: ${request.customer_name}
+Phone: ${request.customer_phone}
+${request.customer_email ? `Email: ${request.customer_email}\n` : ''}Service: ${request.product_name_snapshot}
+Slot: ${request.preferred_date} (${request.preferred_time_slot})
+Address: ${request.address}
+${request.customer_notes ? `Notes: ${request.customer_notes}\n` : ''}
+Open in Admin Console:
+${adminUrl}
+  `.trim();
+
+  return { subject, html, text };
+}
+
+// ─── 5. Admin Quote Request Alert ───
+export function generateAdminQuoteRequestEmail(
+  request: DbQuoteRequest
+): { subject: string; html: string; text: string } {
+  const subject = `[New Quote Request Alert] #${request.request_number} — ${request.customer_name}`;
+  const adminUrl = `${getSiteUrl()}/admin/quote-requests`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F7F4EE; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1C1917;">
+  <div style="max-width: 600px; margin: 30px auto; background-color: #FFFFFF; border: 1px solid #EDE8DE; border-radius: 12px; overflow: hidden;">
+    <div style="background-color: #2C221E; padding: 24px; text-align: center; color: #FAF7F2;">
+      <h1 style="margin: 0; font-family: Georgia, serif; font-size: 20px; letter-spacing: 0.1em; text-transform: uppercase;">ZAIRA ATELIER ALERT</h1>
+      <div style="font-size: 11px; letter-spacing: 0.2em; color: #C4B9A1; margin-top: 4px; text-transform: uppercase;">
+        New Quote Request Received
+      </div>
+    </div>
+    <div style="padding: 24px;">
+      <p style="font-size: 14px; margin-top: 0; color: #57534E;">
+        A new bespoke quote inquiry has been submitted.
+      </p>
+
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
+        <tr style="border-bottom: 1px solid #F2ECE1;">
+          <td style="padding: 8px 0; color: #78716C; width: 140px;">Request Ref:</td>
+          <td style="padding: 8px 0; font-family: monospace; font-weight: bold; color: #1C1917;">#${request.request_number}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #F2ECE1;">
+          <td style="padding: 8px 0; color: #78716C;">Customer:</td>
+          <td style="padding: 8px 0; font-weight: 600; color: #1C1917;">${request.customer_name}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #F2ECE1;">
+          <td style="padding: 8px 0; color: #78716C;">Phone:</td>
+          <td style="padding: 8px 0; font-weight: 600; color: #2C221E;">
+            <a href="tel:${request.customer_phone}" style="color: #2C221E; text-decoration: none;">${request.customer_phone}</a>
+            &nbsp;•&nbsp;
+            <a href="https://wa.me/91${request.customer_phone.replace(/\D/g, '')}" style="color: #15803D; text-decoration: none; font-weight: bold;">WhatsApp ↗</a>
+          </td>
+        </tr>
+        <tr style="border-bottom: 1px solid #F2ECE1;">
+          <td style="padding: 8px 0; color: #78716C;">Product / Service:</td>
+          <td style="padding: 8px 0; font-weight: 500; color: #1C1917;">${request.product_name_snapshot}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #F2ECE1;">
+          <td style="padding: 8px 0; color: #78716C;">Quantity:</td>
+          <td style="padding: 8px 0; color: #1C1917;">${request.quantity}</td>
+        </tr>
+        ${request.customer_notes ? `
+        <tr style="border-bottom: 1px solid #F2ECE1;">
+          <td style="padding: 8px 0; color: #78716C; vertical-align: top;">Requirements:</td>
+          <td style="padding: 8px 0; color: #57534E; white-space: pre-wrap;">${request.customer_notes}</td>
+        </tr>` : ''}
+      </table>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${adminUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2C221E; color: #FFFFFF; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 600;">
+          Open in Admin Console →
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  const text = `
+ZAIRA ATELIER ALERT — NEW QUOTE REQUEST
+==================================================
+Ref: #${request.request_number}
+Customer: ${request.customer_name}
+Phone: ${request.customer_phone}
+${request.customer_email ? `Email: ${request.customer_email}\n` : ''}Product: ${request.product_name_snapshot}
+Quantity: ${request.quantity}
+${request.customer_notes ? `Requirements: ${request.customer_notes}\n` : ''}
+Open in Admin Console:
+${adminUrl}
+  `.trim();
+
+  return { subject, html, text };
+}
+

@@ -40,7 +40,7 @@ export function ContactVisitSection({ cmsContent }: ContactVisitSectionProps) {
     <section id="contact" className="py-16 sm:py-20 lg:py-24 bg-[#FDFBF7] border-t border-[#EAE4D9]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-12 lg:gap-16 items-center">
-          
+
           {/* ─── LEFT: Single Relevant Interior / Showroom Image ─── */}
           <div className="lg:col-span-6 w-full">
             <div className="relative aspect-[4/3] sm:aspect-[16/11] lg:aspect-[4/3] w-full overflow-hidden rounded-3xl bg-[#F4EFE6] border border-[#EAE4D9] shadow-atelier">
@@ -139,12 +139,12 @@ export function ContactVisitSection({ cmsContent }: ContactVisitSectionProps) {
             </div>
 
             {/* Simple Actions: Get Directions & Contact Us */}
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
               <a
                 href={mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#1C1714] hover:bg-[#C5A059] text-white hover:text-[#1C1714] text-[12.5px] sm:text-[13px] font-bold uppercase tracking-wider transition-all shadow-md group"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-[#1C1714] hover:bg-[#C5A059] text-white hover:text-[#1C1714] text-[12.5px] sm:text-[13px] font-bold uppercase tracking-wider transition-all shadow-md group"
               >
                 <Navigation className="w-3.5 h-3.5 text-[#C5A059] group-hover:text-[#1C1714]" />
                 <span>Get Directions</span>
@@ -153,7 +153,7 @@ export function ContactVisitSection({ cmsContent }: ContactVisitSectionProps) {
 
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-1.5 px-6 py-3 rounded-full border border-[#C5A059] hover:bg-[#C5A059]/10 text-[#1C1714] text-[12.5px] sm:text-[13px] font-semibold uppercase tracking-wider transition-colors group"
+                className="inline-flex items-center justify-center gap-1.5 px-6 py-3.5 rounded-full border border-[#C5A059] hover:bg-[#C5A059]/10 text-[#1C1714] text-[12.5px] sm:text-[13px] font-semibold uppercase tracking-wider transition-colors group"
               >
                 <span>Contact Concierge</span>
                 <ArrowRight className="w-3.5 h-3.5 text-[#C5A059] transition-transform duration-200 group-hover:translate-x-0.5" />

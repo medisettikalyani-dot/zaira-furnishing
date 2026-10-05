@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, MessageSquare } from 'lucide-react';
 
 export function ConsultationForm() {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [confirmedWhatsAppUrl, setConfirmedWhatsAppUrl] = useState<string | null>(null);
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -56,6 +57,7 @@ export function ConsultationForm() {
         return;
       }
 
+      setConfirmedWhatsAppUrl(data.whatsappUrl || 'https://wa.me/917947415666');
       setSubmitted(true);
       setName('');
       setPhone('');
@@ -82,16 +84,30 @@ export function ConsultationForm() {
         <p className="text-[13px] text-[#57534E] leading-relaxed max-w-md mx-auto mb-6">
           Thank you. Our showroom coordinator has received your request and will contact you via phone/WhatsApp to confirm your laser measurement schedule.
         </p>
-        <button
-          type="button"
-          onClick={() => {
-            setSubmitted(false);
-            setErrorMessage(null);
-          }}
-          className="px-6 py-2.5 text-[11px] uppercase tracking-wider font-medium bg-[#1C1917] text-white cursor-pointer"
-        >
-          Book Another Appointment
-        </button>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          {confirmedWhatsAppUrl && (
+            <a
+              href={confirmedWhatsAppUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-[#25D366] hover:bg-[#20BA5C] text-white text-[12px] font-semibold tracking-wider rounded-lg shadow-xs transition-colors"
+            >
+              <MessageSquare className="w-4 h-4 fill-white" />
+              <span>Instant WhatsApp Confirmation</span>
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setSubmitted(false);
+              setErrorMessage(null);
+            }}
+            className="px-6 py-2.5 text-[11px] uppercase tracking-wider font-medium bg-[#1C1917] text-white hover:bg-[#9A7B56] transition-colors rounded-lg cursor-pointer"
+          >
+            Book Another Appointment
+          </button>
+        </div>
       </div>
     );
   }
@@ -116,7 +132,7 @@ export function ConsultationForm() {
             onChange={(e) => setName(e.target.value)}
             disabled={isSubmitting}
             placeholder="Your full name"
-            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60"
+            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[16px] sm:text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60 rounded-xl"
           />
         </div>
         <div>
@@ -130,7 +146,7 @@ export function ConsultationForm() {
             onChange={(e) => setPhone(e.target.value)}
             disabled={isSubmitting}
             placeholder="Your mobile number"
-            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60"
+            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[16px] sm:text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60 rounded-xl"
           />
         </div>
       </div>
@@ -144,7 +160,7 @@ export function ConsultationForm() {
             value={serviceRequested}
             onChange={(e) => setServiceRequested(e.target.value)}
             disabled={isSubmitting}
-            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60"
+            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[16px] sm:text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60 rounded-xl"
           >
             <option>Free In-Home Measurement / Site Visit</option>
             <option>Doorstep Fabric / Sample Demo</option>
@@ -164,7 +180,7 @@ export function ConsultationForm() {
             onChange={(e) => setPreferredTimeframe(e.target.value)}
             disabled={isSubmitting}
             placeholder="e.g. This Weekend / Next Tuesday"
-            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60"
+            className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[16px] sm:text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60 rounded-xl"
           />
         </div>
       </div>
@@ -179,14 +195,14 @@ export function ConsultationForm() {
           onChange={(e) => setSiteLocationAndScope(e.target.value)}
           disabled={isSubmitting}
           placeholder="Describe your rooms, number of windows, or specific fabric styles you wish to view..."
-          className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60"
+          className="w-full px-4 py-3 bg-white border border-[#E7E2D8] text-[16px] sm:text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1C1917] disabled:opacity-60 rounded-xl"
         />
       </div>
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full py-4 bg-[#1C1917] text-[#FDFBF7] text-[12px] uppercase tracking-[0.2em] font-medium hover:bg-[#9A7B56] transition-colors disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+        className="w-full py-4 bg-[#1C1714] text-[#FDFBF7] text-[12px] uppercase tracking-[0.2em] font-medium hover:bg-[#9A7B56] transition-colors disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer rounded-xl"
       >
         {isSubmitting ? 'Submitting Request...' : 'Submit Consultation Request'}
       </button>

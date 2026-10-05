@@ -180,7 +180,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       case 'CONFIRMED':
         return {
           label: 'Order Confirmed',
-          classes: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+          classes: 'bg-[#FBF8F3] text-[#7A5832] border-[#E8DFC8]',
         };
       case 'PROCESSING':
         return {
@@ -195,7 +195,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       case 'COMPLETED':
         return {
           label: 'Completed & Installed',
-          classes: 'bg-[#1E3A2F]/10 text-[#1E3A2F] border-[#1E3A2F]/20',
+          classes: 'bg-[#2C221E]/10 text-[#2C221E] border-[#2C221E]/20',
         };
       case 'CANCELLED':
         return {
@@ -220,7 +220,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       case 'PAID':
         return {
           label: 'Paid on Delivery',
-          classes: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+          classes: 'bg-[#FBF8F3] text-[#7A5832] border-[#E8DFC8]',
         };
       case 'FAILED':
         return {
@@ -243,7 +243,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   if (loading) {
     return (
       <div className="py-24 text-center space-y-4 max-w-5xl mx-auto">
-        <div className="w-9 h-9 border-2 border-[#1E3A2F] border-t-transparent rounded-full animate-spin mx-auto" />
+        <div className="w-9 h-9 border-2 border-[#2C221E] border-t-transparent rounded-full animate-spin mx-auto" />
         <p className="text-[13.5px] text-[#78716C]">Loading order #{id} from Cloudflare D1...</p>
       </div>
     );
@@ -267,7 +267,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
           </Link>
           <button
             onClick={fetchOrderDetail}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1E3A2F] text-white text-[12px] font-semibold transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2C221E] text-white text-[12px] font-semibold transition-all"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Retry</span>
@@ -404,8 +404,8 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
       {/* ─── Feedback Alerts ─── */}
       {saveSuccess && (
-        <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl flex items-center gap-3 text-emerald-800 text-[13px]">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+        <div className="bg-[#FBF8F3] border-[#E8DFC8] p-4 rounded-xl flex items-center gap-3 text-[#7A5832] text-[13px]">
+          <CheckCircle2 className="w-5 h-5 text-[#9A7B56] shrink-0" />
           <span>{saveSuccess}</span>
         </div>
       )}
@@ -433,7 +433,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                 </p>
               </div>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-[#FAF7F2] text-[#866945] border border-[#EDE8DE]">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#15803D]" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#9A7B56]" />
                 <span>Price-Locked Snapshot</span>
               </span>
             </div>
@@ -548,7 +548,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                 <span className="font-mono text-[#1C1917]">₹{order.subtotal.toLocaleString('en-IN')}</span>
               </div>
               {order.discount > 0 && (
-                <div className="flex justify-between text-emerald-700">
+                <div className="flex justify-between text-[#9A7B56]">
                   <span>Discount Applied</span>
                   <span className="font-mono">-₹{order.discount.toLocaleString('en-IN')}</span>
                 </div>
@@ -561,7 +561,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
               </div>
               <div className="flex justify-between items-center text-[16px] font-bold text-[#1C1917] pt-2 border-t border-[#EAE4D8]">
                 <span className="font-serif">Total Order Value (COD)</span>
-                <span className="font-serif text-[18px] text-[#1E3A2F]">
+                <span className="font-serif text-[18px] text-[#2C221E]">
                   ₹{order.total_amount.toLocaleString('en-IN')}
                 </span>
               </div>
@@ -598,8 +598,8 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                   Service Request
                 </span>
                 {order.site_visit_required === 1 || order.delivery_option === 'service_visit' ? (
-                  <div className="bg-[#1E3A2F]/5 border border-[#1E3A2F]/15 rounded-xl p-3 text-[12.5px] space-y-1">
-                    <div className="font-semibold text-[#1E3A2F] flex items-center gap-1.5">
+                  <div className="bg-[#2C221E]/5 border border-[#2C221E]/15 rounded-xl p-3 text-[12.5px] space-y-1">
+                    <div className="font-semibold text-[#2C221E] flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5" />
                       <span>Complimentary Master Measurement Visit</span>
                     </div>
@@ -644,7 +644,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
                   disabled={saving || isTerminal}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F] focus:bg-white disabled:opacity-60 cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56] focus:bg-white disabled:opacity-60 cursor-pointer"
                 >
                   <option value={order.status}>
                     Current: {getStatusBadge(order.status).label}
@@ -671,7 +671,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                   value={selectedPaymentStatus}
                   onChange={(e) => setSelectedPaymentStatus(e.target.value)}
                   disabled={saving}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F] focus:bg-white disabled:opacity-60 cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56] focus:bg-white disabled:opacity-60 cursor-pointer"
                 >
                   <option value="PENDING">COD Pending (Doorstep Collection)</option>
                   <option value="PAID">Paid on Delivery</option>
@@ -694,7 +694,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                   disabled={saving}
                   rows={3}
                   placeholder="Internal notes, special delivery requests, measurement observations..."
-                  className="w-full px-3 py-2 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[12.5px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F] focus:bg-white resize-none"
+                  className="w-full px-3 py-2 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[12.5px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56] focus:bg-white resize-none"
                 />
               </div>
 
@@ -702,7 +702,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
               <button
                 type="submit"
                 disabled={saving || (selectedStatus === order.status && selectedPaymentStatus === order.payment_status && notes === (order.notes || ''))}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12.5px] font-semibold transition-all shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[12.5px] font-semibold transition-all shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
                 <span>{saving ? 'Updating D1 Ledger...' : 'Save Order Changes'}</span>
@@ -732,7 +732,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                 </span>
                 <a
                   href={`tel:${order.customer_phone}`}
-                  className="inline-flex items-center gap-1.5 text-[#1E3A2F] hover:text-[#9A7B56] font-medium"
+                  className="inline-flex items-center gap-1.5 text-[#2C221E] hover:text-[#9A7B56] font-medium"
                 >
                   <Phone className="w-3.5 h-3.5" />
                   <span>{order.customer_phone}</span>
@@ -745,7 +745,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                 </span>
                 <a
                   href={`mailto:${order.customer_email}`}
-                  className="inline-flex items-center gap-1.5 text-[#1E3A2F] hover:text-[#9A7B56] font-medium truncate max-w-full"
+                  className="inline-flex items-center gap-1.5 text-[#2C221E] hover:text-[#9A7B56] font-medium truncate max-w-full"
                 >
                   <Mail className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate">{order.customer_email}</span>
@@ -757,7 +757,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                   Payment Method
                 </span>
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#FAF7F2] border border-[#EDE8DE] font-semibold text-[#1C1917] text-[12px] mt-0.5">
-                  <Banknote className="w-3.5 h-3.5 text-[#1E3A2F]" />
+                  <Banknote className="w-3.5 h-3.5 text-[#2C221E]" />
                   <span>{order.payment_method} (Cash on Delivery)</span>
                 </span>
               </div>
@@ -805,7 +805,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                   const isFailed = notif.status === 'FAILED';
 
                   const badgeClass = isSent
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    ? 'bg-[#FBF8F3] text-[#7A5832] border-[#E8DFC8]'
                     : isFailed
                     ? 'bg-rose-50 text-rose-800 border-rose-200'
                     : 'bg-stone-50 text-stone-700 border-stone-200';
@@ -846,7 +846,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                           type="button"
                           onClick={() => handleRetryNotification(notif.id)}
                           disabled={retryingNotifId === notif.id}
-                          className="w-full mt-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#D5CDBF] hover:border-[#1E3A2F] text-[11px] font-medium text-[#1C1917] hover:text-[#1E3A2F] transition-all cursor-pointer disabled:opacity-50"
+                          className="w-full mt-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#D5CDBF] hover:border-[#2C221E] text-[11px] font-medium text-[#1C1917] hover:text-[#9A7B56] transition-all cursor-pointer disabled:opacity-50"
                         >
                           <Send className={`w-3 h-3 ${retryingNotifId === notif.id ? 'animate-spin' : ''}`} />
                           <span>{retryingNotifId === notif.id ? 'Retrying Delivery...' : 'Retry Delivery'}</span>
@@ -886,7 +886,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                         {/* Timeline dot */}
                         <div className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center shrink-0 ${
                           isLast
-                            ? 'border-[#1E3A2F] bg-[#1E3A2F]'
+                            ? 'border-[#2C221E] bg-[#2C221E]'
                             : 'border-[#D5CDBF] bg-white'
                         }`}>
                           <div className={`w-1.5 h-1.5 rounded-full ${isLast ? 'bg-white' : 'bg-[#D5CDBF]'}`} />
@@ -899,7 +899,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                             <span className="text-[#8C827A]">→</span>
                             <span className={`font-semibold text-[12px] ${
                               entry.new_status === 'CANCELLED' ? 'text-rose-700' :
-                              entry.new_status === 'COMPLETED' ? 'text-emerald-700' :
+                              entry.new_status === 'COMPLETED' ? 'text-[#9A7B56]' :
                               'text-[#1C1917]'
                             }`}>{entry.new_status}</span>
                           </div>

@@ -118,7 +118,7 @@ export function EcommerceProductGrid({}: EcommerceProductGridProps) {
           <div className="flex items-center gap-3 shrink-0">
             <Link
               href="/categories"
-              className="px-5 py-2.5 rounded-full text-[12.5px] font-semibold transition-all cursor-pointer bg-white text-[#1C1917] border border-[#EDE8DE] hover:bg-[#1E3A2F] hover:text-white hover:border-[#1E3A2F] shadow-2xs"
+              className="px-5 py-2.5 rounded-full text-[12.5px] font-semibold transition-all cursor-pointer bg-white text-[#1C1917] border border-[#EDE8DE] hover:bg-[#1C1714] hover:text-white hover:border-[#2C221E] shadow-2xs"
             >
               View All Categories &rarr;
             </Link>
@@ -127,7 +127,7 @@ export function EcommerceProductGrid({}: EcommerceProductGridProps) {
               type="button"
               onClick={() => scrollCategoryCarousel('left')}
               aria-label="Scroll left"
-              className="w-10 h-10 rounded-full bg-white border border-[#EDE8DE] flex items-center justify-center text-[#1C1917] hover:bg-[#1E3A2F] hover:text-white hover:border-[#1E3A2F] transition-all shadow-2xs cursor-pointer"
+              className="w-10 h-10 rounded-full bg-white border border-[#EDE8DE] flex items-center justify-center text-[#1C1917] hover:bg-[#1C1714] hover:text-white hover:border-[#2C221E] transition-all shadow-2xs cursor-pointer"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -136,7 +136,7 @@ export function EcommerceProductGrid({}: EcommerceProductGridProps) {
               type="button"
               onClick={() => scrollCategoryCarousel('right')}
               aria-label="Scroll right"
-              className="w-10 h-10 rounded-full bg-white border border-[#EDE8DE] flex items-center justify-center text-[#1C1917] hover:bg-[#1E3A2F] hover:text-white hover:border-[#1E3A2F] transition-all shadow-2xs cursor-pointer"
+              className="w-10 h-10 rounded-full bg-white border border-[#EDE8DE] flex items-center justify-center text-[#1C1917] hover:bg-[#1C1714] hover:text-white hover:border-[#2C221E] transition-all shadow-2xs cursor-pointer"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -157,7 +157,7 @@ export function EcommerceProductGrid({}: EcommerceProductGridProps) {
                 <Link
                   key={item.slug}
                   href={item.href}
-                  className="w-[290px] sm:w-[330px] md:w-[350px] shrink-0 rounded-2xl bg-white border border-[#EDE8DE] overflow-hidden shadow-2xs hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer flex flex-col justify-between group select-none hover:border-[#1E3A2F]/40"
+                  className="w-[290px] sm:w-[330px] md:w-[350px] shrink-0 rounded-2xl bg-white border border-[#EDE8DE] overflow-hidden shadow-2xs hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer flex flex-col justify-between group select-none hover:border-[#2C221E]/40"
                 >
                   {/* Clean Edge-to-Edge Luxury Photography */}
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#FAF7F2]">
@@ -186,7 +186,7 @@ export function EcommerceProductGrid({}: EcommerceProductGridProps) {
                         {count} {count === 1 ? 'Product' : 'Products'}
                       </span>
 
-                      <span className="text-[12.5px] font-semibold text-[#1E3A2F] group-hover:text-[#9A7B56] transition-colors inline-flex items-center gap-1">
+                      <span className="text-[12.5px] font-semibold text-[#2C221E] group-hover:text-[#9A7B56] transition-colors inline-flex items-center gap-1">
                         <span>Explore</span>
                         <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                       </span>
@@ -216,14 +216,14 @@ export function EcommerceProductGrid({}: EcommerceProductGridProps) {
             <button
               type="button"
               onClick={() => openBookingModal('In-Home Catalog Consultation')}
-              className="px-5 py-3 sm:py-2.5 rounded-full bg-[#1E3A2F] hover:bg-[#152B23] text-white font-semibold text-[12.5px] transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs text-center"
+              className="px-5 py-3 sm:py-2.5 rounded-full bg-[#1C1714] hover:bg-[#2C221E] text-white font-semibold text-[12.5px] transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs text-center"
             >
               <Ruler className="w-3.5 h-3.5 text-[#D5CDBF]" />
               <span>Book Free Home Visit</span>
             </button>
             <a
               href="tel:07947415666"
-              className="px-4 py-3 sm:py-2.5 rounded-full border border-[#EDE8DE] hover:border-[#1E3A2F] text-[#1C1917] font-semibold text-[12.5px] transition-all inline-flex items-center justify-center gap-2 text-center"
+              className="px-4 py-3 sm:py-2.5 rounded-full border border-[#EDE8DE] hover:border-[#2C221E] text-[#1C1917] font-semibold text-[12.5px] transition-all inline-flex items-center justify-center gap-2 text-center"
             >
               <Phone className="w-3.5 h-3.5 text-[#9A7B56]" />
               <span>Call Showroom</span>

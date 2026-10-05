@@ -6,7 +6,7 @@ const HIGHLIGHTS = [
     subtitle: 'Beautiful and durable furnishings.',
     icon: (
       // Diamond with facets
-      <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#1E3A2F]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#2C221E]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <path d="M6 3h12l4 7-10 11L2 10l4-7z" />
         <path d="M2 10h20" />
         <path d="m12 21 4-11-4-7-4 7 4 11z" />
@@ -18,7 +18,7 @@ const HIGHLIGHTS = [
     subtitle: 'We measure at your home.',
     icon: (
       // Coiled tape measure
-      <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#1E3A2F]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#2C221E]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="13" cy="13" r="7.5" />
         <circle cx="13" cy="13" r="2.8" />
         <path d="M5.5 13H2.5" />
@@ -33,7 +33,7 @@ const HIGHLIGHTS = [
     subtitle: 'Made to fit your space.',
     icon: (
       // Sewing machine
-      <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#1E3A2F]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#2C221E]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 19h18" />
         <path d="M5 19V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10" />
         <path d="M14 7V4h2v3" />
@@ -49,7 +49,7 @@ const HIGHLIGHTS = [
     subtitle: 'Done by our experts.',
     icon: (
       // Wrench
-      <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#1E3A2F]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#2C221E]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
       </svg>
     ),
@@ -112,7 +112,7 @@ export function TrustHighlights() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-center">
           {/* Left Column: Heading & Subtitle */}
           <div className="lg:col-span-4 text-left">
-            <h2 className="font-serif text-[28px] sm:text-[38px] text-[#1E3A2F] font-medium leading-tight mb-1.5 sm:mb-2 tracking-tight">
+            <h2 className="font-serif text-[28px] sm:text-[38px] text-[#2C221E] font-medium leading-tight mb-1.5 sm:mb-2 tracking-tight">
               Why Choose Zaira
             </h2>
             <p className="text-[13.5px] sm:text-[15px] text-[#66615C] leading-relaxed max-w-sm">

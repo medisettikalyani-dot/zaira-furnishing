@@ -103,8 +103,8 @@ export default function AdminQuoteRequestsPage() {
         );
       case 'QUOTED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#FBF8F3] text-[#7A5832] border border-[#E8DFC8]">
+            <CheckCircle2 className="w-3 h-3 text-[#9A7B56]" />
             QUOTED
           </span>
         );
@@ -177,7 +177,7 @@ export default function AdminQuoteRequestsPage() {
               }}
               className={`px-4 py-2 rounded-xl font-semibold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
                 statusFilter === tab.key
-                  ? 'bg-[#1E3A2F] text-white shadow-2xs'
+                  ? 'bg-[#2C221E] text-white shadow-2xs'
                   : 'bg-[#FAF7F2] text-[#57534E] border border-[#EDE8DE] hover:border-[#D5CDBF] hover:bg-white'
               }`}
             >
@@ -204,7 +204,7 @@ export default function AdminQuoteRequestsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by request number, customer name, phone, email, or product..."
-              className="w-full pl-10 pr-20 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] placeholder:text-[#A8A29E] focus:outline-hidden focus:border-[#1E3A2F] focus:bg-white transition-all"
+              className="w-full pl-10 pr-20 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] placeholder:text-[#A8A29E] focus:outline-hidden focus:border-[#9A7B56] focus:bg-white transition-all"
             />
             {search && (
               <button
@@ -220,7 +220,7 @@ export default function AdminQuoteRequestsPage() {
             )}
             <button
               type="submit"
-              className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11px] font-semibold rounded-lg transition-colors cursor-pointer"
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-[#1C1714] hover:bg-[#2C221E] text-white text-[11px] font-semibold rounded-lg transition-colors cursor-pointer"
             >
               Search
             </button>
@@ -315,7 +315,7 @@ export default function AdminQuoteRequestsPage() {
                     <td className="py-4 px-4 sm:px-6 text-right">
                       <Link
                         href={`/admin/quote-requests/${req.id}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FAF7F2] border border-[#D5CDBF] hover:bg-[#1E3A2F] hover:border-[#1E3A2F] text-[#1C1917] hover:text-white text-[11.5px] font-semibold transition-all shadow-2xs"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FAF7F2] border border-[#D5CDBF] hover:bg-[#1C1714] hover:border-[#2C221E] text-[#1C1917] hover:text-white text-[11.5px] font-semibold transition-all shadow-2xs"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>View</span>

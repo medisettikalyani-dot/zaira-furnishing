@@ -195,9 +195,9 @@ export function BookingModal() {
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 overflow-y-auto bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div
-        className="relative w-full max-w-2xl bg-[#FDFBF7] rounded-3xl border border-[#EAE4D8] shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col"
+        className="relative w-full max-w-2xl bg-[#FDFBF7] rounded-2xl sm:rounded-3xl border border-[#EAE4D8] shadow-2xl overflow-hidden my-auto max-h-[94vh] sm:max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ─── Header ─── */}
@@ -231,9 +231,8 @@ export function BookingModal() {
               {[1, 2, 3].map((s) => (
                 <div key={s} className="flex-1 flex items-center gap-2">
                   <div
-                    className={`h-1.5 w-full rounded-full transition-all duration-300 ${
-                      step >= s ? 'bg-[#D4AF37]' : 'bg-white/20'
-                    }`}
+                    className={`h-1.5 w-full rounded-full transition-all duration-300 ${step >= s ? 'bg-[#D4AF37]' : 'bg-white/20'
+                      }`}
                   />
                 </div>
               ))}
@@ -332,18 +331,16 @@ export function BookingModal() {
                           key={srv.id}
                           type="button"
                           onClick={() => setSelectedService(srv.label)}
-                          className={`p-4 rounded-2xl border text-left transition-all flex items-start gap-4 cursor-pointer ${
-                            isSelected
-                              ? 'bg-[#FAF7F2] border-[#9A7B56] ring-2 ring-[#9A7B56]/20 shadow-xs'
-                              : 'bg-white border-[#EAE4D8] hover:border-[#C4B9A1]'
-                          }`}
+                          className={`p-4 rounded-2xl border text-left transition-all flex items-start gap-4 cursor-pointer ${isSelected
+                            ? 'bg-[#FAF7F2] border-[#9A7B56] ring-2 ring-[#9A7B56]/20 shadow-xs'
+                            : 'bg-white border-[#EAE4D8] hover:border-[#C4B9A1]'
+                            }`}
                         >
                           <div
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                              isSelected
-                                ? 'bg-[#9A7B56] text-white'
-                                : 'bg-[#FAF7F2] text-[#9A7B56]'
-                            }`}
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isSelected
+                              ? 'bg-[#9A7B56] text-white'
+                              : 'bg-[#FAF7F2] text-[#9A7B56]'
+                              }`}
                           >
                             <Icon className="w-5 h-5" />
                           </div>
@@ -353,11 +350,10 @@ export function BookingModal() {
                                 {srv.label}
                               </span>
                               <span
-                                className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
-                                  isSelected
-                                    ? 'bg-[#9A7B56] text-white'
-                                    : 'bg-[#FAF7F2] text-[#9A7B56]'
-                                }`}
+                                className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${isSelected
+                                  ? 'bg-[#9A7B56] text-white'
+                                  : 'bg-[#FAF7F2] text-[#9A7B56]'
+                                  }`}
                               >
                                 {srv.tag}
                               </span>
@@ -388,7 +384,7 @@ export function BookingModal() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-2.5">
                     {CATEGORIES_OPTIONS.map((cat) => {
                       const isSelected = selectedCategories.includes(cat);
                       return (
@@ -396,21 +392,19 @@ export function BookingModal() {
                           key={cat}
                           type="button"
                           onClick={() => toggleCategory(cat)}
-                          className={`p-3.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
-                            isSelected
-                              ? 'bg-[#1C1714] border-[#1C1714] text-white shadow-xs'
-                              : 'bg-white border-[#EAE4D8] text-[#1C1917] hover:border-[#9A7B56]'
-                          }`}
-                        >
-                          <span className="text-[13px] font-medium">{cat}</span>
-                          <div
-                            className={`w-5 h-5 rounded-md flex items-center justify-center border transition-colors ${
-                              isSelected
-                                ? 'bg-white text-[#1C1714] border-white'
-                                : 'border-[#D5CDBC] bg-transparent'
+                          className={`p-2.5 sm:p-3.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${isSelected
+                            ? 'bg-[#1C1714] border-[#1C1714] text-white shadow-xs'
+                            : 'bg-white border-[#EAE4D8] text-[#1C1917] hover:border-[#9A7B56]'
                             }`}
+                        >
+                          <span className="text-[11.5px] sm:text-[13px] font-medium leading-tight truncate pr-1">{cat}</span>
+                          <div
+                            className={`w-4 h-4 sm:w-5 sm:h-5 rounded-md flex items-center justify-center border transition-colors shrink-0 ${isSelected
+                              ? 'bg-white text-[#1C1714] border-white'
+                              : 'border-[#D5CDBC] bg-transparent'
+                              }`}
                           >
-                            {isSelected && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                            {isSelected && <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[2.5]" />}
                           </div>
                         </button>
                       );
@@ -444,7 +438,7 @@ export function BookingModal() {
                         type="date"
                         value={preferredDate}
                         onChange={(e) => setPreferredDate(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-[#D5CDBC] rounded-xl text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                        className="w-full px-3.5 py-2.5 bg-white border border-[#D5CDBC] rounded-xl text-[16px] sm:text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
                       />
                     </div>
                     <div>
@@ -454,7 +448,7 @@ export function BookingModal() {
                       <select
                         value={preferredTimeSlot}
                         onChange={(e) => setPreferredTimeSlot(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-[#D5CDBC] rounded-xl text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                        className="w-full px-3.5 py-2.5 bg-white border border-[#D5CDBC] rounded-xl text-[16px] sm:text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
                       >
                         <option value="Morning (10:00 AM – 1:00 PM)">Morning (10:00 AM – 1:00 PM)</option>
                         <option value="Afternoon (2:00 PM – 5:00 PM)">Afternoon (2:00 PM – 5:00 PM)</option>
@@ -474,11 +468,10 @@ export function BookingModal() {
                           key={area}
                           type="button"
                           onClick={() => setSelectedArea(area)}
-                          className={`px-3 py-1 rounded-lg text-[11.5px] font-medium transition-colors cursor-pointer ${
-                            selectedArea === area
-                              ? 'bg-[#1C1714] text-white'
-                              : 'bg-[#FAF7F2] text-[#57534E] hover:bg-[#EAE4D8]'
-                          }`}
+                          className={`px-3 py-1 rounded-lg text-[11.5px] font-medium transition-colors cursor-pointer ${selectedArea === area
+                            ? 'bg-[#1C1714] text-white'
+                            : 'bg-[#FAF7F2] text-[#57534E] hover:bg-[#EAE4D8]'
+                            }`}
                         >
                           {area}
                         </button>
@@ -498,7 +491,7 @@ export function BookingModal() {
                         placeholder="e.g. Kalyani Medisetti"
                         value={customerName}
                         onChange={(e) => setCustomerName(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-[#D5CDBC] rounded-xl text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                        className="w-full px-3.5 py-2.5 bg-white border border-[#D5CDBC] rounded-xl text-[16px] sm:text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
                       />
                     </div>
                     <div>
@@ -511,7 +504,7 @@ export function BookingModal() {
                         placeholder="e.g. 9876543210"
                         value={customerPhone}
                         onChange={(e) => setCustomerPhone(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-[#D5CDBC] rounded-xl text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                        className="w-full px-3.5 py-2.5 bg-white border border-[#D5CDBC] rounded-xl text-[16px] sm:text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
                       />
                     </div>
                   </div>
@@ -526,13 +519,13 @@ export function BookingModal() {
                       placeholder="e.g. Flat 402, My Home Bhooja, Gachibowli"
                       value={addressDetails}
                       onChange={(e) => setAddressDetails(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-white border border-[#D5CDBC] rounded-xl text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                      className="w-full px-3.5 py-2.5 bg-white border border-[#D5CDBC] rounded-xl text-[16px] sm:text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
                     />
                   </div>
 
                   {/* Trust Badge */}
                   <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#FAF7F2] border border-[#EAE4D8] text-[11.5px] text-[#57534E]">
-                    <ShieldCheck className="w-4 h-4 text-[#1E3A2F] shrink-0" />
+                    <ShieldCheck className="w-4 h-4 text-[#2C221E] shrink-0" />
                     <span>Zero obligation • 100% Free measurement • No purchase required</span>
                   </div>
                 </form>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/auth/admin';
 import { getDatabase } from '@/lib/db';
+import { ensureDatabaseSchema } from '@/lib/db/auto-migrate';
 import { DbOrder } from '@/lib/db/types';
 
 export async function GET(req: NextRequest) {
@@ -22,6 +23,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const db = getDatabase();
+    await ensureDatabaseSchema(db);
 
     let whereClause = 'WHERE 1=1';
     const params: unknown[] = [];

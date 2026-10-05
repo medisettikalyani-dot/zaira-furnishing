@@ -215,7 +215,7 @@ export function RoomLookbookSection() {
   return (
     <section className="py-14 sm:py-20 bg-[#FDFBF7] border-b border-[#EAE4D9]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between pb-6 mb-8 border-b border-[#EAE4D9] gap-4">
           <div>
@@ -241,11 +241,10 @@ export function RoomLookbookSection() {
                   setActiveTab(room.id);
                   setActiveHotspot(0);
                 }}
-                className={`px-4 py-2 rounded-full text-[12px] font-bold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
-                  activeTab === room.id
+                className={`px-4 py-2 rounded-full text-[12px] font-bold tracking-wide transition-all cursor-pointer whitespace-nowrap ${activeTab === room.id
                     ? 'bg-[#1C1714] text-[#C5A059] shadow-sm'
                     : 'text-[#7C7167] hover:text-[#1C1714]'
-                }`}
+                  }`}
               >
                 {room.title.split(' ')[1] || room.title}
               </button>
@@ -255,7 +254,7 @@ export function RoomLookbookSection() {
 
         {/* ─── Interactive Room Display Grid ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          
+
           {/* Left Column: Big Interactive Scene with Pulsing Hotspots (8 cols) */}
           <div className="lg:col-span-8 relative">
             <div className="relative aspect-[16/10] rounded-3xl overflow-hidden shadow-atelier border border-[#EAE4D9] bg-[#F7F4EE] group">
@@ -280,20 +279,18 @@ export function RoomLookbookSection() {
                       type="button"
                       onClick={() => setActiveHotspot(idx)}
                       aria-label={`View ${item.name}`}
-                      className={`relative flex items-center justify-center cursor-pointer transition-transform ${
-                        isActive ? 'scale-125' : 'hover:scale-115'
-                      }`}
+                      className={`relative flex items-center justify-center cursor-pointer transition-transform ${isActive ? 'scale-125' : 'hover:scale-115'
+                        }`}
                     >
                       {/* Animated Ping Radar */}
                       <span className="absolute w-9 h-9 rounded-full bg-[#C5A059]/50 animate-ping" />
-                      
+
                       {/* Core Number Pin */}
                       <span
-                        className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[12px] shadow-lg transition-all ${
-                          isActive
+                        className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[12px] shadow-lg transition-all ${isActive
                             ? 'bg-[#1C1714] text-[#C5A059] ring-4 ring-[#FAF4E7]'
                             : 'bg-white text-[#1C1714] hover:bg-[#1C1714] hover:text-[#C5A059]'
-                        }`}
+                          }`}
                       >
                         {idx + 1}
                       </span>
@@ -411,19 +408,17 @@ export function RoomLookbookSection() {
                       key={idx}
                       type="button"
                       onClick={() => setActiveHotspot(idx)}
-                      className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
-                        isActive
+                      className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${isActive
                           ? 'bg-[#FAF4E7] border-[#C5A059] ring-1 ring-[#C5A059]'
                           : 'bg-white border-[#EAE4D9] hover:border-[#C5A059] text-[#382F2A]'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <span
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                            isActive
+                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${isActive
                               ? 'bg-[#1C1714] text-[#C5A059]'
                               : 'bg-[#F7F4EE] text-[#7C7167]'
-                          }`}
+                            }`}
                         >
                           {idx + 1}
                         </span>

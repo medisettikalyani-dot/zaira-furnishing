@@ -61,13 +61,13 @@ export function EcommerceHeroBanner() {
       onTouchEnd={handleTouchEnd}
       className="relative w-full overflow-hidden bg-[#1C1714] select-none"
     >
-      <div className="relative w-full max-w-[1600px] mx-auto min-h-[460px] sm:min-h-[600px] md:min-h-[660px] lg:min-h-[700px] xl:min-h-[750px] flex items-center shadow-inner">
+      <div className="relative w-full max-w-[1600px] mx-auto min-h-[540px] sm:min-h-[600px] md:min-h-[660px] lg:min-h-[700px] xl:min-h-[750px] flex items-center shadow-inner">
 
         {/* ════════════════════════════════════════════════════════════════════════════
             SLIDE 2: BESPOKE LUXURY LIVING & ZAIRA ATELIER COLLECTIONS
         ════════════════════════════════════════════════════════════════════════════ */}
         {currentSlide === 1 && (
-          <div className="relative w-full h-full min-h-[460px] sm:min-h-[600px] md:min-h-[660px] lg:min-h-[700px] xl:min-h-[750px] flex flex-col justify-between py-6 sm:py-12 lg:py-16 px-3 sm:px-8 overflow-hidden animate-in fade-in duration-500">
+          <div className="relative w-full h-full min-h-[540px] sm:min-h-[600px] md:min-h-[660px] lg:min-h-[700px] xl:min-h-[750px] flex flex-col justify-end sm:justify-between py-6 sm:py-12 lg:py-16 px-3 sm:px-8 overflow-hidden animate-in fade-in duration-500">
 
             {/* High-Resolution Luxury Champagne & Gold Leaf Botanical Background */}
             <div className="absolute inset-0 z-0">
@@ -78,10 +78,11 @@ export function EcommerceHeroBanner() {
                 priority
                 className="object-cover object-center brightness-[0.92]"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#1C1714]/85 via-[#1C1714]/60 to-[#1C1714]/75 backdrop-blur-[0.5px]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1C1714] via-[#1C1714]/50 to-transparent sm:bg-gradient-to-r sm:from-[#1C1714]/85 sm:via-[#1C1714]/60 sm:to-[#1C1714]/75 backdrop-blur-[0.5px]" />
             </div>
 
-            <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col items-center justify-center relative z-10">
+            {/* Desktop Layout (hidden on mobile, rich centerpiece on desktop) */}
+            <div className="hidden sm:flex max-w-7xl mx-auto w-full flex-1 flex-col items-center justify-center relative z-10">
 
               {/* Top Location Headline: Zaira Design Atelier */}
               <div className="text-center mb-4 sm:mb-6">
@@ -102,7 +103,7 @@ export function EcommerceHeroBanner() {
 
                 {/* Left: Luxury Arched Atelier Centerpiece */}
                 <div className="flex items-center gap-3 sm:gap-5 shrink-0">
-                  <div className="relative p-4 sm:p-8 rounded-3xl sm:rounded-[48px] border-2 border-[#C5A059]/80 bg-[#1C1714]/90 backdrop-blur-md shadow-2xl max-w-[310px] sm:max-w-[370px] w-full flex flex-col items-center text-center ring-4 ring-[#C5A059]/20">
+                  <div className="relative p-6 sm:p-8 rounded-3xl sm:rounded-[48px] border-2 border-[#C5A059]/80 bg-[#1C1714]/90 backdrop-blur-md shadow-2xl max-w-[310px] sm:max-w-[370px] w-full flex flex-col items-center text-center ring-4 ring-[#C5A059]/20">
 
                     {/* Arched Top Badge */}
                     <div className="px-3.5 py-0.5 rounded-full bg-[#C5A059]/15 border border-[#C5A059]/50 text-[#C5A059] text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mb-2.5 shadow-xs">
@@ -150,8 +151,8 @@ export function EcommerceHeroBanner() {
                   </div>
                 </div>
 
-                {/* Right: Signature Atelier Department Ribbon (Desktop only) */}
-                <div className="hidden sm:flex w-full max-w-2xl flex-col justify-center space-y-3 sm:space-y-4">
+                {/* Right: Signature Atelier Department Ribbon */}
+                <div className="flex w-full max-w-2xl flex-col justify-center space-y-3 sm:space-y-4">
                   <div className="relative rounded-3xl bg-[#1C1714]/80 backdrop-blur-md text-white py-6 px-6 sm:px-8 shadow-2xl overflow-hidden border border-[#C5A059]/40">
                     <p className="text-[13px] sm:text-[14px] text-[#C5A059] font-serif italic mb-3 relative z-10 text-center sm:text-left">
                       Explore Zaira&apos;s Signature Living Collections...
@@ -204,6 +205,49 @@ export function EcommerceHeroBanner() {
               </div>
 
             </div>
+
+            {/* Mobile Editorial Floating Overlay (Clean, Cinematic, No cramped ring box) */}
+            <div className="sm:hidden relative z-10 w-full px-4 pt-6 pb-12 flex flex-col justify-end">
+              {/* Minimal Luxury Pill */}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1C1714]/80 backdrop-blur-md border border-[#D4AF37]/50 text-[#F5E6CC] text-[10px] font-bold uppercase tracking-[0.2em] mb-2.5 w-fit shadow-md">
+                <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+                <span>Flagship Design Atelier &bull; Hyderabad</span>
+              </div>
+
+              {/* Title & Subtitle floating over botanical background */}
+              <p className="font-serif italic text-[15px] text-[#D4AF37] font-normal leading-tight mb-1 drop-shadow-sm">
+                Curating Refined Spaces
+              </p>
+              <h1 className="text-[28px] font-serif font-normal text-white leading-[1.12] tracking-tight mb-1.5 drop-shadow-md">
+                Experience Bespoke Luxury
+              </h1>
+              <p className="text-[12px] text-[#EAE4D9]/90 font-light leading-snug mb-3.5 max-w-xs drop-shadow-xs">
+                Custom Curtains &bull; Motorized Blinds &bull; Italian Fabrics &bull; Nilaya Wallcoverings
+              </p>
+
+              {/* Location Badge */}
+              <div className="flex items-center gap-2 text-[11px] text-[#EAE4D9] font-medium mb-4">
+                <span className="text-[#D4AF37] font-serif italic">Puppalguda &bull; Financial District</span>
+              </div>
+
+              {/* Dual Action Buttons */}
+              <div className="flex items-center gap-2.5 w-full">
+                <Link
+                  href="/categories"
+                  className="flex-1 py-3 px-4 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#C5A059] to-[#B38E46] text-[#1C1714] font-bold text-[11.5px] uppercase tracking-wider text-center shadow-lg active:scale-95 transition-all"
+                >
+                  Explore Catalog
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => openBookingModal('Showroom Visit')}
+                  className="py-3 px-4 rounded-full bg-[#1C1714]/70 backdrop-blur-md border border-[#D4AF37]/60 text-white font-semibold text-[11.5px] uppercase tracking-wider text-center active:scale-95 transition-all"
+                >
+                  Visit Atelier
+                </button>
+              </div>
+            </div>
+
           </div>
         )}
 
@@ -211,7 +255,7 @@ export function EcommerceHeroBanner() {
             SLIDE 3: BESPOKE WINDOW STYLING FOR GLOBAL & NRI HOMES
         ════════════════════════════════════════════════════════════════════════════ */}
         {currentSlide === 2 && (
-          <div className="relative w-full h-full min-h-[460px] sm:min-h-[600px] md:min-h-[660px] lg:min-h-[700px] xl:min-h-[750px] flex items-center animate-in fade-in duration-500 overflow-hidden">
+          <div className="relative w-full h-full min-h-[540px] sm:min-h-[600px] md:min-h-[660px] lg:min-h-[700px] xl:min-h-[750px] flex flex-col justify-end sm:justify-center animate-in fade-in duration-500 overflow-hidden">
             {/* Bright, Sunlit Room Background with Curtains */}
             <div className="absolute inset-0 z-0">
               <Image
@@ -221,12 +265,12 @@ export function EcommerceHeroBanner() {
                 priority
                 className="object-cover object-center"
               />
-              {/* Soft Warm Daylight Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/70 to-transparent sm:via-white/40" />
+              {/* Soft Warm Daylight Gradient Overlay: On mobile, dark espresso vignette for readable typography; on desktop, warm daylight */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1C1714] via-[#1C1714]/45 to-transparent sm:bg-gradient-to-r sm:from-white/95 sm:via-white/70 sm:to-transparent" />
             </div>
 
-            {/* Left Frosted/Solid Luxury Atelier Card */}
-            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 w-full py-10">
+            {/* Desktop Card (hidden on mobile, rich white card on desktop) */}
+            <div className="hidden sm:block relative z-10 max-w-7xl mx-auto px-4 sm:px-8 w-full py-10">
               <div className="max-w-lg bg-[#FDFBF7]/95 backdrop-blur-md rounded-3xl p-6 sm:p-9 shadow-2xl border border-[#C5A059]/40 space-y-4">
 
                 {/* Headline: Bespoke Window Styling for Global & NRI Homes */}
@@ -308,17 +352,17 @@ export function EcommerceHeroBanner() {
                 </div>
 
                 {/* CTAs */}
-                <div className="flex flex-wrap items-center gap-3 pt-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-3">
                   <button
                     type="button"
                     onClick={() => openBookingModal('NRI Remote Home Styling')}
-                    className="px-6 py-2.5 rounded-full bg-[#1C1714] hover:bg-[#C5A059] text-white hover:text-[#1C1714] font-bold text-[12px] uppercase tracking-wider shadow-md transition-all cursor-pointer"
+                    className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#1C1714] hover:bg-[#C5A059] text-white hover:text-[#1C1714] font-bold text-[12px] uppercase tracking-wider shadow-md transition-all cursor-pointer text-center active:scale-95"
                   >
                     Schedule Video Styling
                   </button>
                   <Link
                     href="/categories/curtains"
-                    className="px-5 py-2.5 rounded-full border border-[#C5A059] hover:bg-[#C5A059]/10 text-[#1C1714] font-semibold text-[12px] uppercase tracking-wider transition-colors"
+                    className="w-full sm:w-auto px-5 py-3 rounded-full border border-[#C5A059] hover:bg-[#C5A059]/10 text-[#1C1714] font-semibold text-[12px] uppercase tracking-wider transition-colors text-center active:scale-95"
                   >
                     Explore Curtains
                   </Link>
@@ -326,6 +370,62 @@ export function EcommerceHeroBanner() {
 
               </div>
             </div>
+
+            {/* Mobile Editorial Floating Overlay (Clean, Cinematic, No giant card) */}
+            <div className="sm:hidden relative z-10 w-full px-4 pt-6 pb-12 flex flex-col justify-end">
+              {/* Minimal Luxury Pill */}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1C1714]/80 backdrop-blur-md border border-[#D4AF37]/50 text-[#F5E6CC] text-[10px] font-bold uppercase tracking-[0.2em] mb-2.5 w-fit shadow-md">
+                <Plane className="w-3 h-3 text-[#D4AF37]" />
+                <span>Worldwide Concierge &bull; Global &amp; NRI</span>
+              </div>
+
+              {/* Title & Subtitle floating over sunlit suite */}
+              <p className="font-serif italic text-[15px] text-[#D4AF37] font-normal leading-tight mb-1 drop-shadow-sm">
+                Global Homeowners Concierge
+              </p>
+              <h2 className="text-[28px] font-serif font-normal text-white leading-[1.12] tracking-tight mb-1.5 drop-shadow-md">
+                Bespoke Window Styling
+              </h2>
+              <p className="text-[12px] text-[#EAE4D9]/90 font-light leading-snug mb-3.5 max-w-xs drop-shadow-xs">
+                Direct atelier pricing (save up to 60%) with insured worldwide air express delivery.
+              </p>
+
+              {/* 3 Micro Perks */}
+              <div className="flex items-center gap-2.5 text-[10.5px] text-[#EAE4D9] font-medium mb-4">
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-[#D4AF37]" />
+                  <span>Direct Pricing</span>
+                </span>
+                <span className="text-[#D4AF37]/60">&bull;</span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-[#D4AF37]" />
+                  <span>Insured Express</span>
+                </span>
+                <span className="text-[#D4AF37]/60">&bull;</span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-[#D4AF37]" />
+                  <span>1,000+ Fabrics</span>
+                </span>
+              </div>
+
+              {/* Dual Action Buttons */}
+              <div className="flex items-center gap-2.5 w-full">
+                <button
+                  type="button"
+                  onClick={() => openBookingModal('NRI Remote Home Styling')}
+                  className="flex-1 py-3 px-4 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#C5A059] to-[#B38E46] text-[#1C1714] font-bold text-[11.5px] uppercase tracking-wider text-center shadow-lg active:scale-95 transition-all"
+                >
+                  Video Styling
+                </button>
+                <Link
+                  href="/categories/curtains"
+                  className="py-3 px-4 rounded-full bg-[#1C1714]/70 backdrop-blur-md border border-[#D4AF37]/60 text-white font-semibold text-[11.5px] uppercase tracking-wider text-center active:scale-95 transition-all"
+                >
+                  Explore Curtains
+                </Link>
+              </div>
+            </div>
+
           </div>
         )}
 
@@ -333,7 +433,7 @@ export function EcommerceHeroBanner() {
             SLIDE 1: ZAIRA ATELIER AT YOUR DOORSTEP (DEFAULT INITIAL SLIDE)
         ════════════════════════════════════════════════════════════════════════════ */}
         {currentSlide === 0 && (
-          <div className="relative w-full h-full min-h-[500px] sm:min-h-[600px] md:min-h-[660px] lg:min-h-[700px] xl:min-h-[750px] flex flex-col justify-end sm:justify-between animate-in fade-in duration-500 overflow-hidden">
+          <div className="relative w-full h-full min-h-[540px] sm:min-h-[600px] md:min-h-[660px] lg:min-h-[700px] xl:min-h-[750px] flex flex-col justify-end sm:justify-between animate-in fade-in duration-500 overflow-hidden">
             {/* Background: Bright, Sunlit Room with Warm Peach Wall, Lamp & Floral Curtains */}
             <div className="absolute inset-0 z-0">
               <Image
@@ -343,13 +443,13 @@ export function EcommerceHeroBanner() {
                 priority
                 className="object-cover object-center"
               />
-              {/* Soft Gradient Overlay: Top is clear for room photo, gradient develops towards bottom */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent sm:bg-gradient-to-r sm:from-black/60 sm:via-black/20 sm:to-transparent" />
+              {/* Soft Gradient Overlay: Clean sunlit view on top, smooth dark espresso blend on bottom for typography */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1C1714] via-[#1C1714]/45 to-transparent sm:bg-gradient-to-r sm:from-black/60 sm:via-black/20 sm:to-transparent" />
             </div>
 
-            {/* Main Content Container - Bottom Grounded on Mobile for Visible Room Photo */}
-            <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-8 w-full pt-16 pb-4 sm:py-12 flex-1 flex flex-col justify-end sm:justify-center">
-              <div className="max-w-xl bg-[#1C1714]/85 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-9 shadow-2xl border border-[#C5A059]/40 space-y-3.5 sm:space-y-5">
+            {/* Desktop Card (hidden on mobile, full rich card on desktop) */}
+            <div className="hidden sm:flex relative z-10 max-w-7xl mx-auto px-4 sm:px-8 w-full py-8 lg:py-12 flex-1 flex-col justify-center">
+              <div className="max-w-xl bg-[#1C1714]/85 backdrop-blur-md rounded-3xl p-6 sm:p-9 shadow-2xl border border-[#C5A059]/40 space-y-3.5 sm:space-y-5">
 
                 {/* Atelier Doorstep Badge */}
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF5EE] border border-[#E5D7BF] shadow-xs">
@@ -392,7 +492,7 @@ export function EcommerceHeroBanner() {
                 </div>
 
                 {/* Dedicated Desktop Atelier Van Placement */}
-                <div className="hidden sm:flex relative rounded-2xl bg-gradient-to-r from-[#2A231E] via-[#231C18] to-[#1C1714] p-4 border border-[#C5A059]/35 shadow-inner items-center gap-4">
+                <div className="flex relative rounded-2xl bg-gradient-to-r from-[#2A231E] via-[#231C18] to-[#1C1714] p-4 border border-[#C5A059]/35 shadow-inner items-center gap-4">
                   {/* Sleek Gold & White Atelier Van SVG */}
                   <div className="w-28 sm:w-36 shrink-0">
                     <svg
@@ -401,7 +501,6 @@ export function EcommerceHeroBanner() {
                       xmlns="http://www.w3.org/2000/svg"
                       className="w-full h-auto drop-shadow-md"
                     >
-                      {/* Van Body Outer Path */}
                       <path
                         d="M 15 115 L 15 28 Q 15 15 30 15 L 210 15 Q 225 15 240 40 L 280 80 Q 290 88 310 95 Q 325 100 325 115 L 325 118 Q 325 122 320 122 L 295 122 Q 295 102 275 102 Q 255 102 255 122 L 115 122 Q 115 102 95 102 Q 75 102 75 122 L 20 122 Q 15 122 15 115 Z"
                         stroke="#C5A059"
@@ -409,24 +508,18 @@ export function EcommerceHeroBanner() {
                         strokeLinejoin="round"
                         fill="rgba(197, 160, 89, 0.15)"
                       />
-                      {/* Windshield */}
                       <path
                         d="M 215 25 L 268 75 L 215 75 Z"
                         stroke="#FDFBF7"
                         strokeWidth="2.5"
                         fill="rgba(253, 251, 247, 0.18)"
                       />
-                      {/* Door Seam */}
                       <path d="M 210 75 L 210 122" stroke="#C5A059" strokeWidth="2" strokeDasharray="3 3" />
-                      {/* Headlight Beam */}
                       <path d="M 315 98 Q 328 102 328 112" stroke="#FFD700" strokeWidth="4" />
-                      {/* Rear Wheel */}
                       <circle cx="95" cy="122" r="16" stroke="#C5A059" strokeWidth="3" fill="#1C1714" />
                       <circle cx="95" cy="122" r="6" fill="#FDFBF7" />
-                      {/* Front Wheel */}
                       <circle cx="275" cy="122" r="16" stroke="#C5A059" strokeWidth="3" fill="#1C1714" />
                       <circle cx="275" cy="122" r="6" fill="#FDFBF7" />
-                      {/* Ground Line */}
                       <line x1="5" y1="138" x2="335" y2="138" stroke="#C5A059" strokeWidth="2" strokeDasharray="6 4" opacity="0.6" />
                     </svg>
                   </div>
@@ -442,17 +535,62 @@ export function EcommerceHeroBanner() {
                   </div>
                 </div>
 
-                {/* Mobile Direct Action Button */}
-                <div className="sm:hidden pt-1">
-                  <button
-                    type="button"
-                    onClick={() => openBookingModal('Free In-Home Measurement')}
-                    className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-full bg-[#C5A059] text-[#1C1714] font-bold text-[12px] uppercase tracking-wider shadow-md transition-all cursor-pointer"
-                  >
-                    <span>Book Free Home Visit</span>
-                  </button>
-                </div>
+              </div>
+            </div>
 
+            {/* Mobile Editorial Floating Overlay (Clean, Cinematic, No heavy card box) */}
+            <div className="sm:hidden relative z-10 w-full px-4 pt-6 pb-12 flex flex-col justify-end">
+              {/* Minimal Luxury Pill */}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1C1714]/80 backdrop-blur-md border border-[#D4AF37]/50 text-[#F5E6CC] text-[10px] font-bold uppercase tracking-[0.2em] mb-2.5 w-fit shadow-md">
+                <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+                <span>Doorstep Curation &bull; Hyderabad</span>
+              </div>
+
+              {/* Title & Subtitle directly floating over photo vignette */}
+              <p className="font-serif italic text-[15px] text-[#D4AF37] font-normal leading-tight mb-1 drop-shadow-sm">
+                Experience Zaira at Home
+              </p>
+              <h1 className="text-[28px] font-serif font-normal text-white leading-[1.12] tracking-tight mb-1.5 drop-shadow-md">
+                Bespoke Window Styling
+              </h1>
+              <p className="text-[12px] text-[#EAE4D9]/90 font-light leading-snug mb-3.5 max-w-xs drop-shadow-xs">
+                Free laser measurement &amp; 500+ fabric swatches brought directly to your home.
+              </p>
+
+              {/* 3 Micro Perks */}
+              <div className="flex items-center gap-2.5 text-[10.5px] text-[#EAE4D9] font-medium mb-4">
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-[#D4AF37]" />
+                  <span>Free Laser Check</span>
+                </span>
+                <span className="text-[#D4AF37]/60">&bull;</span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-[#D4AF37]" />
+                  <span>500+ Swatches</span>
+                </span>
+                <span className="text-[#D4AF37]/60">&bull;</span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-[#D4AF37]" />
+                  <span>Artisan Fit</span>
+                </span>
+              </div>
+
+              {/* Dual Action Buttons */}
+              <div className="flex items-center gap-2.5 w-full">
+                <button
+                  type="button"
+                  onClick={() => openBookingModal('Free In-Home Measurement')}
+                  className="flex-1 py-3 px-4 rounded-full bg-gradient-to-r from-[#D4AF37] via-[#C5A059] to-[#B38E46] text-[#1C1714] font-bold text-[11.5px] uppercase tracking-wider text-center shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Book Free Visit</span>
+                </button>
+                <Link
+                  href="/categories/curtains"
+                  className="py-3 px-4 rounded-full bg-[#1C1714]/70 backdrop-blur-md border border-[#D4AF37]/60 text-white font-semibold text-[11.5px] uppercase tracking-wider text-center active:scale-95 transition-all"
+                >
+                  Explore Drapes
+                </Link>
               </div>
             </div>
 
@@ -510,14 +648,14 @@ export function EcommerceHeroBanner() {
         </button>
 
         {/* ─── Carousel Indicator Dots ─── */}
-        <div className="absolute bottom-2 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15">
+        <div className="absolute bottom-2.5 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-[#1C1714]/70 backdrop-blur-md px-3 py-1 rounded-full border border-white/15">
           {[0, 1, 2].map((idx) => (
             <button
               key={idx}
               type="button"
               onClick={() => setCurrentSlide(idx)}
               aria-label={`Go to slide ${idx + 1}`}
-              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${currentSlide === idx ? 'w-8 bg-[#C5A059]' : 'w-2 bg-white/60 hover:bg-white'
+              className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 cursor-pointer ${currentSlide === idx ? 'w-6 sm:w-8 bg-[#C5A059]' : 'w-1.5 sm:w-2 bg-white/50 hover:bg-white'
                 }`}
             />
           ))}

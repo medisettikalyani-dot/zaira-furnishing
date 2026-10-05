@@ -62,7 +62,7 @@ export function ShopByRoomSection() {
 
           <Link
             href="/categories"
-            className="inline-flex items-center gap-1.5 text-[13px] font-bold text-[#1E3A2F] hover:text-[#9A7B56] transition-colors group shrink-0"
+            className="inline-flex items-center gap-1.5 text-[13px] font-bold text-[#2C221E] hover:text-[#9A7B56] transition-colors group shrink-0"
           >
             <span>Explore All Spaces</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -88,7 +88,7 @@ export function ShopByRoomSection() {
                 />
 
                 {/* Tag */}
-                <div className="absolute top-3.5 left-3.5 px-2.5 py-1 rounded-full bg-[#1E3A2F]/90 backdrop-blur-xs text-white text-[9.5px] uppercase font-bold tracking-wider">
+                <div className="absolute top-3.5 left-3.5 px-2.5 py-1 rounded-full bg-[#2C221E]/90 backdrop-blur-xs text-white text-[9.5px] uppercase font-bold tracking-wider">
                   {room.tag}
                 </div>
 

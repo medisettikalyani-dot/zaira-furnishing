@@ -76,28 +76,32 @@ export function CategoryIconGrid() {
         </div>
 
         {/* ─── 4-Column Split Cards Grid (Pure Category Title Left, Big Photo Right) ─── */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {TOP_CATEGORIES.map((cat) => (
             <Link
               key={cat.id}
               href={cat.href}
-              className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-7 bg-white border border-[#E0D9D0] hover:border-[#823423] transition-all duration-300 shadow-2xs hover:shadow-md min-h-[120px] sm:min-h-[165px] rounded-xl sm:rounded-none gap-2 sm:gap-0"
+              className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-6 lg:p-7 bg-white border border-[#E0D9D0] hover:border-[#823423] transition-all duration-300 shadow-2xs hover:shadow-lg min-h-[140px] sm:min-h-[165px] rounded-2xl sm:rounded-xl gap-2.5 sm:gap-0 relative overflow-hidden"
             >
-              {/* Left Side: Category Name Only (Bold Burgundy Serif) */}
-              <div className="pr-1 sm:pr-4 flex-1 min-w-0">
-                <h3 className="font-serif text-[16px] sm:text-[23px] lg:text-[25px] font-bold text-[#823423] group-hover:text-[#1C1714] transition-colors leading-tight">
+              {/* Category Name & Subtle Mobile Cue */}
+              <div className="pr-1 sm:pr-4 flex-1 min-w-0 w-full flex sm:block items-center justify-between">
+                <h3 className="font-serif text-[15.5px] sm:text-[22px] lg:text-[24px] font-bold text-[#823423] group-hover:text-[#1C1714] transition-colors leading-tight">
                   {cat.name}
                 </h3>
+                {/* Mobile Touch Chevron Cue */}
+                <span className="sm:hidden text-[11px] text-[#C5A059] font-bold">
+                  →
+                </span>
               </div>
 
-              {/* Right Side: Big Clear Rectangular Product Image */}
-              <div className="relative w-full sm:w-36 h-20 sm:h-28 overflow-hidden shrink-0 bg-[#F7F4EE] border border-[#EAE4D9]/60 rounded-lg sm:rounded-none">
+              {/* Big Clear Rectangular Product Image */}
+              <div className="relative w-full sm:w-36 h-24 sm:h-28 overflow-hidden shrink-0 bg-[#F7F4EE] border border-[#EAE4D9]/80 rounded-xl sm:rounded-lg shadow-2xs">
                 <Image
                   src={cat.image}
                   alt={cat.name}
                   fill
-                  sizes="(max-width: 640px) 50vw, 150px"
-                  className="object-cover object-center group-hover:scale-106 transition-transform duration-500 ease-out"
+                  sizes="(max-width: 640px) 45vw, 150px"
+                  className="object-cover object-center group-hover:scale-108 transition-transform duration-500 ease-out"
                 />
               </div>
             </Link>

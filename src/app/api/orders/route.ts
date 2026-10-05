@@ -122,15 +122,17 @@ export async function POST(req: NextRequest) {
     const finalOrderSource: AllowedOrderSource = rawSource as AllowedOrderSource;
 
     // 1. Validate required customer information
-    if (!customerName || typeof customerName !== 'string' || customerName.trim().length < 2) {
+    const finalCustomerName = (customerName || body.name || body.fullName || body.customer_name || '').toString().trim();
+    if (!finalCustomerName || finalCustomerName.length < 2) {
       return NextResponse.json({ error: 'Full name is required (min 2 characters)' }, { status: 400 });
     }
 
-    if (!customerPhone || typeof customerPhone !== 'string' || !/^[0-9+ -]{10,14}$/.test(customerPhone.trim())) {
+    const rawPhone = (customerPhone || body.phone || body.mobile || body.customer_phone || '').toString().trim();
+    if (!rawPhone || !/^[0-9+ -]{10,14}$/.test(rawPhone)) {
       return NextResponse.json({ error: 'Valid 10-digit mobile number is required' }, { status: 400 });
     }
 
-    const cleanPhone = customerPhone.trim();
+    const cleanPhone = rawPhone;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const cleanEmail = customerEmail ? customerEmail.trim() : (customer?.email || '');
     const finalEmail = cleanEmail || `${cleanPhone.replace(/\D/g, '')}@guest.zaira.local`;
@@ -139,21 +141,34 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Validate delivery address
-    if (!deliveryAddress || typeof deliveryAddress !== 'string' || deliveryAddress.trim().length < 5) {
+    const rawDeliveryAddress = (
+      deliveryAddress ||
+      body.address ||
+      body.shippingAddress ||
+      body.delivery_address ||
+      (body.addressLine1 ? `${body.addressLine1}, ${body.addressLine2 || ''}` : '')
+    );
+    const finalDeliveryAddress = typeof rawDeliveryAddress === 'string' ? rawDeliveryAddress.trim() : '';
+
+    if (!finalDeliveryAddress || finalDeliveryAddress.length < 5) {
       return NextResponse.json({ error: 'Delivery address is required (min 5 characters)' }, { status: 400 });
     }
 
-    if (!city || typeof city !== 'string' || !city.trim()) {
+    const finalCity = (city || body.town || 'Hyderabad').toString().trim();
+    if (!finalCity) {
       return NextResponse.json({ error: 'City is required' }, { status: 400 });
     }
 
-    if (!state || typeof state !== 'string' || !state.trim()) {
+    const finalState = (state || body.province || 'Telangana').toString().trim();
+    if (!finalState) {
       return NextResponse.json({ error: 'State is required' }, { status: 400 });
     }
 
-    if (!pincode || typeof pincode !== 'string' || !/^[0-9]{6}$/.test(pincode.trim())) {
+    const rawPincode = (pincode || body.postalCode || body.pin_code || '500033').toString().trim();
+    if (!rawPincode || !/^[0-9]{6}$/.test(rawPincode)) {
       return NextResponse.json({ error: 'Valid 6-digit PIN code is required' }, { status: 400 });
     }
+    const finalPincode = rawPincode;
 
     // Enforce COD payment method for Stage 4
     if (paymentMethod && paymentMethod.toUpperCase() !== 'COD') {
@@ -183,7 +198,7 @@ export async function POST(req: NextRequest) {
         await db.execute(
           `INSERT INTO users (id, role, name, email, phone, status, created_at, updated_at)
            VALUES (?, 'CUSTOMER', ?, ?, ?, 'active', datetime('now'), datetime('now'))`,
-          [userId, customerName.trim(), finalEmail, cleanPhone]
+          [userId, finalCustomerName, finalEmail, cleanPhone]
         );
       }
       try {
@@ -388,13 +403,13 @@ export async function POST(req: NextRequest) {
           orderId,
           orderNumber,
           userId,
-          customerName.trim(),
+          finalCustomerName,
           finalEmail,
-          customerPhone.trim(),
-          deliveryAddress.trim(),
-          city.trim(),
-          state.trim(),
-          pincode.trim(),
+          cleanPhone,
+          finalDeliveryAddress,
+          finalCity,
+          finalState,
+          finalPincode,
           landmark ? landmark.trim() : null,
           deliveryOption,
           siteVisitRequired,
@@ -480,13 +495,13 @@ export async function POST(req: NextRequest) {
         status: 'CONFIRMED',
         paymentMethod: 'COD',
         paymentStatus: 'PENDING',
-        customerName: customerName.trim(),
+        customerName: finalCustomerName,
         customerEmail: finalEmail,
-        customerPhone: customerPhone.trim(),
-        deliveryAddress: deliveryAddress.trim(),
-        city: city.trim(),
-        state: state.trim(),
-        pincode: pincode.trim(),
+        customerPhone: cleanPhone,
+        deliveryAddress: finalDeliveryAddress,
+        city: finalCity,
+        state: finalState,
+        pincode: finalPincode,
         landmark: landmark ? landmark.trim() : null,
         deliveryOption,
         siteVisitRequired,

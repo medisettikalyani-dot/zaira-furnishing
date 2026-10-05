@@ -2,12 +2,23 @@
 
 import crypto from 'crypto';
 import { getDatabase } from '@/lib/db';
-import { DbOrder, DbOrderNotification, DbOrderStatusHistory, NotificationEventType, NotificationRecipientType } from '@/lib/db/types';
+import {
+  DbOrder,
+  DbOrderNotification,
+  DbOrderStatusHistory,
+  DbMeasurementRequest,
+  DbQuoteRequest,
+  DbAdminNotification,
+  NotificationEventType,
+  NotificationRecipientType,
+} from '@/lib/db/types';
 import { getNotificationProvider, DefaultNotificationProvider } from './provider';
 import {
   generateCustomerOrderConfirmationEmail,
   generateAdminNewOrderEmail,
   generateCustomerStatusUpdateEmail,
+  generateAdminMeasurementRequestEmail,
+  generateAdminQuoteRequestEmail,
 } from './templates';
 
 interface SendNotificationParams {
@@ -151,6 +162,7 @@ export async function triggerNewOrderNotifications(
   order: DbOrder,
   items: any[]
 ): Promise<{ customerNotification: DbOrderNotification; adminNotification: DbOrderNotification }> {
+  const db = getDatabase();
   const defaultProvider = new DefaultNotificationProvider();
   const adminEmail = defaultProvider.getAdminEmail();
 
@@ -196,10 +208,163 @@ export async function triggerNewOrderNotifications(
     },
   });
 
+  // 3. Record in Unified Admin Notifications Table
+  try {
+    const isWhatsApp = order.order_source === 'WHATSAPP';
+    const notifTitle = isWhatsApp
+      ? `New WhatsApp Order #${order.order_number}`
+      : `New Web Order #${order.order_number}`;
+    const notifMsg = `Order placed by ${order.customer_name} for ₹${Number(order.total_amount).toLocaleString('en-IN')} (${items.length} item${items.length === 1 ? '' : 's'})`;
+
+    await db.execute(
+      `INSERT OR REPLACE INTO admin_notifications (
+        id, type, reference_id, reference_number, title, message,
+        customer_name, customer_phone, customer_email, amount,
+        action_url, is_read, created_at
+      ) VALUES (?, 'ORDER', ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`,
+      [
+        `notif-order-${order.id}`,
+        order.id,
+        order.order_number,
+        notifTitle,
+        notifMsg,
+        order.customer_name,
+        order.customer_phone,
+        order.customer_email || null,
+        order.total_amount,
+        `/admin/orders/${order.id}`,
+      ]
+    );
+  } catch (adminNotifErr) {
+    console.error('Error logging to admin_notifications:', adminNotifErr);
+  }
+
   return {
     customerNotification: custResult.notification,
     adminNotification: adminResult.notification,
   };
+}
+
+/**
+ * Triggers all notifications for a newly booked measurement or consultation request:
+ * 1. Inserts into admin_notifications for instant admin bell & phone alert
+ * 2. Sends email alert to admin concierge
+ */
+export async function triggerNewMeasurementNotification(
+  request: DbMeasurementRequest
+): Promise<{ success: boolean; notificationId: string }> {
+  const db = getDatabase();
+  const defaultProvider = new DefaultNotificationProvider();
+  const adminEmail = defaultProvider.getAdminEmail();
+
+  const isConsultation =
+    request.product_name_snapshot?.toLowerCase().includes('consultation') ||
+    request.category_slug_snapshot === 'services';
+  const notifType = isConsultation ? 'CONSULTATION' : 'MEASUREMENT';
+  const label = isConsultation ? 'Consultation Request' : 'In-Home Measurement';
+  const notifTitle = `New ${label} #${request.request_number}`;
+  const notifMsg = `${request.customer_name} requested ${request.product_name_snapshot || 'In-Home Visit'} for ${request.preferred_date} (${request.preferred_time_slot})`;
+  const notificationId = `notif-meas-${request.id}`;
+
+  // 1. Record into admin_notifications
+  try {
+    await db.execute(
+      `INSERT OR REPLACE INTO admin_notifications (
+        id, type, reference_id, reference_number, title, message,
+        customer_name, customer_phone, customer_email, amount,
+        action_url, is_read, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`,
+      [
+        notificationId,
+        notifType,
+        request.id,
+        request.request_number,
+        notifTitle,
+        notifMsg,
+        request.customer_name,
+        request.customer_phone,
+        request.customer_email || null,
+        null,
+        '/admin/measurement-requests',
+      ]
+    );
+  } catch (err) {
+    console.error('Error recording measurement admin notification:', err);
+  }
+
+  // 2. Dispatch email to admin
+  try {
+    const emailContent = generateAdminMeasurementRequestEmail(request);
+    await defaultProvider.send({
+      to: adminEmail,
+      subject: emailContent.subject,
+      html: emailContent.html,
+      text: emailContent.text,
+      metadata: { measurementId: request.id },
+    });
+  } catch (emailErr) {
+    console.error('Error sending measurement admin alert email:', emailErr);
+  }
+
+  return { success: true, notificationId };
+}
+
+/**
+ * Triggers all notifications for a newly submitted quote request:
+ * 1. Inserts into admin_notifications
+ * 2. Sends email alert to admin concierge
+ */
+export async function triggerNewQuoteNotification(
+  request: DbQuoteRequest
+): Promise<{ success: boolean; notificationId: string }> {
+  const db = getDatabase();
+  const defaultProvider = new DefaultNotificationProvider();
+  const adminEmail = defaultProvider.getAdminEmail();
+
+  const notifTitle = `New Custom Quote Request #${request.request_number}`;
+  const notifMsg = `${request.customer_name} requested a bespoke quote for ${request.product_name_snapshot} (Qty: ${request.quantity})`;
+  const notificationId = `notif-quote-${request.id}`;
+
+  // 1. Record into admin_notifications
+  try {
+    await db.execute(
+      `INSERT OR REPLACE INTO admin_notifications (
+        id, type, reference_id, reference_number, title, message,
+        customer_name, customer_phone, customer_email, amount,
+        action_url, is_read, created_at
+      ) VALUES (?, 'QUOTE', ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`,
+      [
+        notificationId,
+        request.id,
+        request.request_number,
+        notifTitle,
+        notifMsg,
+        request.customer_name,
+        request.customer_phone,
+        request.customer_email || null,
+        null,
+        '/admin/quote-requests',
+      ]
+    );
+  } catch (err) {
+    console.error('Error recording quote admin notification:', err);
+  }
+
+  // 2. Dispatch email to admin
+  try {
+    const emailContent = generateAdminQuoteRequestEmail(request);
+    await defaultProvider.send({
+      to: adminEmail,
+      subject: emailContent.subject,
+      html: emailContent.html,
+      text: emailContent.text,
+      metadata: { quoteId: request.id },
+    });
+  } catch (emailErr) {
+    console.error('Error sending quote admin alert email:', emailErr);
+  }
+
+  return { success: true, notificationId };
 }
 
 /**
@@ -396,65 +561,131 @@ export async function retryNotification(
 }
 
 /**
- * Count unread admin notifications for new WhatsApp orders.
+ * Count all unread admin notifications across Orders, Measurements, and Quotes.
  */
-export async function getUnreadAdminWhatsAppOrdersCount(): Promise<number> {
+export async function getUnreadAdminNotificationsCount(): Promise<{
+  total: number;
+  orders: number;
+  measurements: number;
+  quotes: number;
+}> {
   const db = getDatabase();
-  const row = await db.queryOne<{ count: number }>(`
-    SELECT COUNT(*) as count
-    FROM order_notifications n
-    JOIN orders o ON n.order_id = o.id
-    WHERE n.recipient_type = 'ADMIN'
-      AND n.event_type = 'NEW_ORDER_ADMIN'
-      AND o.order_source = 'WHATSAPP'
-      AND (n.is_read = 0 OR n.is_read IS NULL)
-  `);
-  return row?.count || 0;
+  try {
+    const rows = await db.query<{ type: string; count: number }>(`
+      SELECT type, COUNT(*) as count
+      FROM admin_notifications
+      WHERE is_read = 0 OR is_read IS NULL
+      GROUP BY type
+    `);
+
+    let orders = 0;
+    let measurements = 0;
+    let quotes = 0;
+
+    for (const r of rows) {
+      if (r.type === 'ORDER') orders += r.count;
+      else if (r.type === 'MEASUREMENT' || r.type === 'CONSULTATION') measurements += r.count;
+      else if (r.type === 'QUOTE') quotes += r.count;
+    }
+
+    return {
+      total: orders + measurements + quotes,
+      orders,
+      measurements,
+      quotes,
+    };
+  } catch {
+    return { total: 0, orders: 0, measurements: 0, quotes: 0 };
+  }
 }
 
 /**
- * Retrieve admin order notifications with order metadata.
+ * Backward compatibility: count unread admin notifications.
+ */
+export async function getUnreadAdminWhatsAppOrdersCount(): Promise<number> {
+  const counts = await getUnreadAdminNotificationsCount();
+  return counts.total;
+}
+
+/**
+ * Retrieve unified admin notifications with action URLs, phone dialers, and WhatsApp links.
+ */
+export async function getUnifiedAdminNotifications(options?: {
+  unreadOnly?: boolean;
+  type?: string;
+  limit?: number;
+}): Promise<any[]> {
+  const db = getDatabase();
+  const limit = options?.limit || 25;
+  const whereClauses: string[] = ['1=1'];
+  const params: unknown[] = [];
+
+  if (options?.unreadOnly) {
+    whereClauses.push('(is_read = 0 OR is_read IS NULL)');
+  }
+
+  if (options?.type && options.type !== 'ALL') {
+    if (options.type === 'MEASUREMENT') {
+      whereClauses.push("(type = 'MEASUREMENT' OR type = 'CONSULTATION')");
+    } else {
+      whereClauses.push('type = ?');
+      params.push(options.type);
+    }
+  }
+
+  params.push(limit);
+
+  try {
+    const notifications = await db.query<DbAdminNotification>(
+      `SELECT * FROM admin_notifications
+       WHERE ${whereClauses.join(' AND ')}
+       ORDER BY created_at DESC
+       LIMIT ?`,
+      params
+    );
+
+    return notifications.map((n) => {
+      const cleanPhone = (n.customer_phone || '').replace(/\D/g, '');
+      const waNumber = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+      return {
+        ...n,
+        phone_call_url: n.customer_phone ? `tel:${n.customer_phone}` : null,
+        whatsapp_url: cleanPhone ? `https://wa.me/${waNumber}` : null,
+      };
+    });
+  } catch (err) {
+    console.error('Error fetching unified notifications:', err);
+    return [];
+  }
+}
+
+/**
+ * Backward-compatible helper for existing order notification list callers.
  */
 export async function getAdminOrderNotifications(options?: {
   unreadOnly?: boolean;
   limit?: number;
 }): Promise<any[]> {
-  const db = getDatabase();
-  const limit = options?.limit || 20;
-  const whereClauses = [
-    "n.recipient_type = 'ADMIN'",
-    "n.event_type = 'NEW_ORDER_ADMIN'",
-    "o.order_source = 'WHATSAPP'",
-  ];
-
-  if (options?.unreadOnly) {
-    whereClauses.push('(n.is_read = 0 OR n.is_read IS NULL)');
-  }
-
-  const sql = `
-    SELECT
-      n.id,
-      n.order_id,
-      n.subject,
-      n.status,
-      n.is_read,
-      n.read_at,
-      n.payload_summary,
-      n.created_at,
-      o.order_number,
-      o.customer_name,
-      o.customer_phone,
-      o.total_amount,
-      o.order_source,
-      o.status as order_status
-    FROM order_notifications n
-    JOIN orders o ON n.order_id = o.id
-    WHERE ${whereClauses.join(' AND ')}
-    ORDER BY n.created_at DESC
-    LIMIT ?
-  `;
-
-  return db.query(sql, [limit]);
+  const notifications = await getUnifiedAdminNotifications(options);
+  // Map back to shape expected by existing layout
+  return notifications.map((n) => ({
+    id: n.id,
+    order_id: n.reference_id,
+    order_number: n.reference_number,
+    subject: n.title,
+    message: n.message,
+    status: 'SENT',
+    is_read: n.is_read,
+    read_at: n.read_at,
+    created_at: n.created_at,
+    customer_name: n.customer_name,
+    customer_phone: n.customer_phone,
+    total_amount: n.amount || 0,
+    order_source: n.type,
+    action_url: n.action_url,
+    phone_call_url: n.phone_call_url,
+    whatsapp_url: n.whatsapp_url,
+  }));
 }
 
 /**
@@ -462,11 +693,25 @@ export async function getAdminOrderNotifications(options?: {
  */
 export async function markNotificationAsRead(notificationId: string): Promise<boolean> {
   const db = getDatabase();
-  const res = await db.execute(
-    "UPDATE order_notifications SET is_read = 1, read_at = datetime('now'), updated_at = datetime('now') WHERE id = ?",
-    [notificationId]
-  );
-  return res.changes > 0;
+  let modified = false;
+
+  try {
+    const res1 = await db.execute(
+      "UPDATE admin_notifications SET is_read = 1, read_at = datetime('now') WHERE id = ?",
+      [notificationId]
+    );
+    if (res1.changes > 0) modified = true;
+  } catch {}
+
+  try {
+    const res2 = await db.execute(
+      "UPDATE order_notifications SET is_read = 1, read_at = datetime('now'), updated_at = datetime('now') WHERE id = ?",
+      [notificationId]
+    );
+    if (res2.changes > 0) modified = true;
+  } catch {}
+
+  return modified;
 }
 
 /**
@@ -474,31 +719,52 @@ export async function markNotificationAsRead(notificationId: string): Promise<bo
  */
 export async function markOrderNotificationsAsRead(orderIdentifier: string): Promise<boolean> {
   const db = getDatabase();
-  const res = await db.execute(
-    `UPDATE order_notifications
-     SET is_read = 1, read_at = datetime('now'), updated_at = datetime('now')
-     WHERE recipient_type = 'ADMIN'
-       AND (is_read = 0 OR is_read IS NULL)
-       AND (
-         order_id = ? OR
-         order_id = (SELECT id FROM orders WHERE order_number = ?)
-       )`,
-    [orderIdentifier, orderIdentifier]
-  );
-  return res.changes > 0;
+  try {
+    await db.execute(
+      `UPDATE admin_notifications
+       SET is_read = 1, read_at = datetime('now')
+       WHERE reference_id = ? OR reference_number = ?`,
+      [orderIdentifier, orderIdentifier]
+    );
+  } catch {}
+
+  try {
+    await db.execute(
+      `UPDATE order_notifications
+       SET is_read = 1, read_at = datetime('now'), updated_at = datetime('now')
+       WHERE recipient_type = 'ADMIN'
+         AND (is_read = 0 OR is_read IS NULL)
+         AND (
+           order_id = ? OR
+           order_id = (SELECT id FROM orders WHERE order_number = ?)
+         )`,
+      [orderIdentifier, orderIdentifier]
+    );
+  } catch {}
+
+  return true;
 }
 
 /**
- * Mark all unread admin WhatsApp order notifications as read.
+ * Mark all unread admin notifications as read.
  */
 export async function markAllAdminNotificationsAsRead(): Promise<boolean> {
   const db = getDatabase();
-  const res = await db.execute(
-    `UPDATE order_notifications
-     SET is_read = 1, read_at = datetime('now'), updated_at = datetime('now')
-     WHERE recipient_type = 'ADMIN'
-       AND (is_read = 0 OR is_read IS NULL)`
-  );
-  return res.changes > 0;
+  try {
+    await db.execute(
+      "UPDATE admin_notifications SET is_read = 1, read_at = datetime('now') WHERE is_read = 0 OR is_read IS NULL"
+    );
+  } catch {}
+
+  try {
+    await db.execute(
+      `UPDATE order_notifications
+       SET is_read = 1, read_at = datetime('now'), updated_at = datetime('now')
+       WHERE recipient_type = 'ADMIN'
+         AND (is_read = 0 OR is_read IS NULL)`
+    );
+  } catch {}
+
+  return true;
 }
 

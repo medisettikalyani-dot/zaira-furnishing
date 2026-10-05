@@ -111,8 +111,8 @@ export default function AdminQuoteDetailPage({ params }: { params: Promise<{ id:
         );
       case 'QUOTED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FBF8F3] text-[#7A5832] border border-[#E8DFC8]">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#9A7B56]" />
             QUOTED
           </span>
         );
@@ -342,8 +342,8 @@ export default function AdminQuoteDetailPage({ params }: { params: Promise<{ id:
             </div>
 
             {saveSuccess && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+              <div className="p-3 bg-[#FBF8F3] border-[#E8DFC8] rounded-lg text-xs text-[#7A5832] flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-[#9A7B56]" />
                 <span>{saveSuccess}</span>
               </div>
             )}
@@ -389,7 +389,7 @@ export default function AdminQuoteDetailPage({ params }: { params: Promise<{ id:
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full py-2.5 px-4 bg-[#152B23] hover:bg-[#1E3A2F] text-white rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-2.5 px-4 bg-[#1C1714] hover:bg-[#2C221E] text-white rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {saving ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />

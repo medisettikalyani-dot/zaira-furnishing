@@ -97,7 +97,7 @@ export default function AdminDashboardPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/admin/products/new"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12.5px] font-semibold transition-all shadow-2xs"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1C1714] hover:bg-[#2C221E] text-white text-[12.5px] font-semibold transition-all shadow-2xs"
           >
             <Plus className="w-4 h-4" />
             <span>Add Product</span>
@@ -135,7 +135,7 @@ export default function AdminDashboardPage() {
           </div>
           <Link
             href="/admin/orders"
-            className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#1E3A2F] hover:text-[#9A7B56] mt-4 transition-colors"
+            className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#2C221E] hover:text-[#9A7B56] mt-4 transition-colors"
           >
             <span>Manage Orders</span>
             <ArrowRight className="w-3 h-3" />
@@ -148,7 +148,7 @@ export default function AdminDashboardPage() {
             <span className="text-[11px] uppercase font-bold tracking-wider text-[#8C827A]">
               Catalog Products
             </span>
-            <div className="w-8 h-8 rounded-lg bg-[#1E3A2F]/10 flex items-center justify-center text-[#1E3A2F]">
+            <div className="w-8 h-8 rounded-lg bg-[#2C221E]/10 flex items-center justify-center text-[#2C221E]">
               <Package className="w-4 h-4" />
             </div>
           </div>
@@ -162,7 +162,7 @@ export default function AdminDashboardPage() {
           </div>
           <Link
             href="/admin/products"
-            className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#1E3A2F] hover:text-[#9A7B56] mt-4 transition-colors"
+            className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#2C221E] hover:text-[#9A7B56] mt-4 transition-colors"
           >
             <span>Manage Products</span>
             <ArrowRight className="w-3 h-3" />
@@ -189,7 +189,7 @@ export default function AdminDashboardPage() {
           </div>
           <Link
             href="/admin/categories"
-            className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#1E3A2F] hover:text-[#9A7B56] mt-4 transition-colors"
+            className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#2C221E] hover:text-[#9A7B56] mt-4 transition-colors"
           >
             <span>Manage Categories</span>
             <ArrowRight className="w-3 h-3" />
@@ -216,7 +216,7 @@ export default function AdminDashboardPage() {
           </div>
           <Link
             href="/admin/services"
-            className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#1E3A2F] hover:text-[#9A7B56] mt-4 transition-colors"
+            className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#2C221E] hover:text-[#9A7B56] mt-4 transition-colors"
           >
             <span>Configure Services</span>
             <ArrowRight className="w-3 h-3" />
@@ -243,7 +243,7 @@ export default function AdminDashboardPage() {
           </div>
           <Link
             href="/admin/cms"
-            className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#1E3A2F] hover:text-[#9A7B56] mt-4 transition-colors"
+            className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#2C221E] hover:text-[#9A7B56] mt-4 transition-colors"
           >
             <span>Edit Homepage CMS</span>
             <ArrowRight className="w-3 h-3" />
@@ -266,7 +266,7 @@ export default function AdminDashboardPage() {
             </div>
             <Link
               href="/admin/products"
-              className="text-[12px] font-semibold text-[#1E3A2F] hover:text-[#9A7B56]"
+              className="text-[12px] font-semibold text-[#2C221E] hover:text-[#9A7B56]"
             >
               View All ({stats?.productsCount || 0}) →
             </Link>
@@ -300,7 +300,7 @@ export default function AdminDashboardPage() {
                   </span>
                   <Link
                     href={`/admin/products/${p.id}`}
-                    className="px-3 py-1.5 rounded-lg border border-[#EDE8DE] hover:border-[#1E3A2F] text-[11.5px] font-medium text-[#1C1917] transition-all"
+                    className="px-3 py-1.5 rounded-lg border border-[#EDE8DE] hover:border-[#2C221E] text-[11.5px] font-medium text-[#1C1917] transition-all"
                   >
                     Edit
                   </Link>
@@ -312,7 +312,7 @@ export default function AdminDashboardPage() {
 
         {/* Quick Operations & System Health */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-[#152B23] text-white p-6 rounded-2xl border border-[#234237] shadow-xs">
+          <div className="bg-[#2C221E] text-white p-6 rounded-2xl border border-[#3D302A] shadow-xs">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-4 h-4 text-[#9A7B56]" />
               <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#C4B9A1]">
@@ -325,7 +325,7 @@ export default function AdminDashboardPage() {
             <p className="text-[12.5px] text-[#A8A29E] leading-relaxed mb-4 font-light">
               Relational SQLite schema active with transactional foreign keys, indexed slugs, and real-time customer query resolution.
             </p>
-            <div className="space-y-2 text-[12px] border-t border-[#234237] pt-4 text-[#C4B9A1]">
+            <div className="space-y-2 text-[12px] border-t border-[#3D302A] pt-4 text-[#C4B9A1]">
               <div className="flex justify-between">
                 <span>Database Engine:</span>
                 <strong className="text-white">Cloudflare D1</strong>

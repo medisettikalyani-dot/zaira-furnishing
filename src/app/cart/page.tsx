@@ -67,7 +67,7 @@ export default function CartPage() {
         {/* ─── SUCCESS SCREEN ─── */}
         {checkoutStep === 'success' ? (
           <div className="max-w-2xl mx-auto bg-white rounded-2xl border border-[#EDE8DE] p-6 sm:p-10 text-center shadow-[0_2px_12px_rgba(28,25,23,0.03)]">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#1E3A2F]/10 text-[#1E3A2F] flex items-center justify-center mx-auto mb-4 sm:mb-5">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#2C221E]/10 text-[#2C221E] flex items-center justify-center mx-auto mb-4 sm:mb-5">
               <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2]" />
             </div>
             <span className="text-[10.5px] sm:text-[11px] uppercase tracking-[0.2em] font-semibold text-[#9A7B56] block mb-1.5">
@@ -93,7 +93,7 @@ export default function CartPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-[#78716C]">Payment Method:</span>
-                <span className="font-semibold text-[#1E3A2F]">Cash on Delivery / On-Site Inspection</span>
+                <span className="font-semibold text-[#2C221E]">Cash on Delivery / On-Site Inspection</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#78716C]">Delivery & Fitting:</span>
@@ -159,7 +159,7 @@ export default function CartPage() {
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="e.g. Radhika Sharma"
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8CFBF] bg-[#FAF7F2] text-[13px] sm:text-[13.5px] text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#1E3A2F]/20 focus:border-[#1E3A2F] transition-all"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8CFBF] bg-[#FAF7F2] text-[13px] sm:text-[13.5px] text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#2C221E]/20 focus:border-[#9A7B56] transition-all"
                     />
                   </div>
 
@@ -174,7 +174,7 @@ export default function CartPage() {
                         value={customerPhone}
                         onChange={(e) => setCustomerPhone(e.target.value)}
                         placeholder="e.g. +91 98765 43210"
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8CFBF] bg-[#FAF7F2] text-[13px] sm:text-[13.5px] text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#1E3A2F]/20 focus:border-[#1E3A2F] transition-all"
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8CFBF] bg-[#FAF7F2] text-[13px] sm:text-[13.5px] text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#2C221E]/20 focus:border-[#9A7B56] transition-all"
                       />
                     </div>
                     <div>
@@ -186,7 +186,7 @@ export default function CartPage() {
                         value={customerEmail}
                         onChange={(e) => setCustomerEmail(e.target.value)}
                         placeholder="e.g. radhika@example.com"
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8CFBF] bg-[#FAF7F2] text-[13px] sm:text-[13.5px] text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#1E3A2F]/20 focus:border-[#1E3A2F] transition-all"
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8CFBF] bg-[#FAF7F2] text-[13px] sm:text-[13.5px] text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#2C221E]/20 focus:border-[#9A7B56] transition-all"
                       />
                     </div>
                   </div>
@@ -204,7 +204,7 @@ export default function CartPage() {
                       value={customerAddress}
                       onChange={(e) => setCustomerAddress(e.target.value)}
                       placeholder="e.g. Villa 14, Rainbow Meadows, Alkapur Twp"
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8CFBF] bg-[#FAF7F2] text-[13px] sm:text-[13.5px] text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#1E3A2F]/20 focus:border-[#1E3A2F] transition-all resize-none"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8CFBF] bg-[#FAF7F2] text-[13px] sm:text-[13.5px] text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#2C221E]/20 focus:border-[#9A7B56] transition-all resize-none"
                     />
                   </div>
 
@@ -217,30 +217,30 @@ export default function CartPage() {
                       required
                       value={customerCity}
                       onChange={(e) => setCustomerCity(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8CFBF] bg-[#FAF7F2] text-[13px] sm:text-[13.5px] text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#1E3A2F]/20 focus:border-[#1E3A2F] transition-all"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8CFBF] bg-[#FAF7F2] text-[13px] sm:text-[13.5px] text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#2C221E]/20 focus:border-[#9A7B56] transition-all"
                     />
                   </div>
 
                   <h3 className="font-serif text-[17px] sm:text-[18px] text-[#1C1917] font-medium pt-3 pb-2 border-b border-[#F2ECE1]">
                     3. Payment Method
                   </h3>
-                  <div className="p-3.5 sm:p-4 rounded-xl bg-[#FAF7F2] border border-[#1E3A2F]/30 flex items-center justify-between">
+                  <div className="p-3.5 sm:p-4 rounded-xl bg-[#FAF7F2] border border-[#2C221E]/30 flex items-center justify-between">
                     <div>
-                      <span className="text-[13px] sm:text-[13.5px] font-semibold text-[#1E3A2F] block">
+                      <span className="text-[13px] sm:text-[13.5px] font-semibold text-[#2C221E] block">
                         Cash on Delivery (COD) / On-Site Inspection
                       </span>
                       <span className="text-[11px] sm:text-[11.5px] text-[#78716C]">
                         Inspect fabrics and stitching in person before final payment.
                       </span>
                     </div>
-                    <span className="px-2 py-0.5 text-[9.5px] uppercase font-bold tracking-wider bg-[#1E3A2F] text-white rounded-md shrink-0 ml-2">
+                    <span className="px-2 py-0.5 text-[9.5px] uppercase font-bold tracking-wider bg-[#2C221E] text-white rounded-md shrink-0 ml-2">
                       Selected
                     </span>
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full py-3.5 rounded-xl text-center text-[11.5px] sm:text-[12px] uppercase tracking-widest font-semibold bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all shadow-xs mt-4 cursor-pointer active:scale-[0.99]"
+                    className="w-full py-3.5 rounded-xl text-center text-[11.5px] sm:text-[12px] uppercase tracking-widest font-semibold bg-[#1C1714] hover:bg-[#2C221E] text-white transition-all shadow-xs mt-4 cursor-pointer active:scale-[0.99]"
                   >
                     Confirm & Place Order (₹{totalPayable.toLocaleString('en-IN')})
                   </button>
@@ -279,7 +279,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex justify-between text-[#78716C]">
                     <span>Delivery & Measurement</span>
-                    <span className="text-[#1E3A2F] font-semibold">Complimentary</span>
+                    <span className="text-[#2C221E] font-semibold">Complimentary</span>
                   </div>
                   <div className="flex justify-between text-[15px] sm:text-[16px] font-serif font-semibold text-[#1C1917] pt-2 border-t border-[#F2ECE1]">
                     <span>Total Amount</span>
@@ -378,7 +378,7 @@ export default function CartPage() {
                             )}
 
                             {item.customDimensions && (
-                              <p className="text-[10.5px] sm:text-[11px] text-[#1E3A2F] bg-[#1E3A2F]/5 border border-[#1E3A2F]/10 px-2 py-0.5 rounded-md inline-block mt-1 font-medium">
+                              <p className="text-[10.5px] sm:text-[11px] text-[#2C221E] bg-[#2C221E]/5 border border-[#2C221E]/10 px-2 py-0.5 rounded-md inline-block mt-1 font-medium">
                                 Bespoke Specs: {item.customDimensions}
                               </p>
                             )}
@@ -428,7 +428,7 @@ export default function CartPage() {
                   <div className="pt-2">
                     <Link
                       href="/categories"
-                      className="inline-flex items-center gap-2 text-[11.5px] sm:text-[12px] uppercase tracking-wider font-semibold text-[#1E3A2F] hover:text-[#9A7B56] transition-colors group"
+                      className="inline-flex items-center gap-2 text-[11.5px] sm:text-[12px] uppercase tracking-wider font-semibold text-[#2C221E] hover:text-[#9A7B56] transition-colors group"
                     >
                       <ArrowLeft className="w-3.5 h-3.5 transition-transform duration-200 group-hover:-translate-x-1" />
                       <span>Continue Shopping</span>
@@ -452,7 +452,7 @@ export default function CartPage() {
 
                     <div className="flex justify-between text-[#78716C]">
                       <span>Delivery & Site Visit</span>
-                      <span className="font-semibold text-[#1E3A2F]">Complimentary</span>
+                      <span className="font-semibold text-[#2C221E]">Complimentary</span>
                     </div>
 
                     <div className="flex justify-between text-[#78716C]">
@@ -477,7 +477,7 @@ export default function CartPage() {
                     {/* Primary CTA: PROCEED TO CHECKOUT */}
                     <Link
                       href="/checkout"
-                      className="w-full py-3.5 rounded-xl text-center text-[11.5px] sm:text-[12px] uppercase tracking-widest font-semibold bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all shadow-xs cursor-pointer active:scale-[0.99] flex items-center justify-center gap-2"
+                      className="w-full py-3.5 rounded-xl text-center text-[11.5px] sm:text-[12px] uppercase tracking-widest font-semibold bg-[#1C1714] hover:bg-[#2C221E] text-white transition-all shadow-xs cursor-pointer active:scale-[0.99] flex items-center justify-center gap-2"
                     >
                       <span>Proceed to Checkout</span>
                       <ArrowRight className="w-4 h-4" />
@@ -492,7 +492,7 @@ export default function CartPage() {
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full py-2.5 rounded-xl text-center text-[11px] sm:text-[11.5px] uppercase tracking-wider font-semibold border border-[#25D366]/40 hover:border-[#25D366] bg-transparent hover:bg-[#25D366]/5 text-[#15803D] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-2.5 rounded-xl text-center text-[11px] sm:text-[11.5px] uppercase tracking-wider font-semibold border border-[#25D366]/40 hover:border-[#25D366] bg-transparent hover:bg-[#25D366]/5 text-[#9A7B56] transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
                       <span>WhatsApp Order Assist</span>
@@ -530,7 +530,7 @@ export default function CartPage() {
                 </p>
                 <Link
                   href="/categories"
-                  className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-sm"
+                  className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-sm"
                 >
                   <span>Explore Categories</span>
                   <ArrowRight className="w-4 h-4" />

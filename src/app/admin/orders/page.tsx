@@ -104,7 +104,7 @@ export default function AdminOrdersPage() {
       case 'CONFIRMED':
         return {
           label: 'Confirmed',
-          classes: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+          classes: 'bg-[#FBF8F3] text-[#7A5832] border-[#E8DFC8]',
         };
       case 'PROCESSING':
         return {
@@ -119,7 +119,7 @@ export default function AdminOrdersPage() {
       case 'COMPLETED':
         return {
           label: 'Completed & Installed',
-          classes: 'bg-[#1E3A2F]/10 text-[#1E3A2F] border-[#1E3A2F]/20',
+          classes: 'bg-[#2C221E]/10 text-[#2C221E] border-[#2C221E]/20',
         };
       case 'CANCELLED':
         return {
@@ -144,7 +144,7 @@ export default function AdminOrdersPage() {
       case 'PAID':
         return {
           label: 'Paid on Delivery',
-          classes: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+          classes: 'bg-[#FBF8F3] text-[#7A5832] border-[#E8DFC8]',
         };
       case 'FAILED':
         return {
@@ -233,7 +233,7 @@ export default function AdminOrdersPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by Order #, Customer Name, Phone, or Email..."
-              className="w-full pl-10 pr-20 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] placeholder:text-[#A8A29E] focus:outline-hidden focus:border-[#1E3A2F] focus:bg-white transition-all"
+              className="w-full pl-10 pr-20 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] placeholder:text-[#A8A29E] focus:outline-hidden focus:border-[#9A7B56] focus:bg-white transition-all"
             />
             {search && (
               <button
@@ -249,7 +249,7 @@ export default function AdminOrdersPage() {
             )}
             <button
               type="submit"
-              className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11px] font-semibold rounded-lg transition-colors cursor-pointer"
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-[#1C1714] hover:bg-[#2C221E] text-white text-[11px] font-semibold rounded-lg transition-colors cursor-pointer"
             >
               Search
             </button>
@@ -263,7 +263,7 @@ export default function AdminOrdersPage() {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-4 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] font-sans font-medium text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F] cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2378716C%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] bg-[right_14px_center] bg-no-repeat pr-9"
+              className="w-full px-4 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] font-sans font-medium text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56] cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2378716C%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] bg-[right_14px_center] bg-no-repeat pr-9"
             >
               <option value="ALL">All Order Statuses</option>
               <option value="CONFIRMED">Confirmed</option>
@@ -282,7 +282,7 @@ export default function AdminOrdersPage() {
                 setPaymentFilter(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-4 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] font-sans font-medium text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F] cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2378716C%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] bg-[right_14px_center] bg-no-repeat pr-9"
+              className="w-full px-4 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] font-sans font-medium text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56] cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2378716C%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] bg-[right_14px_center] bg-no-repeat pr-9"
             >
               <option value="ALL">All Payment Statuses</option>
               <option value="PENDING">COD Pending</option>
@@ -320,7 +320,7 @@ export default function AdminOrdersPage() {
       <div className="bg-white rounded-2xl border border-[#EDE8DE] shadow-2xs overflow-hidden">
         {loading ? (
           <div className="py-20 text-center space-y-3">
-            <div className="w-8 h-8 border-2 border-[#1E3A2F] border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="w-8 h-8 border-2 border-[#2C221E] border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-[13px] text-[#78716C]">Loading orders from Cloudflare D1...</p>
           </div>
         ) : error ? (
@@ -330,7 +330,7 @@ export default function AdminOrdersPage() {
             <p className="text-[13px] text-[#78716C] max-w-md mx-auto">{error}</p>
             <button
               onClick={fetchOrders}
-              className="px-4 py-2 rounded-xl bg-[#1E3A2F] text-white text-[12px] font-semibold"
+              className="px-4 py-2 rounded-xl bg-[#2C221E] text-white text-[12px] font-semibold"
             >
               Retry
             </button>
@@ -394,7 +394,7 @@ export default function AdminOrdersPage() {
                             <span>{sourceBadge.label}</span>
                           </span>
                           {o.order_source === 'WHATSAPP' && o.has_unread_notification === 1 && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-600 text-white tracking-wider">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#9A7B56] text-white tracking-wider">
                               NEW
                             </span>
                           )}
@@ -427,7 +427,7 @@ export default function AdminOrdersPage() {
                         </div>
                         <div className="mt-1">
                           {o.site_visit_required === 1 || o.delivery_option === 'service_visit' ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-[#1E3A2F]/10 text-[#1E3A2F]">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-[#2C221E]/10 text-[#2C221E]">
                               <Clock className="w-3 h-3" />
                               <span>Sizing Visit ({o.site_visit_time || 'Standard'})</span>
                             </span>
@@ -462,7 +462,7 @@ export default function AdminOrdersPage() {
                         <div className="font-sans text-[15px] font-bold text-[#1C1917]">
                           ₹{o.total_amount.toLocaleString('en-IN')}
                         </div>
-                        <div className="flex items-center gap-1 text-[11px] font-medium text-[#1E3A2F] mt-0.5">
+                        <div className="flex items-center gap-1 text-[11px] font-medium text-[#2C221E] mt-0.5">
                           <Banknote className="w-3 h-3" />
                           <span>{o.payment_method}</span>
                         </div>
@@ -487,7 +487,7 @@ export default function AdminOrdersPage() {
                       <td className="py-4 px-4 sm:px-6 align-top text-right">
                         <Link
                           href={`/admin/orders/${o.order_number || o.id}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FAF7F2] border border-[#D5CDBF] hover:bg-[#1E3A2F] hover:border-[#1E3A2F] text-[#1C1917] hover:text-white text-[11.5px] font-semibold transition-all shadow-2xs"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FAF7F2] border border-[#D5CDBF] hover:bg-[#1C1714] hover:border-[#2C221E] text-[#1C1917] hover:text-white text-[11.5px] font-semibold transition-all shadow-2xs"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           <span>Manage</span>

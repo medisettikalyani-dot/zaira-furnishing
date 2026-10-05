@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/auth/admin';
 import { getDatabase } from '@/lib/db';
+import { ensureDatabaseSchema } from '@/lib/db/auto-migrate';
 import { DbSubcategory } from '@/lib/db/types';
 
 export async function GET(req: NextRequest) {
@@ -11,28 +12,30 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const categoryId = searchParams.get('categoryId');
+    const categoryId = searchParams.get('categoryId') || searchParams.get('category_id');
 
     const db = getDatabase();
+    await ensureDatabaseSchema(db);
+
     let sql = `
       SELECT 
         s.*,
         c.name as category_name,
         (SELECT COUNT(*) FROM products p WHERE p.subcategory_id = s.id) as product_count
       FROM subcategories s
-      JOIN categories c ON s.category_id = c.id
+      LEFT JOIN categories c ON s.category_id = c.id
     `;
     const params: unknown[] = [];
 
     if (categoryId) {
-      sql += ' WHERE s.category_id = ?';
-      params.push(categoryId);
+      sql += ' WHERE (s.category_id = ? OR c.slug = ?)';
+      params.push(categoryId, categoryId);
     }
 
     sql += ' ORDER BY s.display_order ASC';
 
     const subcategories = await db.query<DbSubcategory & { category_name: string; product_count: number }>(sql, params);
-    return NextResponse.json({ data: subcategories });
+    return NextResponse.json({ data: subcategories || [] });
   } catch (error) {
     console.error('Admin GET subcategories error:', error);
     return NextResponse.json({ error: 'Failed to fetch subcategories' }, { status: 500 });

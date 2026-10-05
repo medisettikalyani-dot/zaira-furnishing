@@ -113,10 +113,10 @@ export function DecorStylingSolutions() {
           </div>
         </div>
 
-        {/* ─── Carousel Wrapper with Both Side Navigation Arrows ─── */}
+        {/* ─── Carousel Wrapper with Desktop 3-Card & Mobile Single-Card Layout ─── */}
         <div className="relative max-w-5xl mx-auto">
 
-          {/* Left Carousel Arrow Button */}
+          {/* Left Carousel Arrow Button (Desktop) */}
           <button
             type="button"
             onClick={handlePrev}
@@ -126,8 +126,88 @@ export function DecorStylingSolutions() {
             <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:-translate-x-0.5" />
           </button>
 
-          {/* 3 Architectural Photo Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-7 lg:gap-8 items-center px-1 sm:px-2">
+          {/* ─── MOBILE VIEW: Single Sculpted Architectural Card with Touch Controls ─── */}
+          <div className="block md:hidden px-2">
+            <div
+              key={`mobile-${centerCard.id}`}
+              onClick={() => openBookingModal(centerCard.service)}
+              className="group cursor-pointer relative aspect-[9/13.5] rounded-t-[90px] rounded-b-[24px] overflow-hidden bg-[#EFE9DD] shadow-2xl transition-all duration-500 max-w-sm mx-auto border border-[#EAE4D9]"
+            >
+              <Image
+                src={centerCard.image}
+                alt={centerCard.alt}
+                fill
+                sizes="(max-width: 768px) 90vw, 380px"
+                priority
+                className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-106"
+              />
+
+              {/* Mobile Card Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-between p-5 text-white">
+                {/* Top Badge: Current Slide Number */}
+                <div className="flex items-center justify-between">
+                  <span className="px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md text-[10px] uppercase font-bold tracking-widest text-[#D4AF37] border border-white/20">
+                    Space {((currentIndex + 1) % CAROUSEL_CARDS.length) + 1} of {CAROUSEL_CARDS.length}
+                  </span>
+                  <span className="text-[10px] text-white/70 uppercase tracking-wider font-semibold">
+                    Tap to Consult
+                  </span>
+                </div>
+
+                {/* Bottom Details */}
+                <div>
+                  <span className="text-[10.5px] uppercase font-bold tracking-widest text-[#C5A059] block mb-1">
+                    {centerCard.category}
+                  </span>
+                  <h3 className="font-serif text-[21px] font-bold text-white leading-tight mb-2.5">
+                    {centerCard.name}
+                  </h3>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-[11px] font-semibold text-white border border-white/30">
+                    <span>Book Consultation</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Navigation Controls */}
+            <div className="flex items-center justify-between max-w-sm mx-auto mt-4 px-2">
+              <button
+                type="button"
+                onClick={handlePrev}
+                aria-label="Previous space"
+                className="w-10 h-10 rounded-full bg-white border border-[#EAE4D9] text-[#1C1714] shadow-md flex items-center justify-center active:scale-95 cursor-pointer"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-1.5">
+                {CAROUSEL_CARDS.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setCurrentIndex(idx)}
+                    aria-label={`Slide to space ${idx + 1}`}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      idx === currentIndex ? 'w-6 bg-[#1C1714]' : 'w-2 bg-[#DED6C7]'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleNext}
+                aria-label="Next space"
+                className="w-10 h-10 rounded-full bg-white border border-[#EAE4D9] text-[#1C1714] shadow-md flex items-center justify-center active:scale-95 cursor-pointer"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* ─── DESKTOP VIEW: 3 Architectural Photo Cards ─── */}
+          <div className="hidden md:grid md:grid-cols-3 gap-6 sm:gap-7 lg:gap-8 items-center px-1 sm:px-2">
 
             {/* Left Card: Vertical Capsule Pill */}
             <div
@@ -227,7 +307,7 @@ export function DecorStylingSolutions() {
 
           </div>
 
-          {/* Right Carousel Arrow Button */}
+          {/* Right Carousel Arrow Button (Desktop) */}
           <button
             type="button"
             onClick={handleNext}
@@ -237,8 +317,8 @@ export function DecorStylingSolutions() {
             <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:translate-x-0.5" />
           </button>
 
-          {/* Carousel Slide Indicators */}
-          <div className="flex items-center justify-center gap-2 mt-6">
+          {/* Desktop Slide Indicators */}
+          <div className="hidden md:flex items-center justify-center gap-2 mt-6">
             {CAROUSEL_CARDS.map((_, idx) => (
               <button
                 key={idx}
@@ -286,7 +366,7 @@ export function DecorStylingSolutions() {
             <button
               type="button"
               onClick={() => openBookingModal('Design & Home Styling Consultation')}
-              className="px-6 sm:px-8 py-3 rounded-full bg-[#1C1714] hover:bg-[#C5A059] text-white hover:text-[#1C1714] text-[11px] sm:text-[12px] font-bold uppercase tracking-widest shadow-md transition-all cursor-pointer flex items-center gap-2"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3.5 rounded-full bg-[#1C1714] hover:bg-[#C5A059] text-white hover:text-[#1C1714] text-[11px] sm:text-[12px] font-bold uppercase tracking-widest shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               <span>BOOK YOUR DESIGN CONSULTATION TODAY!</span>
               <ArrowRight className="w-3.5 h-3.5" />

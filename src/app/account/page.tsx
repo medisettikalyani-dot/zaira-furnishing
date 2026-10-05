@@ -121,7 +121,7 @@ export default function AccountPage() {
     return (
       <div className="bg-[#FAF7F2] min-h-screen pt-12 pb-24 text-[#1C1917]">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <div className="w-8 h-8 border-2 border-[#1E3A2F] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-8 h-8 border-2 border-[#2C221E] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-[13px] text-[#78716C]">Loading your account...</p>
         </div>
       </div>
@@ -167,7 +167,7 @@ export default function AccountPage() {
                 }}
                 className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all cursor-pointer ${
                   authMode === 'login'
-                    ? 'bg-[#1E3A2F] text-white shadow-xs'
+                    ? 'bg-[#2C221E] text-white shadow-xs'
                     : 'text-[#78716C] hover:text-[#1C1917]'
                 }`}
               >
@@ -181,7 +181,7 @@ export default function AccountPage() {
                 }}
                 className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all cursor-pointer ${
                   authMode === 'register'
-                    ? 'bg-[#1E3A2F] text-white shadow-xs'
+                    ? 'bg-[#2C221E] text-white shadow-xs'
                     : 'text-[#78716C] hover:text-[#1C1917]'
                 }`}
               >
@@ -211,7 +211,7 @@ export default function AccountPage() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Rohini Sharma"
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-[#FAF7F2] text-[13.5px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-[#FAF7F2] text-[13.5px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
                     />
                   </div>
                 </div>
@@ -229,7 +229,7 @@ export default function AccountPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="client@zairafurnishing.com"
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-[#FAF7F2] text-[13.5px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-[#FAF7F2] text-[13.5px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
                   />
                 </div>
               </div>
@@ -246,7 +246,7 @@ export default function AccountPage() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+91 98765 43210"
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-[#FAF7F2] text-[13.5px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-[#FAF7F2] text-[13.5px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
                     />
                   </div>
                 </div>
@@ -264,7 +264,7 @@ export default function AccountPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-[#FAF7F2] text-[13.5px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-[#FAF7F2] text-[13.5px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
                   />
                 </div>
               </div>
@@ -282,7 +282,7 @@ export default function AccountPage() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-[#FAF7F2] text-[13.5px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-[#FAF7F2] text-[13.5px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
                     />
                   </div>
                 </div>
@@ -291,7 +291,7 @@ export default function AccountPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 rounded-xl text-center text-[12px] uppercase tracking-widest font-semibold bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all shadow-xs cursor-pointer disabled:opacity-50 mt-2"
+                className="w-full py-3.5 rounded-xl text-center text-[12px] uppercase tracking-widest font-semibold bg-[#1C1714] hover:bg-[#2C221E] text-white transition-all shadow-xs cursor-pointer disabled:opacity-50 mt-2"
               >
                 {loading
                   ? 'Connecting...'
@@ -307,7 +307,7 @@ export default function AccountPage() {
             {/* Top Customer Greeting Banner */}
             <div className="bg-white rounded-3xl border border-[#EDE8DE] p-6 sm:p-8 mb-8 shadow-[0_2px_12px_rgba(28,25,23,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex items-center gap-4 sm:gap-5">
-                <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-[#1E3A2F]/10 text-[#1E3A2F] flex items-center justify-center font-serif text-[24px] sm:text-[28px] font-medium shrink-0">
+                <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-[#2C221E]/10 text-[#2C221E] flex items-center justify-center font-serif text-[24px] sm:text-[28px] font-medium shrink-0">
                   {customer?.name?.charAt(0).toUpperCase() || 'C'}
                 </div>
                 <div>
@@ -315,7 +315,7 @@ export default function AccountPage() {
                     <h1 className="font-serif text-[24px] sm:text-[28px] text-[#1C1917] font-medium leading-tight">
                       {customer?.name}
                     </h1>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#FBF8F3] text-[#7A5832] border-[#E8DFC8]">
                       <CheckCircle2 className="w-3 h-3" />
                       Verified Customer
                     </span>
@@ -335,7 +335,7 @@ export default function AccountPage() {
               <div className="flex items-center gap-3">
                 <Link
                   href="/account/orders"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#EDE8DE] hover:border-[#1E3A2F] text-[12.5px] font-medium text-[#1C1917] transition-all bg-[#FAF7F2]"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#EDE8DE] hover:border-[#2C221E] text-[12.5px] font-medium text-[#1C1917] transition-all bg-[#FAF7F2]"
                 >
                   <PackageCheck className="w-4 h-4 text-[#9A7B56]" />
                   <span>My Orders</span>
@@ -359,8 +359,8 @@ export default function AccountPage() {
                 onClick={() => setActiveTab('wishlist')}
                 className={`text-left p-6 rounded-2xl border transition-all cursor-pointer ${
                   activeTab === 'wishlist'
-                    ? 'bg-white border-[#1E3A2F] shadow-sm ring-1 ring-[#1E3A2F]'
-                    : 'bg-white border-[#EDE8DE] hover:border-[#1E3A2F]/50 shadow-2xs'
+                    ? 'bg-white border-[#2C221E] shadow-sm ring-1 ring-[#2C221E]'
+                    : 'bg-white border-[#EDE8DE] hover:border-[#2C221E]/50 shadow-2xs'
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
@@ -378,13 +378,13 @@ export default function AccountPage() {
               {/* Cart Card */}
               <Link
                 href="/cart"
-                className="p-6 rounded-2xl bg-white border border-[#EDE8DE] hover:border-[#1E3A2F]/50 transition-all shadow-2xs block"
+                className="p-6 rounded-2xl bg-white border border-[#EDE8DE] hover:border-[#2C221E]/50 transition-all shadow-2xs block"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[11px] uppercase tracking-wider text-[#1E3A2F] font-semibold">
+                  <span className="text-[11px] uppercase tracking-wider text-[#2C221E] font-semibold">
                     Active Cart
                   </span>
-                  <ShoppingBag className="w-5 h-5 text-[#1E3A2F]" />
+                  <ShoppingBag className="w-5 h-5 text-[#2C221E]" />
                 </div>
                 <div className="font-serif text-[28px] text-[#1C1917] font-medium mb-1">
                   {cartCount} items
@@ -395,7 +395,7 @@ export default function AccountPage() {
               {/* Orders Card */}
               <Link
                 href="/account/orders"
-                className="p-6 rounded-2xl bg-white border border-[#EDE8DE] hover:border-[#1E3A2F]/50 transition-all shadow-2xs block"
+                className="p-6 rounded-2xl bg-white border border-[#EDE8DE] hover:border-[#2C221E]/50 transition-all shadow-2xs block"
               >
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[11px] uppercase tracking-wider text-[#78716C] font-semibold">
@@ -424,7 +424,7 @@ export default function AccountPage() {
                   </div>
                   <Link
                     href="/categories"
-                    className="text-[11.5px] uppercase tracking-wider font-semibold text-[#1E3A2F] hover:underline"
+                    className="text-[11.5px] uppercase tracking-wider font-semibold text-[#2C221E] hover:underline"
                   >
                     Browse Categories &rarr;
                   </Link>
@@ -445,7 +445,7 @@ export default function AccountPage() {
                     </p>
                     <Link
                       href="/categories"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1E3A2F] text-white text-[12px] font-semibold uppercase tracking-wider hover:bg-[#152B23] transition-colors"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#2C221E] text-white text-[12px] font-semibold uppercase tracking-wider hover:bg-[#2C221E] transition-colors"
                     >
                       <span>Explore Categories</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -469,7 +469,7 @@ export default function AccountPage() {
                           </div>
                           <Link
                             href={`/products/${item.product_slug}`}
-                            className="font-serif text-[16px] text-[#1C1917] font-medium hover:text-[#1E3A2F] line-clamp-1 mb-1 block"
+                            className="font-serif text-[16px] text-[#1C1917] font-medium hover:text-[#9A7B56] line-clamp-1 mb-1 block"
                           >
                             {item.product_name}
                           </Link>
@@ -492,7 +492,7 @@ export default function AccountPage() {
                                 unitPrice: item.base_price,
                               });
                             }}
-                            className="flex-1 py-2 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase font-semibold tracking-wider transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                            className="flex-1 py-2 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[11.5px] uppercase font-semibold tracking-wider transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                           >
                             <ShoppingBag className="w-3.5 h-3.5" />
                             <span>Add to Cart</span>

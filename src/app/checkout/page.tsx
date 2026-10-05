@@ -399,13 +399,13 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={copyOrderReference}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#1E3A2F] bg-white border border-[#D8CFBF] hover:bg-[#FAF7F2] transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#2C221E] bg-white border border-[#D8CFBF] hover:bg-[#FAF7F2] transition-colors cursor-pointer"
                     title="Copy Order Reference"
                   >
                     {copiedRef ? (
                       <>
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        <span className="text-emerald-700">Copied</span>
+                        <Check className="w-3.5 h-3.5 text-[#9A7B56]" />
+                        <span className="text-[#9A7B56]">Copied</span>
                       </>
                     ) : (
                       <>
@@ -487,7 +487,7 @@ export default function CheckoutPage() {
 
                 <div className="sm:col-span-2">
                   <span className="text-[#8C827A] block text-[11px] uppercase tracking-wider font-medium">Delivery & Service Selection</span>
-                  <span className="font-medium text-[#1E3A2F]">
+                  <span className="font-medium text-[#2C221E]">
                     {deliveryOption === 'service_visit'
                       ? `In-Home Sizing & Installation (${getSlotLabel(timeSlot)})`
                       : 'Standard White-Glove Doorstep Delivery'}
@@ -537,7 +537,7 @@ export default function CheckoutPage() {
                         </div>
                         {item.customDimensions && (
                           <div className="mt-1.5">
-                            <span className="inline-block text-[10.5px] font-medium bg-[#1E3A2F]/5 text-[#1E3A2F] border border-[#1E3A2F]/15 px-2 py-0.5 rounded">
+                            <span className="inline-block text-[10.5px] font-medium bg-[#2C221E]/5 text-[#2C221E] border border-[#2C221E]/15 px-2 py-0.5 rounded">
                               Bespoke Specification: {item.customDimensions}
                             </span>
                           </div>
@@ -580,7 +580,7 @@ export default function CheckoutPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[12.5px]">
                 <div className="p-3.5 rounded-lg bg-[#FAF7F2] border border-[#EDE8DE]">
-                  <span className="font-serif text-[13px] font-semibold text-[#1E3A2F] block mb-1">
+                  <span className="font-serif text-[13px] font-semibold text-[#2C221E] block mb-1">
                     1. Order / Enquiry Received
                   </span>
                   <p className="text-[#78716C] leading-relaxed text-[11.5px]">
@@ -589,7 +589,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="p-3.5 rounded-lg bg-[#FAF7F2] border border-[#EDE8DE]">
-                  <span className="font-serif text-[13px] font-semibold text-[#1E3A2F] block mb-1">
+                  <span className="font-serif text-[13px] font-semibold text-[#2C221E] block mb-1">
                     2. Measurement & Customization Confirmation
                   </span>
                   <p className="text-[#78716C] leading-relaxed text-[11.5px]">
@@ -600,7 +600,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="p-3.5 rounded-lg bg-[#FAF7F2] border border-[#EDE8DE]">
-                  <span className="font-serif text-[13px] font-semibold text-[#1E3A2F] block mb-1">
+                  <span className="font-serif text-[13px] font-semibold text-[#2C221E] block mb-1">
                     3. Tailoring / Preparation
                   </span>
                   <p className="text-[#78716C] leading-relaxed text-[11.5px]">
@@ -611,7 +611,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="p-3.5 rounded-lg bg-[#FAF7F2] border border-[#EDE8DE]">
-                  <span className="font-serif text-[13px] font-semibold text-[#1E3A2F] block mb-1">
+                  <span className="font-serif text-[13px] font-semibold text-[#2C221E] block mb-1">
                     4. Delivery & Installation
                   </span>
                   <p className="text-[#78716C] leading-relaxed text-[11.5px]">
@@ -627,7 +627,7 @@ export default function CheckoutPage() {
             <div className="pt-2 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3">
               <Link
                 href={`/account/orders/${orderId}`}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-xs"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-xs"
               >
                 <FileText className="w-4 h-4" />
                 <span>View Order Details</span>
@@ -687,7 +687,7 @@ export default function CheckoutPage() {
           </p>
           <Link
             href="/categories"
-            className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-sm"
+            className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-sm"
           >
             <span>Explore Categories</span>
             <ArrowRight className="w-4 h-4" />
@@ -712,7 +712,7 @@ export default function CheckoutPage() {
           </p>
           <Link
             href="/categories"
-            className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-sm"
+            className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-sm"
           >
             <span>Explore Categories</span>
             <ArrowRight className="w-4 h-4" />
@@ -797,7 +797,7 @@ export default function CheckoutPage() {
                       isActive
                         ? 'bg-[#1C1917] text-white shadow-xs'
                         : isCompleted
-                        ? 'bg-[#1E3A2F]/10 text-[#1E3A2F] hover:bg-[#1E3A2F]/20 cursor-pointer'
+                        ? 'bg-[#2C221E]/10 text-[#2C221E] hover:bg-[#1C1714]/20 cursor-pointer'
                         : 'bg-[#EDE8DE] text-[#A8A29E] cursor-not-allowed'
                     }`}
                   >
@@ -806,7 +806,7 @@ export default function CheckoutPage() {
                         isActive
                           ? 'bg-[#9A7B56] text-white'
                           : isCompleted
-                          ? 'bg-[#1E3A2F] text-white'
+                          ? 'bg-[#2C221E] text-white'
                           : 'bg-[#D6CFC3] text-[#78716C]'
                       }`}
                     >
@@ -853,7 +853,7 @@ export default function CheckoutPage() {
                       className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] sm:text-[13.5px] text-[#1C1917] transition-all outline-none ${
                         errors.fullName
                           ? 'border-rose-400 bg-rose-50/30 focus:border-rose-500'
-                          : 'border-[#D8CFBF] bg-[#FAF7F2] focus:bg-white focus:border-[#1E3A2F] focus:ring-2 focus:ring-[#1E3A2F]/15'
+                          : 'border-[#D8CFBF] bg-[#FAF7F2] focus:bg-white focus:border-[#9A7B56] focus:ring-2 focus:ring-[#2C221E]/15'
                       }`}
                     />
                     {errors.fullName && (
@@ -877,7 +877,7 @@ export default function CheckoutPage() {
                         className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] sm:text-[13.5px] text-[#1C1917] transition-all outline-none ${
                           errors.phone
                             ? 'border-rose-400 bg-rose-50/30 focus:border-rose-500'
-                            : 'border-[#D8CFBF] bg-[#FAF7F2] focus:bg-white focus:border-[#1E3A2F] focus:ring-2 focus:ring-[#1E3A2F]/15'
+                            : 'border-[#D8CFBF] bg-[#FAF7F2] focus:bg-white focus:border-[#9A7B56] focus:ring-2 focus:ring-[#2C221E]/15'
                         }`}
                       />
                       {errors.phone ? (
@@ -902,7 +902,7 @@ export default function CheckoutPage() {
                         className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] sm:text-[13.5px] text-[#1C1917] transition-all outline-none ${
                           errors.email
                             ? 'border-rose-400 bg-rose-50/30 focus:border-rose-500'
-                            : 'border-[#D8CFBF] bg-[#FAF7F2] focus:bg-white focus:border-[#1E3A2F] focus:ring-2 focus:ring-[#1E3A2F]/15'
+                            : 'border-[#D8CFBF] bg-[#FAF7F2] focus:bg-white focus:border-[#9A7B56] focus:ring-2 focus:ring-[#2C221E]/15'
                         }`}
                       />
                       {errors.email && (
@@ -913,7 +913,7 @@ export default function CheckoutPage() {
 
                   <button
                     type="submit"
-                    className="w-full mt-4 py-3.5 rounded-xl font-semibold text-[12px] uppercase tracking-widest bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                    className="w-full mt-4 py-3.5 rounded-xl font-semibold text-[12px] uppercase tracking-widest bg-[#1C1714] hover:bg-[#2C221E] text-white transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
                   >
                     <span>Continue to Delivery & Service</span>
                     <ArrowRight className="w-4 h-4" />
@@ -948,7 +948,7 @@ export default function CheckoutPage() {
                       className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] sm:text-[13.5px] text-[#1C1917] transition-all outline-none ${
                         errors.addressLine1
                           ? 'border-rose-400 bg-rose-50/30 focus:border-rose-500'
-                          : 'border-[#D8CFBF] bg-[#FAF7F2] focus:bg-white focus:border-[#1E3A2F] focus:ring-2 focus:ring-[#1E3A2F]/15'
+                          : 'border-[#D8CFBF] bg-[#FAF7F2] focus:bg-white focus:border-[#9A7B56] focus:ring-2 focus:ring-[#2C221E]/15'
                       }`}
                     />
                     {errors.addressLine1 && (
@@ -971,7 +971,7 @@ export default function CheckoutPage() {
                       className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] sm:text-[13.5px] text-[#1C1917] transition-all outline-none ${
                         errors.addressLine2
                           ? 'border-rose-400 bg-rose-50/30 focus:border-rose-500'
-                          : 'border-[#D8CFBF] bg-[#FAF7F2] focus:bg-white focus:border-[#1E3A2F] focus:ring-2 focus:ring-[#1E3A2F]/15'
+                          : 'border-[#D8CFBF] bg-[#FAF7F2] focus:bg-white focus:border-[#9A7B56] focus:ring-2 focus:ring-[#2C221E]/15'
                       }`}
                     />
                     {errors.addressLine2 && (
@@ -988,7 +988,7 @@ export default function CheckoutPage() {
                         type="text"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8CFBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] focus:bg-white focus:border-[#1E3A2F] outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8CFBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] focus:bg-white focus:border-[#9A7B56] outline-none"
                       />
                     </div>
                     <div>
@@ -999,7 +999,7 @@ export default function CheckoutPage() {
                         type="text"
                         value={state}
                         onChange={(e) => setState(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8CFBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] focus:bg-white focus:border-[#1E3A2F] outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-[#D8CFBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] focus:bg-white focus:border-[#9A7B56] outline-none"
                       />
                     </div>
                     <div>
@@ -1018,7 +1018,7 @@ export default function CheckoutPage() {
                         className={`w-full px-3.5 py-2.5 rounded-lg border text-[13px] text-[#1C1917] transition-all outline-none ${
                           errors.pincode
                             ? 'border-rose-400 bg-rose-50/30 focus:border-rose-500'
-                            : 'border-[#D8CFBF] bg-[#FAF7F2] focus:bg-white focus:border-[#1E3A2F]'
+                            : 'border-[#D8CFBF] bg-[#FAF7F2] focus:bg-white focus:border-[#9A7B56]'
                         }`}
                       />
                       {errors.pincode && (
@@ -1038,13 +1038,13 @@ export default function CheckoutPage() {
                         onClick={() => setDeliveryOption('standard')}
                         className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
                           deliveryOption === 'standard'
-                            ? 'border-[#1E3A2F] bg-[#FAF7F2] ring-1 ring-[#1E3A2F]'
+                            ? 'border-[#2C221E] bg-[#FAF7F2] ring-1 ring-[#2C221E]'
                             : 'border-[#EDE8DE] hover:border-[#D5CBB9]'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-[13px] font-semibold text-[#1C1917]">Standard Delivery</span>
-                          <span className="text-[11px] font-bold text-[#1E3A2F] uppercase">Complimentary</span>
+                          <span className="text-[11px] font-bold text-[#2C221E] uppercase">Complimentary</span>
                         </div>
                         <p className="text-[11.5px] text-[#78716C] leading-snug">
                           White-glove doorstep delivery dispatched in 2–4 business days with nationwide tracking.
@@ -1055,7 +1055,7 @@ export default function CheckoutPage() {
                         onClick={() => setDeliveryOption('service_visit')}
                         className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
                           deliveryOption === 'service_visit'
-                            ? 'border-[#1E3A2F] bg-[#FAF7F2] ring-1 ring-[#1E3A2F]'
+                            ? 'border-[#2C221E] bg-[#FAF7F2] ring-1 ring-[#2C221E]'
                             : 'border-[#EDE8DE] hover:border-[#D5CBB9]'
                         }`}
                       >
@@ -1083,7 +1083,7 @@ export default function CheckoutPage() {
                               onClick={() => setTimeSlot(slot)}
                               className={`py-2 px-2.5 rounded-lg text-[11.5px] font-medium border text-center transition-all cursor-pointer ${
                                 timeSlot === slot
-                                  ? 'border-[#1E3A2F] bg-white text-[#1E3A2F] font-semibold shadow-xs'
+                                  ? 'border-[#2C221E] bg-white text-[#2C221E] font-semibold shadow-xs'
                                   : 'border-[#EDE8DE] bg-white/70 text-[#57534E] hover:border-[#9A7B56]'
                               }`}
                             >
@@ -1105,7 +1105,7 @@ export default function CheckoutPage() {
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 py-3.5 rounded-xl font-semibold text-[12px] uppercase tracking-widest bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                      className="flex-1 py-3.5 rounded-xl font-semibold text-[12px] uppercase tracking-widest bg-[#1C1714] hover:bg-[#2C221E] text-white transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
                     >
                       <span>Continue to Payment</span>
                       <ArrowRight className="w-4 h-4" />
@@ -1131,18 +1131,18 @@ export default function CheckoutPage() {
                     onClick={() => setPaymentMethod('cod')}
                     className={`p-4 rounded-xl border transition-all cursor-pointer ${
                       paymentMethod === 'cod'
-                        ? 'border-[#1E3A2F] bg-[#FAF7F2] ring-1 ring-[#1E3A2F]'
+                        ? 'border-[#2C221E] bg-[#FAF7F2] ring-1 ring-[#2C221E]'
                         : 'border-[#EDE8DE] hover:border-[#D5CBB9]'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center gap-2.5">
-                        <Banknote className="w-4 h-4 text-[#1E3A2F]" />
+                        <Banknote className="w-4 h-4 text-[#2C221E]" />
                         <span className="text-[13.5px] font-semibold text-[#1C1917]">
                           Cash on Delivery (COD) / On-Site Inspection
                         </span>
                       </div>
-                      <span className="px-2 py-0.5 rounded text-[9.5px] uppercase font-bold tracking-wider bg-[#1E3A2F] text-white">
+                      <span className="px-2 py-0.5 rounded text-[9.5px] uppercase font-bold tracking-wider bg-[#2C221E] text-white">
                         Recommended
                       </span>
                     </div>
@@ -1183,7 +1183,7 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={handleNextStep3}
-                    className="flex-1 py-3.5 rounded-xl font-semibold text-[12px] uppercase tracking-widest bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                    className="flex-1 py-3.5 rounded-xl font-semibold text-[12px] uppercase tracking-widest bg-[#1C1714] hover:bg-[#2C221E] text-white transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
                   >
                     <span>Proceed to Order Review</span>
                     <ArrowRight className="w-4 h-4" />
@@ -1234,7 +1234,7 @@ export default function CheckoutPage() {
                     {addressLine1}, {addressLine2}
                   </p>
                   <p className="text-[#78716C]">{city}, {state} – {pincode}</p>
-                  <div className="pt-1 text-[#1E3A2F] font-semibold">
+                  <div className="pt-1 text-[#2C221E] font-semibold">
                     Service: {deliveryOption === 'service_visit' ? `In-Home Sizing & Installation (${getSlotLabel(timeSlot)})` : 'Standard White-Glove Delivery'}
                   </div>
                 </div>
@@ -1277,7 +1277,7 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={() => setAuthModalOpen(true)}
-                      className="px-4 py-2 bg-white border border-[#D8CFBF] hover:bg-[#FAF7F2] text-[#1E3A2F] text-[11px] uppercase tracking-wider font-semibold rounded-lg transition-colors shrink-0 cursor-pointer"
+                      className="px-4 py-2 bg-white border border-[#D8CFBF] hover:bg-[#FAF7F2] text-[#2C221E] text-[11px] uppercase tracking-wider font-semibold rounded-lg transition-colors shrink-0 cursor-pointer"
                     >
                       Sign In If Existing
                     </button>
@@ -1313,7 +1313,7 @@ export default function CheckoutPage() {
                     type="button"
                     disabled={isSubmitting || hasUnavailableItems}
                     onClick={handlePlaceOrder}
-                    className="flex-1 py-4 rounded-xl font-semibold text-[12.5px] uppercase tracking-widest bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-75 disabled:cursor-not-allowed"
+                    className="flex-1 py-4 rounded-xl font-semibold text-[12.5px] uppercase tracking-widest bg-[#1C1714] hover:bg-[#2C221E] text-white transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-75 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
                       <>
@@ -1366,7 +1366,7 @@ export default function CheckoutPage() {
                       <p className="text-[11px] text-[#78716C]">Pleat: {item.headingStyle}</p>
                     )}
                     {item.customDimensions ? (
-                      <p className="text-[10.5px] text-[#1E3A2F] bg-[#1E3A2F]/5 px-1.5 py-0.5 rounded inline-block mt-0.5">
+                      <p className="text-[10.5px] text-[#2C221E] bg-[#2C221E]/5 px-1.5 py-0.5 rounded inline-block mt-0.5">
                         Bespoke: {item.customDimensions}
                       </p>
                     ) : item.sizeLabel ? (
@@ -1391,7 +1391,7 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between text-[#78716C]">
                 <span>Delivery & Sizing Visit</span>
-                <span className="font-semibold text-[#1E3A2F]">Complimentary</span>
+                <span className="font-semibold text-[#2C221E]">Complimentary</span>
               </div>
               <div className="flex justify-between text-[#78716C]">
                 <span>GST (Included)</span>

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/auth/admin';
 import { getDatabase } from '@/lib/db';
+import { ensureDatabaseSchema } from '@/lib/db/auto-migrate';
+import { CATEGORIES } from '@/lib/data/categories';
 import { DbProduct } from '@/lib/db/types';
 
 export async function GET(req: NextRequest) {
@@ -17,6 +19,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const db = getDatabase();
+    await ensureDatabaseSchema(db);
+
     let sql = `
       SELECT p.*,
         c.name as category_name,
@@ -53,7 +57,16 @@ export async function GET(req: NextRequest) {
 
     sql += ' ORDER BY p.display_order ASC, p.created_at DESC';
 
-    const products = await db.query<DbProduct & { category_name: string; category_slug: string; subcategory_name?: string; main_image?: string; variant_count: number }>(sql, params);
+    const products = await db.query<
+      DbProduct & {
+        category_name: string;
+        category_slug: string;
+        subcategory_name?: string;
+        main_image?: string;
+        variant_count: number;
+      }
+    >(sql, params);
+
     return NextResponse.json({ data: products });
   } catch (error) {
     console.error('Admin GET products error:', error);
@@ -97,21 +110,102 @@ export async function POST(req: NextRequest) {
       space_slugs = [],
     } = body;
 
-    if (!category_id || !name || !slug || base_price === undefined) {
-      return NextResponse.json({ error: 'Category, name, slug, and base price are required' }, { status: 400 });
+    if (!name || (!name.trim())) {
+      return NextResponse.json({ error: 'Product name is required' }, { status: 400 });
     }
 
-    const cleanSlug = slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    const id = `prod-${cleanSlug}-${Date.now().toString().slice(-4)}`;
-
+    const rawCat = (category_id ? String(category_id).trim() : '') || 'cat-1';
     const db = getDatabase();
-    const existing = await db.queryOne('SELECT id FROM products WHERE slug = ?', [cleanSlug]);
-    if (existing) {
-      return NextResponse.json({ error: 'Product slug already exists' }, { status: 409 });
+    await ensureDatabaseSchema(db);
+
+    // 1. Resolve category_id to guarantee foreign key integrity
+    let resolvedCategoryId = rawCat;
+    const catRow = await db.queryOne<{ id: string }>(
+      'SELECT id FROM categories WHERE id = ? OR slug = ? LIMIT 1',
+      [rawCat, rawCat]
+    );
+
+    if (catRow) {
+      resolvedCategoryId = catRow.id;
+    } else {
+      // Check if it matches a known category in our master catalog
+      const matchedStaticCat = CATEGORIES.find(
+        (c) => c.id === rawCat || c.slug === rawCat
+      );
+      if (matchedStaticCat) {
+        await db.execute(
+          `INSERT OR IGNORE INTO categories (id, name, slug, tagline, description, image, display_order, active, featured, is_customizable)
+           VALUES (?, ?, ?, ?, ?, ?, 0, 1, 1, ?)`,
+          [
+            matchedStaticCat.id,
+            matchedStaticCat.name,
+            matchedStaticCat.slug,
+            matchedStaticCat.tagline,
+            matchedStaticCat.description,
+            matchedStaticCat.image,
+            matchedStaticCat.isCustomizable ? 1 : 0,
+          ]
+        );
+        resolvedCategoryId = matchedStaticCat.id;
+      } else {
+        // Safe auto-creation: Create category entry so foreign key constraint NEVER fails
+        const cleanCatName = rawCat.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        await db.execute(
+          `INSERT OR IGNORE INTO categories (id, name, slug, tagline, description, image, display_order, active, featured, is_customizable)
+           VALUES (?, ?, ?, ?, ?, ?, 0, 1, 1, 0)`,
+          [
+            rawCat,
+            cleanCatName,
+            rawCat,
+            `Bespoke ${cleanCatName}`,
+            `Collection of ${cleanCatName}`,
+            '/images/hero/living_room.jpg',
+          ]
+        );
+        resolvedCategoryId = rawCat;
+      }
     }
 
-    const spaceSlugsJson = JSON.stringify(space_slugs || []);
+    // 2. Resolve subcategory_id safely
+    let resolvedSubcategoryId: string | null = null;
+    if (subcategory_id && typeof subcategory_id === 'string' && subcategory_id.trim()) {
+      const cleanSub = subcategory_id.trim();
+      const subRow = await db.queryOne<{ id: string }>(
+        'SELECT id FROM subcategories WHERE id = ? OR slug = ? LIMIT 1',
+        [cleanSub, cleanSub]
+      );
+      if (subRow) {
+        resolvedSubcategoryId = subRow.id;
+      } else {
+        resolvedSubcategoryId = null;
+      }
+    }
 
+    // 3. Clean and auto-generate unique slug
+    let cleanSlug = (slug || name)
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    if (!cleanSlug) {
+      cleanSlug = `product-${Date.now().toString().slice(-6)}`;
+    }
+
+    let finalSlug = cleanSlug;
+    let suffix = 2;
+    while (await db.queryOne('SELECT id FROM products WHERE slug = ?', [finalSlug])) {
+      finalSlug = `${cleanSlug}-${suffix}`;
+      suffix++;
+    }
+
+    const id = `prod-${finalSlug}-${Date.now().toString().slice(-4)}`;
+    const spaceSlugsJson = JSON.stringify(space_slugs || []);
+    const numericBasePrice = isNaN(Number(base_price)) ? 0 : Number(base_price);
+    const validProductType = product_type === 'custom_made' ? 'custom_made' : 'standard';
+
+    // 4. Insert Core Product
     await db.execute(
       `INSERT INTO products (
         id, category_id, subcategory_id, name, display_name, slug, description, short_description,
@@ -120,16 +214,16 @@ export async function POST(req: NextRequest) {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
-        category_id,
-        subcategory_id || null,
+        resolvedCategoryId,
+        resolvedSubcategoryId,
         name.trim(),
         display_name?.trim() || name.trim(),
-        cleanSlug,
+        finalSlug,
         description?.trim() || '',
-        short_description?.trim() || '',
-        product_type,
-        pricing_type,
-        Number(base_price),
+        short_description?.trim() || description?.trim() || '',
+        validProductType,
+        pricing_type || 'fixed',
+        numericBasePrice,
         starting_price ? 1 : 0,
         unit?.trim() || 'piece',
         custom_made ? 1 : 0,
@@ -142,11 +236,11 @@ export async function POST(req: NextRequest) {
       ]
     );
 
-    // Save images
+    // 5. Save images
     if (Array.isArray(images) && images.length > 0) {
       for (let i = 0; i < images.length; i++) {
         const img = images[i];
-        if (img.image_url) {
+        if (img && img.image_url) {
           await db.execute(
             `INSERT INTO product_images (id, product_id, image_url, alt_text, display_order, is_main, active)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -176,10 +270,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Save variants
+    // 6. Save variants safely
+    const VALID_VARIANT_TYPES = new Set(['color', 'pattern', 'material', 'finish', 'thickness', 'opacity', 'firmness', 'design']);
     if (Array.isArray(variants)) {
       for (let i = 0; i < variants.length; i++) {
         const v = variants[i];
+        if (!v) continue;
+        const vType = VALID_VARIANT_TYPES.has(v.variant_type) ? v.variant_type : 'color';
         await db.execute(
           `INSERT INTO product_variants (
             id, product_id, name, variant_type, sku, color_hex, thumbnail_image,
@@ -188,8 +285,8 @@ export async function POST(req: NextRequest) {
           [
             v.id || `var-${id}-${i}`,
             id,
-            v.name,
-            v.variant_type || 'color',
+            v.name || `Variant ${i + 1}`,
+            vType,
             v.sku || `SKU-${id}-${i}`,
             v.color_hex || null,
             v.thumbnail_image || null,
@@ -204,22 +301,42 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Save specifications
+    // 7. Save specifications safely
     if (Array.isArray(specifications)) {
       for (let i = 0; i < specifications.length; i++) {
         const s = specifications[i];
-        await db.execute(
-          `INSERT INTO product_specifications (id, product_id, label, value, display_order)
-           VALUES (?, ?, ?, ?, ?)`,
-          [s.id || `spec-${id}-${i}`, id, s.label, s.value, i]
-        );
+        if (s && s.label) {
+          await db.execute(
+            `INSERT INTO product_specifications (id, product_id, label, value, display_order)
+             VALUES (?, ?, ?, ?, ?)`,
+            [s.id || `spec-${id}-${i}`, id, s.label.trim(), s.value?.trim() || '', i]
+          );
+        }
       }
     }
 
-    // Save customization configs
+    // 8. Save customization configs safely
+    const VALID_FIELD_TYPES = new Set(['dimension_pair', 'select', 'number', 'text', 'boolean']);
     if (Array.isArray(customization_configs)) {
       for (let i = 0; i < customization_configs.length; i++) {
         const cfg = customization_configs[i];
+        if (!cfg || !cfg.field_key) continue;
+
+        const fieldType = VALID_FIELD_TYPES.has(cfg.field_type) ? cfg.field_type : 'select';
+        let optionsFormatted: string | null = null;
+        if (cfg.options) {
+          if (Array.isArray(cfg.options)) {
+            optionsFormatted = JSON.stringify(cfg.options);
+          } else if (typeof cfg.options === 'string') {
+            const trimmed = cfg.options.trim();
+            if (trimmed.startsWith('[')) {
+              optionsFormatted = trimmed;
+            } else {
+              optionsFormatted = JSON.stringify(trimmed.split(',').map((s: string) => s.trim()).filter(Boolean));
+            }
+          }
+        }
+
         await db.execute(
           `INSERT INTO customization_configs (
             id, product_id, field_key, field_label, field_type, options, default_value,
@@ -228,13 +345,13 @@ export async function POST(req: NextRequest) {
           [
             cfg.id || `cfg-${id}-${i}`,
             id,
-            cfg.field_key,
-            cfg.field_label,
-            cfg.field_type || 'select',
-            typeof cfg.options === 'object' ? JSON.stringify(cfg.options) : cfg.options || null,
+            cfg.field_key.trim(),
+            cfg.field_label?.trim() || cfg.field_key.trim(),
+            fieldType,
+            optionsFormatted,
             cfg.default_value || null,
-            cfg.min_value !== undefined ? Number(cfg.min_value) : null,
-            cfg.max_value !== undefined ? Number(cfg.max_value) : null,
+            cfg.min_value !== undefined && cfg.min_value !== null && cfg.min_value !== '' ? Number(cfg.min_value) : null,
+            cfg.max_value !== undefined && cfg.max_value !== null && cfg.max_value !== '' ? Number(cfg.max_value) : null,
             cfg.unit || null,
             cfg.is_required ? 1 : 0,
             i,
@@ -243,7 +360,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, id, slug: cleanSlug });
+    return NextResponse.json({ success: true, id, slug: finalSlug });
   } catch (error) {
     console.error('Admin POST product error:', error);
     return NextResponse.json(

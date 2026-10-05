@@ -76,7 +76,7 @@ export function HeroSection({ cmsContent }: HeroSectionProps) {
             transform: 'rotate(-2deg)',
           }}
         />
-        <div className="absolute top-1/4 -left-20 w-72 h-72 rounded-full bg-[#1E3A2F]/5 blur-3xl" />
+        <div className="absolute top-1/4 -left-20 w-72 h-72 rounded-full bg-[#2C221E]/5 blur-3xl" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -90,7 +90,7 @@ export function HeroSection({ cmsContent }: HeroSectionProps) {
               onClick={() => setActiveSlide(idx)}
               className={`px-4 py-1.5 rounded-full text-[11.5px] font-semibold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                 activeSlide === idx
-                  ? 'bg-[#1E3A2F] text-white shadow-xs'
+                  ? 'bg-[#2C221E] text-white shadow-xs'
                   : 'bg-white/80 border border-[#EAE4D8] text-[#57534E] hover:text-[#1C1917] hover:bg-white'
               }`}
             >
@@ -107,7 +107,7 @@ export function HeroSection({ cmsContent }: HeroSectionProps) {
             
             {/* Trust Pill / Eyebrow */}
             <div className="flex items-center gap-2.5 mb-3.5 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1E3A2F]/10 border border-[#1E3A2F]/20 text-[#1E3A2F] text-[9.5px] sm:text-[10.5px] uppercase tracking-widest font-semibold max-w-full">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#2C221E]/10 border border-[#2C221E]/20 text-[#2C221E] text-[9.5px] sm:text-[10.5px] uppercase tracking-widest font-semibold max-w-full">
                 <Sparkles className="w-3 h-3 text-[#D4AF37] shrink-0" />
                 <span className="truncate">{current.eyebrow}</span>
               </span>
@@ -115,7 +115,7 @@ export function HeroSection({ cmsContent }: HeroSectionProps) {
             </div>
 
             {/* Main Headline */}
-            <h1 className="font-serif text-[28px] xs:text-[34px] sm:text-[46px] lg:text-[52px] xl:text-[56px] text-[#1E3A2F] font-semibold leading-[1.15] tracking-tight mb-4 break-words">
+            <h1 className="font-serif text-[28px] xs:text-[34px] sm:text-[46px] lg:text-[52px] xl:text-[56px] text-[#2C221E] font-semibold leading-[1.15] tracking-tight mb-4 break-words">
               {current.title}
             </h1>
 
@@ -134,7 +134,7 @@ export function HeroSection({ cmsContent }: HeroSectionProps) {
                 <span className="text-[11px] text-[#78716C]">(1,480+ Reviews)</span>
               </div>
               <span className="text-[#C4B9A1] hidden sm:inline">•</span>
-              <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#1E3A2F]">
+              <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#2C221E]">
                 <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
                 <span>146 Quality Checks</span>
               </div>
@@ -150,7 +150,7 @@ export function HeroSection({ cmsContent }: HeroSectionProps) {
               <button
                 type="button"
                 onClick={() => openBookingModal('Free In-Home Measurement')}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-[13.5px] font-semibold text-white bg-[#1E3A2F] hover:bg-[#152B23] rounded-full transition-all duration-300 shadow-md hover:shadow-xl cursor-pointer group text-center"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-[13.5px] font-semibold text-white bg-[#1C1714] hover:bg-[#2C221E] rounded-full transition-all duration-300 shadow-md hover:shadow-xl cursor-pointer group text-center"
               >
                 <Ruler className="w-4 h-4 text-[#D4AF37]" />
                 <span>Book Free In-Home Visit</span>
@@ -159,7 +159,7 @@ export function HeroSection({ cmsContent }: HeroSectionProps) {
 
               <Link
                 href="/categories"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 text-[13px] font-semibold text-[#1E3A2F] bg-white hover:bg-[#FAF7F2] border border-[#C4B9A1] rounded-full transition-all duration-300 shadow-2xs text-center"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 text-[13px] font-semibold text-[#2C221E] bg-white hover:bg-[#FAF7F2] border border-[#C4B9A1] rounded-full transition-all duration-300 shadow-2xs text-center"
               >
                 <span>Explore Catalog</span>
                 <ChevronRight className="w-4 h-4 text-[#9A7B56]" />
@@ -198,7 +198,7 @@ export function HeroSection({ cmsContent }: HeroSectionProps) {
                     <span className="text-[10px] uppercase font-bold tracking-wider text-[#78716C] block">
                       Client Trust
                     </span>
-                    <span className="text-[13px] font-bold text-[#1E3A2F] block">
+                    <span className="text-[13px] font-bold text-[#2C221E] block">
                       {current.stat}
                     </span>
                   </div>

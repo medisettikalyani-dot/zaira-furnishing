@@ -175,33 +175,59 @@ export function WhatYouGetAtZaira() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* ─── Headline & Accent Underline (As per Reference) ─── */}
-        <div className="text-center mb-12 sm:mb-16">
-          <h2 className="font-serif text-[30px] sm:text-[38px] lg:text-[44px] font-bold text-[#823423] tracking-tight">
-            What you get at Zaira
+        {/* ─── Headline & Accent Underline (5-Step Process) ─── */}
+        <div className="text-center mb-10 sm:mb-14">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#823423]/10 text-[#823423] text-[10.5px] uppercase tracking-widest font-bold mb-2">
+            <span>Our 5-Step Process &bull; The Zaira Journey</span>
+          </div>
+          <h2 className="font-serif text-[28px] sm:text-[38px] lg:text-[44px] font-bold text-[#823423] tracking-tight">
+            How Zaira Works
           </h2>
-          <div className="w-28 sm:w-40 h-0.5 bg-[#823423] mx-auto mt-2.5" />
+          <p className="text-[13px] sm:text-[15px] text-[#78716C] mt-1.5 max-w-xl mx-auto leading-relaxed">
+            From doorstep fabric swatches &amp; laser measurement to master custom tailoring and dust-free installation.
+          </p>
+          <div className="w-24 sm:w-36 h-0.5 bg-[#823423]/60 mx-auto mt-3" />
         </div>
 
-        {/* ─── 5 Value Pillars Row (Illustrated Icons + Pure Serif Titles) ─── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 sm:gap-10 justify-items-center items-start max-w-6xl mx-auto">
+        {/* ─── 5 Value Pillars Row (Illustrated Icons + Step Numbers + Pure Serif Titles) ─── */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-6 justify-items-stretch items-stretch max-w-6xl mx-auto">
           {PILLARS.map((pillar, idx) => (
             <div
               key={pillar.id}
               onClick={() => openBookingModal(pillar.modalService)}
-              className={`group cursor-pointer flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1.5 ${
-                idx === 4 ? 'col-span-2 sm:col-span-1' : ''
+              className={`group cursor-pointer flex flex-col items-center justify-between text-center p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white/90 backdrop-blur-xs border border-[#EAE4D9] hover:border-[#823423]/60 transition-all duration-300 hover:-translate-y-1.5 shadow-2xs hover:shadow-md ${
+                idx === 4 ? 'col-span-2 sm:col-span-1 max-w-sm sm:max-w-none mx-auto w-full' : ''
               }`}
             >
-              {/* Illustrated Icon Frame with Smooth Hover Animation */}
-              <div className="w-18 h-18 sm:w-20 sm:h-20 flex items-center justify-center mb-3 group-hover:scale-115 transition-transform duration-300">
-                {pillar.icon}
+              <div className="flex flex-col items-center w-full">
+                {/* Step Number Tag */}
+                <div className="w-full flex justify-center mb-2">
+                  <span className="text-[9.5px] sm:text-[10px] uppercase tracking-wider font-bold text-[#823423] px-2.5 py-0.5 rounded-full bg-[#823423]/10">
+                    Step 0{idx + 1}
+                  </span>
+                </div>
+
+                {/* Illustrated Icon Frame with Smooth Hover Animation */}
+                <div className="w-14 h-14 sm:w-18 sm:h-18 flex items-center justify-center mb-2 sm:mb-2.5 group-hover:scale-110 transition-transform duration-300">
+                  {pillar.icon}
+                </div>
+
+                {/* Title in Bold Serif Typography */}
+                <h3 className="font-serif text-[15px] sm:text-[17px] lg:text-[18px] font-bold text-[#1C1714] group-hover:text-[#823423] transition-colors leading-tight">
+                  {pillar.title}
+                </h3>
+
+                {/* Subtitle / Value Proposition */}
+                <p className="text-[11px] sm:text-[12px] text-[#78716C] group-hover:text-[#57534E] mt-1.5 leading-snug font-sans">
+                  {pillar.subtitle}
+                </p>
               </div>
 
-              {/* Title in Bold Serif Typography */}
-              <h3 className="font-serif text-[17px] sm:text-[19px] lg:text-[20px] font-bold text-[#1C1714] group-hover:text-[#823423] transition-colors leading-tight max-w-[140px]">
-                {pillar.title}
-              </h3>
+              {/* Subtle Atelier Tap Cue */}
+              <div className="mt-3 pt-2 border-t border-[#F2ECE1] w-full flex items-center justify-center gap-1 text-[10px] sm:text-[11px] font-semibold text-[#823423] group-hover:text-[#1C1714] transition-colors">
+                <span>Inquire</span>
+                <span className="transition-transform group-hover:translate-x-0.5">→</span>
+              </div>
             </div>
           ))}
         </div>

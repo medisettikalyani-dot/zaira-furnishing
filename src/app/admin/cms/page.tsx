@@ -210,7 +210,7 @@ export default function AdminCmsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-8 h-8 border-2 border-[#1E3A2F] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-2 border-[#2C221E] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -221,10 +221,10 @@ export default function AdminCmsPage() {
       {toast && (
         <div
           className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-xl text-xs font-semibold flex items-center space-x-2 ${
-            toast.type === 'success' ? 'bg-[#1E3A2F] text-white' : 'bg-red-600 text-white'
+            toast.type === 'success' ? 'bg-[#2C221E] text-white' : 'bg-red-600 text-white'
           }`}
         >
-          {toast.type === 'success' ? <Check className="w-4 h-4 text-emerald-400" /> : <AlertCircle className="w-4 h-4" />}
+          {toast.type === 'success' ? <Check className="w-4 h-4 text-[#D4AF37]" /> : <AlertCircle className="w-4 h-4" />}
           <span>{toast.message}</span>
         </div>
       )}
@@ -248,7 +248,7 @@ export default function AdminCmsPage() {
             href="/"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-[#EDE8DE] hover:border-[#1E3A2F] text-[12.5px] font-medium text-[#1C1917] transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-[#EDE8DE] hover:border-[#2C221E] text-[12.5px] font-medium text-[#1C1917] transition-all cursor-pointer"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             <span>View Live Site</span>
@@ -257,7 +257,7 @@ export default function AdminCmsPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12.5px] font-semibold transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1C1714] hover:bg-[#2C221E] text-white text-[12.5px] font-semibold transition-all shadow-2xs cursor-pointer disabled:opacity-50"
           >
             {saving ? (
               <>
@@ -286,14 +286,14 @@ export default function AdminCmsPage() {
               onClick={() => setActiveTab(tabKey)}
               className={`p-4 rounded-2xl text-left border transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-white border-[#1E3A2F] shadow-sm ring-1 ring-[#1E3A2F]'
+                  ? 'bg-white border-[#2C221E] shadow-sm ring-1 ring-[#2C221E]'
                   : 'bg-white/80 hover:bg-white border-[#EDE8DE] text-[#78716C] hover:text-[#1C1917]'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div
                   className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
-                    isActive ? 'bg-[#1E3A2F] text-[#FAF7F2]' : 'bg-[#FAF7F2] text-[#8C827A]'
+                    isActive ? 'bg-[#2C221E] text-[#FAF7F2]' : 'bg-[#FAF7F2] text-[#8C827A]'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -329,7 +329,7 @@ export default function AdminCmsPage() {
                   type="text"
                   value={currentSectionData.content?.eyebrow || ''}
                   onChange={(e) => handleContentChange('eyebrow', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                   placeholder="e.g. ZAIRA FURNISHING"
                 />
               </div>
@@ -341,7 +341,7 @@ export default function AdminCmsPage() {
                   type="text"
                   value={currentSectionData.title || ''}
                   onChange={(e) => handleFieldChange('title', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[14px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F] font-serif"
+                  className="w-full px-3.5 py-2 text-[14px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56] font-serif"
                   placeholder="e.g. Beautiful Furnishings for Your Home"
                 />
               </div>
@@ -355,7 +355,7 @@ export default function AdminCmsPage() {
                 rows={2}
                 value={currentSectionData.subtitle || ''}
                 onChange={(e) => handleFieldChange('subtitle', e.target.value)}
-                className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                 placeholder="Curtains, blinds, wallpapers, rugs, flooring and more for your home."
               />
             </div>
@@ -371,7 +371,7 @@ export default function AdminCmsPage() {
                     type="text"
                     value={currentSectionData.content?.primary_cta_text || ''}
                     onChange={(e) => handleContentChange('primary_cta_text', e.target.value)}
-                    className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl bg-white outline-none focus:border-[#1E3A2F]"
+                    className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl bg-white outline-none focus:border-[#9A7B56]"
                     placeholder="Shop Now"
                   />
                 </div>
@@ -381,7 +381,7 @@ export default function AdminCmsPage() {
                     type="text"
                     value={currentSectionData.content?.primary_cta_link || ''}
                     onChange={(e) => handleContentChange('primary_cta_link', e.target.value)}
-                    className="w-full px-3.5 py-2 text-[12.5px] font-mono border border-[#D5CDBF] rounded-xl bg-white outline-none focus:border-[#1E3A2F]"
+                    className="w-full px-3.5 py-2 text-[12.5px] font-mono border border-[#D5CDBF] rounded-xl bg-white outline-none focus:border-[#9A7B56]"
                     placeholder="/products"
                   />
                 </div>
@@ -397,7 +397,7 @@ export default function AdminCmsPage() {
                     type="text"
                     value={currentSectionData.content?.secondary_cta_text || ''}
                     onChange={(e) => handleContentChange('secondary_cta_text', e.target.value)}
-                    className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl bg-white outline-none focus:border-[#1E3A2F]"
+                    className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl bg-white outline-none focus:border-[#9A7B56]"
                     placeholder="Book a Free Visit"
                   />
                 </div>
@@ -407,7 +407,7 @@ export default function AdminCmsPage() {
                     type="text"
                     value={currentSectionData.content?.secondary_cta_link || ''}
                     onChange={(e) => handleContentChange('secondary_cta_link', e.target.value)}
-                    className="w-full px-3.5 py-2 text-[12.5px] font-mono border border-[#D5CDBF] rounded-xl bg-white outline-none focus:border-[#1E3A2F]"
+                    className="w-full px-3.5 py-2 text-[12.5px] font-mono border border-[#D5CDBF] rounded-xl bg-white outline-none focus:border-[#9A7B56]"
                     placeholder="/services"
                   />
                 </div>
@@ -439,7 +439,7 @@ export default function AdminCmsPage() {
                     type="text"
                     value={currentSectionData.image_url || ''}
                     onChange={(e) => handleFieldChange('image_url', e.target.value)}
-                    className="w-full px-3.5 py-2 text-[12.5px] border border-[#D5CDBF] rounded-xl font-mono focus:outline-hidden focus:border-[#1E3A2F]"
+                    className="w-full px-3.5 py-2 text-[12.5px] border border-[#D5CDBF] rounded-xl font-mono focus:outline-hidden focus:border-[#9A7B56]"
                     placeholder="/images/hero/living_room.jpg or R2 URL"
                   />
                   <div className="flex items-center gap-2">
@@ -473,7 +473,7 @@ export default function AdminCmsPage() {
                   type="text"
                   value={currentSectionData.title || ''}
                   onChange={(e) => handleFieldChange('title', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F] font-serif"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56] font-serif"
                   placeholder="Featured Furnishings"
                 />
               </div>
@@ -485,7 +485,7 @@ export default function AdminCmsPage() {
                   type="text"
                   value={currentSectionData.subtitle || ''}
                   onChange={(e) => handleFieldChange('subtitle', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                   placeholder="Explore selected furnishings from Zaira."
                 />
               </div>
@@ -499,7 +499,7 @@ export default function AdminCmsPage() {
                 rows={3}
                 value={featuredSlugsText}
                 onChange={(e) => setFeaturedSlugsText(e.target.value)}
-                className="w-full px-3.5 py-2 text-[12.5px] border border-[#D5CDBF] rounded-xl font-mono focus:outline-hidden focus:border-[#1E3A2F]"
+                className="w-full px-3.5 py-2 text-[12.5px] border border-[#D5CDBF] rounded-xl font-mono focus:outline-hidden focus:border-[#9A7B56]"
                 placeholder="blackout-curtains, roma-textured-boucle-upholstery, roller-blinds, solis-hand-tufted-wool-silk-rug, monaco-crush-resistant-matte-velvet"
               />
               <p className="text-[11px] text-[#8C827A] mt-1">
@@ -521,7 +521,7 @@ export default function AdminCmsPage() {
                   type="text"
                   value={currentSectionData.title || ''}
                   onChange={(e) => handleFieldChange('title', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F] font-serif"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56] font-serif"
                   placeholder="About Zaira Furnishing"
                 />
               </div>
@@ -533,7 +533,7 @@ export default function AdminCmsPage() {
                   type="text"
                   value={currentSectionData.subtitle || ''}
                   onChange={(e) => handleFieldChange('subtitle', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                   placeholder="Furnishings & Services"
                 />
               </div>
@@ -548,7 +548,7 @@ export default function AdminCmsPage() {
                   rows={2}
                   value={currentSectionData.content?.paragraph1 || ''}
                   onChange={(e) => handleContentChange('paragraph1', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
               <div>
@@ -559,7 +559,7 @@ export default function AdminCmsPage() {
                   rows={2}
                   value={currentSectionData.content?.paragraph2 || ''}
                   onChange={(e) => handleContentChange('paragraph2', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
               <div>
@@ -570,7 +570,7 @@ export default function AdminCmsPage() {
                   rows={2}
                   value={currentSectionData.content?.paragraph3 || ''}
                   onChange={(e) => handleContentChange('paragraph3', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
             </div>
@@ -584,7 +584,7 @@ export default function AdminCmsPage() {
                   type="text"
                   value={currentSectionData.content?.cta_text || ''}
                   onChange={(e) => handleContentChange('cta_text', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                   placeholder="Learn More"
                 />
               </div>
@@ -596,7 +596,7 @@ export default function AdminCmsPage() {
                   type="text"
                   value={currentSectionData.content?.cta_link || ''}
                   onChange={(e) => handleContentChange('cta_link', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[12.5px] font-mono border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[12.5px] font-mono border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                   placeholder="/about"
                 />
               </div>
@@ -624,7 +624,7 @@ export default function AdminCmsPage() {
                       type="text"
                       value={currentSectionData.image_url || ''}
                       onChange={(e) => handleFieldChange('image_url', e.target.value)}
-                      className="w-full px-3 py-1.5 text-[12px] border border-[#D5CDBF] rounded-lg font-mono focus:outline-hidden focus:border-[#1E3A2F]"
+                      className="w-full px-3 py-1.5 text-[12px] border border-[#D5CDBF] rounded-lg font-mono focus:outline-hidden focus:border-[#9A7B56]"
                     />
                     <label className="cursor-pointer inline-flex items-center gap-1 px-3 py-1.5 bg-[#FAF7F2] hover:bg-[#F2ECE1] border border-[#D5CDBF] text-[#1C1917] text-[11.5px] font-semibold rounded-lg">
                       <Upload className="w-3 h-3" />
@@ -660,7 +660,7 @@ export default function AdminCmsPage() {
                       type="text"
                       value={currentSectionData.secondary_image_url || ''}
                       onChange={(e) => handleFieldChange('secondary_image_url', e.target.value)}
-                      className="w-full px-3 py-1.5 text-[12px] border border-[#D5CDBF] rounded-lg font-mono focus:outline-hidden focus:border-[#1E3A2F]"
+                      className="w-full px-3 py-1.5 text-[12px] border border-[#D5CDBF] rounded-lg font-mono focus:outline-hidden focus:border-[#9A7B56]"
                     />
                     <label className="cursor-pointer inline-flex items-center gap-1 px-3 py-1.5 bg-[#FAF7F2] hover:bg-[#F2ECE1] border border-[#D5CDBF] text-[#1C1917] text-[11.5px] font-semibold rounded-lg">
                       <Upload className="w-3 h-3" />
@@ -691,7 +691,7 @@ export default function AdminCmsPage() {
                   type="text"
                   value={currentSectionData.title || ''}
                   onChange={(e) => handleFieldChange('title', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl font-serif focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl font-serif focus:outline-hidden focus:border-[#9A7B56]"
                   placeholder="Visit the Zaira Showroom"
                 />
               </div>
@@ -703,7 +703,7 @@ export default function AdminCmsPage() {
                   type="text"
                   value={currentSectionData.subtitle || ''}
                   onChange={(e) => handleFieldChange('subtitle', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                   placeholder="See fabrics, furnishings and finishes in person..."
                 />
               </div>
@@ -718,7 +718,7 @@ export default function AdminCmsPage() {
                   rows={3}
                   value={currentSectionData.content?.address || ''}
                   onChange={(e) => handleContentChange('address', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
               <div className="space-y-3">
@@ -730,7 +730,7 @@ export default function AdminCmsPage() {
                     type="text"
                     value={currentSectionData.content?.hours || ''}
                     onChange={(e) => handleContentChange('hours', e.target.value)}
-                    className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                    className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                     placeholder="Mon–Sat 10:30 AM–8:30 PM · Sunday by appointment"
                   />
                 </div>
@@ -743,7 +743,7 @@ export default function AdminCmsPage() {
                       type="text"
                       value={currentSectionData.content?.phone || ''}
                       onChange={(e) => handleContentChange('phone', e.target.value)}
-                      className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                      className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                     />
                   </div>
                   <div>
@@ -754,7 +754,7 @@ export default function AdminCmsPage() {
                       type="email"
                       value={currentSectionData.content?.email || ''}
                       onChange={(e) => handleContentChange('email', e.target.value)}
-                      className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                      className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                     />
                   </div>
                 </div>
@@ -769,7 +769,7 @@ export default function AdminCmsPage() {
                 type="text"
                 value={currentSectionData.content?.maps_query || ''}
                 onChange={(e) => handleContentChange('maps_query', e.target.value)}
-                className="w-full px-3.5 py-2 text-[12.5px] border border-[#D5CDBF] rounded-xl font-mono focus:outline-hidden focus:border-[#1E3A2F]"
+                className="w-full px-3.5 py-2 text-[12.5px] border border-[#D5CDBF] rounded-xl font-mono focus:outline-hidden focus:border-[#9A7B56]"
               />
             </div>
           </div>
@@ -787,7 +787,7 @@ export default function AdminCmsPage() {
                   type="text"
                   value={currentSectionData.title || ''}
                   onChange={(e) => handleFieldChange('title', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl font-serif focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl font-serif focus:outline-hidden focus:border-[#9A7B56]"
                   placeholder="Zaira Furnishing"
                 />
               </div>
@@ -799,7 +799,7 @@ export default function AdminCmsPage() {
                   type="text"
                   value={currentSectionData.subtitle || ''}
                   onChange={(e) => handleFieldChange('subtitle', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                   placeholder="Curtains, blinds, fabrics and furnishings for thoughtfully designed spaces."
                 />
               </div>
@@ -814,7 +814,7 @@ export default function AdminCmsPage() {
                   rows={2}
                   value={currentSectionData.content?.address || ''}
                   onChange={(e) => handleContentChange('address', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
               <div>
@@ -825,7 +825,7 @@ export default function AdminCmsPage() {
                   type="text"
                   value={currentSectionData.content?.copyright || ''}
                   onChange={(e) => handleContentChange('copyright', e.target.value)}
-                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#9A7B56]"
                   placeholder="© 2026 Zaira Furnishing. All rights reserved."
                 />
               </div>

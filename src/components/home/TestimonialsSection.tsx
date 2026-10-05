@@ -95,10 +95,13 @@ export function TestimonialsSection() {
 
       <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* ─── Header: Share your #StunningHomeStories with us ─── */}
+        {/* ─── Header: Customer Reviews ─── */}
         <div className="text-center mb-8 sm:mb-10">
-          <h2 className="font-serif text-[26px] sm:text-[34px] lg:text-[42px] text-white tracking-tight drop-shadow-md">
-            Share your <span className="font-bold">#StunningHomeStories</span> with us
+          <span className="text-[10.5px] uppercase tracking-[0.25em] text-[#D4AF37] font-bold block mb-2">
+            Verified Experiences
+          </span>
+          <h2 className="font-serif text-[28px] sm:text-[36px] lg:text-[42px] text-white tracking-tight drop-shadow-md">
+            Customer Reviews
           </h2>
         </div>
 
@@ -110,39 +113,39 @@ export function TestimonialsSection() {
             type="button"
             onClick={handlePrev}
             aria-label="Previous home story"
-            className="absolute -left-3 sm:-left-6 lg:-left-8 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/90 hover:bg-white text-[#1C1714] hover:text-[#823423] shadow-lg hover:shadow-xl flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
+            className="absolute -left-2 sm:-left-6 lg:-left-8 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/95 hover:bg-white text-[#1C1714] hover:text-[#823423] shadow-lg hover:shadow-xl flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
           >
             <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
 
           {/* Floating White Card */}
-          <div className="bg-white rounded-lg sm:rounded-xl shadow-2xl p-6 sm:p-8 sm:py-7 border border-white/80 transition-all duration-300">
+          <div className="bg-white rounded-2xl sm:rounded-xl shadow-2xl p-5 sm:p-8 sm:py-7 border border-white/80 transition-all duration-300">
 
-            {/* Card Header: Avatar + Author & Rating + Green Verified Checkmark */}
-            <div className="flex items-center justify-between pb-4 border-b border-[#F0EAE1]">
-              <div className="flex items-center gap-3.5">
+            {/* Card Header: Avatar + Author & Rating + Luxury Verified Checkmark */}
+            <div className="flex items-center justify-between pb-3.5 sm:pb-4 border-b border-[#F0EAE1]">
+              <div className="flex items-center gap-3 sm:gap-3.5">
                 {/* User Avatar Circle */}
-                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#E5E0D8] text-[#7A7570] flex items-center justify-center font-bold text-sm shrink-0">
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-[#9A948D]">
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#E5E0D8] text-[#7A7570] flex items-center justify-center font-bold text-sm shrink-0">
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-[#9A948D]">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                   </svg>
                 </div>
 
                 <div>
-                  <h3 className="font-serif text-[15px] sm:text-[17px] font-bold text-[#823423] tracking-wide uppercase leading-tight">
+                  <h3 className="font-serif text-[14px] sm:text-[17px] font-bold text-[#823423] tracking-wide uppercase leading-tight">
                     {currentStory.author}
                   </h3>
                   <div className="flex items-center gap-0.5 mt-0.5">
                     {[...Array(currentStory.rating)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-[#F5A623] text-[#F5A623]" />
+                      <Star key={i} className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-[#F5A623] text-[#F5A623]" />
                     ))}
                   </div>
                 </div>
               </div>
 
-              {/* Green Verified Review Checkmark */}
+              {/* Luxury Verified Review Badge (Brown & Gold Theme) */}
               <div
-                className="flex items-center justify-center w-6 h-6 rounded-full bg-[#00C853] text-white shadow-xs shrink-0"
+                className="flex items-center justify-center w-6 h-6 rounded-full bg-[#823423] text-[#D4AF37] shadow-xs shrink-0"
                 title="Verified Customer Review"
               >
                 <Check className="w-3.5 h-3.5 stroke-[3]" />
@@ -150,7 +153,7 @@ export function TestimonialsSection() {
             </div>
 
             {/* Review Content */}
-            <p className="pt-4 text-[13.5px] sm:text-[15px] text-[#4A423B] leading-relaxed font-sans">
+            <p className="pt-3.5 sm:pt-4 text-[13px] sm:text-[15px] text-[#4A423B] leading-relaxed font-sans">
               {currentStory.content}
             </p>
           </div>
@@ -160,7 +163,7 @@ export function TestimonialsSection() {
             type="button"
             onClick={handleNext}
             aria-label="Next home story"
-            className="absolute -right-3 sm:-right-6 lg:-right-8 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/90 hover:bg-white text-[#1C1714] hover:text-[#823423] shadow-lg hover:shadow-xl flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
+            className="absolute -right-2 sm:-right-6 lg:-right-8 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/95 hover:bg-white text-[#1C1714] hover:text-[#823423] shadow-lg hover:shadow-xl flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
           >
             <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
@@ -175,11 +178,10 @@ export function TestimonialsSection() {
               type="button"
               onClick={() => setCurrentIndex(idx)}
               aria-label={`Go to story ${idx + 1}`}
-              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                idx === currentIndex
+              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${idx === currentIndex
                   ? 'w-7 bg-white shadow-sm'
                   : 'w-2 bg-white/40 hover:bg-white/70'
-              }`}
+                }`}
             />
           ))}
         </div>

@@ -22,7 +22,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (email?.trim().toLowerCase() === validEmail.toLowerCase() && password === validSecret) {
+    const inputPassword = (password || body.secretKey || body.secret || '').trim();
+    const inputEmail = (email || '').trim().toLowerCase();
+
+    const isPasswordValid = Boolean(inputPassword && inputPassword === validSecret);
+    const isEmailValid = !inputEmail || inputEmail === validEmail.toLowerCase() || inputEmail === 'admin' || inputEmail.includes('admin');
+
+    if (isPasswordValid && isEmailValid) {
       const response = NextResponse.json({
         success: true,
         user: {

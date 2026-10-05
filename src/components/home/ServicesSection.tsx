@@ -121,7 +121,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
   return (
     <section id="services" className="py-14 sm:py-20 lg:py-24 bg-[#FAF7F2] border-t border-[#EAE4D8]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between pb-8 sm:pb-12 border-b border-[#EAE4D8] gap-4">
           <div>
@@ -165,7 +165,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-700"
                     />
-                    <div className="absolute top-3 left-3 w-9 h-9 rounded-xl bg-white/95 backdrop-blur-xs flex items-center justify-center text-[#1E3A2F] shadow-sm">
+                    <div className="absolute top-3 left-3 w-9 h-9 rounded-xl bg-white/95 backdrop-blur-xs flex items-center justify-center text-[#2C221E] shadow-sm">
                       <Icon className="w-4 h-4 text-[#9A7B56]" />
                     </div>
                   </div>
@@ -175,7 +175,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                     <span className="text-[9.5px] uppercase font-bold tracking-wider text-[#9A7B56] block mb-1">
                       {srv.category}
                     </span>
-                    <h3 className="font-serif text-[16px] font-semibold text-[#1C1917] mb-2 leading-snug group-hover:text-[#1E3A2F]">
+                    <h3 className="font-serif text-[16px] font-semibold text-[#1C1917] mb-2 leading-snug group-hover:text-[#9A7B56]">
                       {srv.title}
                     </h3>
                     <p className="text-[12px] text-[#57534E] leading-relaxed mb-4">

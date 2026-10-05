@@ -167,7 +167,7 @@ export default function OrderDetailsPage() {
     return (
       <div className="bg-[#FAF7F2] min-h-screen pt-12 pb-24 text-[#1C1917]">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <div className="w-8 h-8 border-2 border-[#1E3A2F] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-8 h-8 border-2 border-[#2C221E] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-[13px] text-[#78716C]">Loading order details...</p>
         </div>
       </div>
@@ -191,14 +191,14 @@ export default function OrderDetailsPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/account/orders"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-xs"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-xs"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to My Orders</span>
             </Link>
             <Link
               href="/categories"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-[#D8CFBF] text-[#1C1917] hover:border-[#1E3A2F] text-[11.5px] uppercase tracking-wider font-semibold transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-[#D8CFBF] text-[#1C1917] hover:border-[#2C221E] text-[11.5px] uppercase tracking-wider font-semibold transition-all"
             >
               <span>Explore Categories</span>
             </Link>
@@ -315,8 +315,8 @@ export default function OrderDetailsPage() {
       case 'COMPLETED':
         return {
           label: 'Completed',
-          classes: 'bg-[#1E3A2F]/10 text-[#1E3A2F] border-[#1E3A2F]/20',
-          dot: 'bg-[#1E3A2F]',
+          classes: 'bg-[#2C221E]/10 text-[#2C221E] border-[#2C221E]/20',
+          dot: 'bg-[#2C221E]',
         };
       case 'CANCELLED':
         return {
@@ -328,8 +328,8 @@ export default function OrderDetailsPage() {
       default:
         return {
           label: 'Confirmed',
-          classes: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-          dot: 'bg-emerald-600',
+          classes: 'bg-[#FBF8F3] text-[#7A5832] border-[#E8DFC8]',
+          dot: 'bg-[#9A7B56]',
         };
     }
   };
@@ -371,13 +371,13 @@ export default function OrderDetailsPage() {
                 <button
                   type="button"
                   onClick={copyRef}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#FAF7F2] border border-[#D8CFBF] hover:bg-white text-[10.5px] font-semibold text-[#1E3A2F] transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#FAF7F2] border border-[#D8CFBF] hover:bg-white text-[10.5px] font-semibold text-[#2C221E] transition-colors cursor-pointer"
                   title="Copy Reference"
                 >
                   {copiedRef ? (
                     <>
-                      <Check className="w-3 h-3 text-emerald-600" />
-                      <span className="text-emerald-700">Copied</span>
+                      <Check className="w-3 h-3 text-[#9A7B56]" />
+                      <span className="text-[#9A7B56]">Copied</span>
                     </>
                   ) : (
                     <>
@@ -413,7 +413,7 @@ export default function OrderDetailsPage() {
                 type="button"
                 onClick={() => fetchOrderDetails(true)}
                 disabled={isRefreshing}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white border border-[#D8CFBF] hover:border-[#1E3A2F] text-[#1C1917] hover:text-[#1E3A2F] text-[11.5px] uppercase tracking-wider font-semibold transition-all cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white border border-[#D8CFBF] hover:border-[#2C221E] text-[#1C1917] hover:text-[#9A7B56] text-[11.5px] uppercase tracking-wider font-semibold transition-all cursor-pointer disabled:opacity-50"
                 title="Refresh order status"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -487,7 +487,7 @@ export default function OrderDetailsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[11.5px] text-[#78716C]">
-                  Current Status: <strong className="text-[#1E3A2F] uppercase">{currentStatus}</strong>
+                  Current Status: <strong className="text-[#2C221E] uppercase">{currentStatus}</strong>
                 </span>
               </div>
             </div>
@@ -505,7 +505,7 @@ export default function OrderDetailsPage() {
                     {idx < ORDER_LIFECYCLE_STEPS.length - 1 && (
                       <div
                         className={`hidden sm:block absolute top-[14px] left-[28px] right-[-14px] h-0.5 z-0 ${
-                          idx < currentStepIdx ? 'bg-[#1E3A2F]' : 'bg-[#EDE8DE]'
+                          idx < currentStepIdx ? 'bg-[#2C221E]' : 'bg-[#EDE8DE]'
                         }`}
                       />
                     )}
@@ -514,9 +514,9 @@ export default function OrderDetailsPage() {
                     <div
                       className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 transition-colors ${
                         isPast
-                          ? 'bg-[#1E3A2F] text-white'
+                          ? 'bg-[#2C221E] text-white'
                           : isCurrent
-                          ? 'bg-[#1E3A2F] text-white ring-4 ring-[#1E3A2F]/20'
+                          ? 'bg-[#2C221E] text-white ring-4 ring-[#2C221E]/20'
                           : 'bg-white border-2 border-[#D8CFBF] text-[#A8A29E]'
                       }`}
                     >
@@ -534,18 +534,18 @@ export default function OrderDetailsPage() {
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span
                           className={`font-serif text-[14px] sm:text-[15px] font-semibold ${
-                            isCurrent ? 'text-[#1E3A2F]' : isPast ? 'text-[#1C1917]' : 'text-[#8C827A]'
+                            isCurrent ? 'text-[#2C221E]' : isPast ? 'text-[#1C1917]' : 'text-[#8C827A]'
                           }`}
                         >
                           {step.label}
                         </span>
                         {isCurrent && (
-                          <span className="px-1.5 py-0.2 rounded text-[9px] uppercase font-bold tracking-wider bg-[#1E3A2F] text-white">
+                          <span className="px-1.5 py-0.2 rounded text-[9px] uppercase font-bold tracking-wider bg-[#2C221E] text-white">
                             Current
                           </span>
                         )}
                         {isPast && (
-                          <span className="text-[10px] text-emerald-700 font-medium">
+                          <span className="text-[10px] text-[#9A7B56] font-medium">
                             ✓ Done
                           </span>
                         )}
@@ -710,7 +710,7 @@ export default function OrderDetailsPage() {
                   <Truck className="w-4 h-4 text-[#9A7B56] shrink-0 mt-0.5" />
                   <div>
                     <span className="font-semibold text-[#1C1917] block">Service Method</span>
-                    <span className="text-[#1E3A2F] font-medium block">
+                    <span className="text-[#2C221E] font-medium block">
                       {order.deliveryOption === 'service_visit'
                         ? `In-Home Sizing & Installation (${getSlotLabel(order.timeSlot)})`
                         : 'Standard White-Glove Doorstep Delivery'}
@@ -741,7 +741,7 @@ export default function OrderDetailsPage() {
                     <MessageCircle className="w-4 h-4 text-[#25D366] shrink-0 mt-0.5" />
                     <div>
                       <span className="font-semibold text-[#1C1917] block">Order Channel</span>
-                      <span className="text-[#1E3A2F] font-medium text-[12px] block">
+                      <span className="text-[#2C221E] font-medium text-[12px] block">
                         {order.orderSource === 'WHATSAPP'
                           ? 'Order placed via WhatsApp'
                           : order.orderSource}
@@ -765,7 +765,7 @@ export default function OrderDetailsPage() {
 
               <div className="flex justify-between text-[#78716C]">
                 <span>White-Glove Delivery</span>
-                <span className="font-semibold text-[#1E3A2F]">Complimentary</span>
+                <span className="font-semibold text-[#2C221E]">Complimentary</span>
               </div>
 
               <div className="flex justify-between text-[#78716C]">
@@ -785,7 +785,7 @@ export default function OrderDetailsPage() {
             <div className="space-y-2 pt-2">
               <Link
                 href={`/account/orders/${order.id}/track`}
-                className="w-full py-3.5 rounded-xl font-semibold text-[12px] uppercase tracking-widest bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 rounded-xl font-semibold text-[12px] uppercase tracking-widest bg-[#1C1714] hover:bg-[#2C221E] text-white transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Track Order Progress</span>
                 <ArrowRight className="w-4 h-4" />

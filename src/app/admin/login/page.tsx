@@ -44,7 +44,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-[880px] bg-white rounded-2xl border border-[#E8E2D5] shadow-[0_20px_50px_rgba(28,25,23,0.06)] overflow-hidden flex flex-col md:flex-row">
         
         {/* ─── Left Brand Panel (~44%) ─── */}
-        <div className="relative md:w-[44%] bg-[#12241C] p-6 sm:p-8 lg:p-10 flex flex-col justify-between text-[#FAF7F2] overflow-hidden">
+        <div className="relative md:w-[44%] bg-[#1C1714] p-6 sm:p-8 lg:p-10 flex flex-col justify-between text-[#FAF7F2] overflow-hidden">
           {/* Subtle Atelier Furnishing Texture Overlay */}
           <div className="absolute inset-0 pointer-events-none select-none">
             <Image
@@ -55,7 +55,7 @@ export default function AdminLoginPage() {
               sizes="(max-width: 768px) 100vw, 44vw"
               className="object-cover opacity-20"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#10231C]/92 via-[#152B23]/95 to-[#0D1C15]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#1C1714]/92 via-[#2C221E]/95 to-[#12100E]" />
           </div>
 
           {/* Top Brand Header */}
@@ -64,7 +64,7 @@ export default function AdminLoginPage() {
               <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center shrink-0">
                 <svg viewBox="0 0 36 36" className="w-5 h-5 fill-none" aria-hidden="true">
                   <path d="M18 3 L31 14 L18 22 L5 14 Z" fill="#9CA488" />
-                  <path d="M5 14 L18 22 L18 33 L5 25 Z" fill="#1E3A2F" />
+                  <path d="M5 14 L18 22 L18 33 L5 25 Z" fill="#2C221E" />
                   <path d="M31 14 L18 22 L18 33 L31 25 Z" fill="#587465" />
                   <path
                     d="M18 10 L23 14 L23 24 L13 24 L13 14 Z"
@@ -142,7 +142,7 @@ export default function AdminLoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     autoComplete="email"
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F] focus:ring-1 focus:ring-[#1E3A2F] transition-all bg-[#FAF7F2]"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56] focus:ring-1 focus:ring-[#2C221E] transition-all bg-[#FAF7F2]"
                   />
                 </div>
               </div>
@@ -165,7 +165,7 @@ export default function AdminLoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     autoComplete="current-password"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F] focus:ring-1 focus:ring-[#1E3A2F] transition-all bg-white"
+                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56] focus:ring-1 focus:ring-[#2C221E] transition-all bg-white"
                   />
                   <button
                     type="button"
@@ -186,7 +186,7 @@ export default function AdminLoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[13.5px] font-medium tracking-wide transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+                className="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[13.5px] font-medium tracking-wide transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
               >
                 {loading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -202,7 +202,7 @@ export default function AdminLoginPage() {
 
           {/* Security Indicator */}
           <div className="mt-6 pt-4 border-t border-[#F2ECE1] flex items-center justify-center gap-2 text-[11.5px] text-[#78716C]">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#15803D]" />
+            <ShieldCheck className="w-3.5 h-3.5 text-[#9A7B56]" />
             <span>Secure administrator access</span>
           </div>
         </div>

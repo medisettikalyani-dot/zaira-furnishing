@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/auth/admin';
 import {
-  getUnreadAdminWhatsAppOrdersCount,
-  getAdminOrderNotifications,
+  getUnreadAdminNotificationsCount,
+  getUnifiedAdminNotifications,
   markNotificationAsRead,
   markOrderNotificationsAsRead,
   markAllAdminNotificationsAsRead,
@@ -17,15 +17,18 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const unreadOnly = searchParams.get('unread_only') === 'true';
-    const limit = parseInt(searchParams.get('limit') || '15', 10);
+    const type = searchParams.get('type') || undefined;
+    const limit = parseInt(searchParams.get('limit') || '30', 10);
 
-    const [unreadCount, notifications] = await Promise.all([
-      getUnreadAdminWhatsAppOrdersCount(),
-      getAdminOrderNotifications({ unreadOnly, limit }),
+    const [counts, notifications] = await Promise.all([
+      getUnreadAdminNotificationsCount(),
+      getUnifiedAdminNotifications({ unreadOnly, type, limit }),
     ]);
 
     return NextResponse.json({
-      unreadCount,
+      success: true,
+      unreadCount: counts.total,
+      counts,
       notifications,
     });
   } catch (error) {
@@ -59,12 +62,13 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const unreadCount = await getUnreadAdminWhatsAppOrdersCount();
+    const counts = await getUnreadAdminNotificationsCount();
 
     return NextResponse.json({
       success: true,
       modified,
-      unreadCount,
+      unreadCount: counts.total,
+      counts,
     });
   } catch (error) {
     console.error('Error marking admin notification read:', error);

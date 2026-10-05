@@ -45,7 +45,7 @@ export function QualityPromiseBanner() {
   const { openBookingModal } = useStore();
 
   return (
-    <section className="py-14 sm:py-18 bg-[#152B23] text-white border-t border-[#234437] relative overflow-hidden">
+    <section className="py-14 sm:py-18 bg-[#2C221E] text-white border-t border-[#3D302A] relative overflow-hidden">
       {/* Background Subtle Monogram Accent */}
       <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/3 opacity-5 pointer-events-none">
         <svg viewBox="0 0 100 100" className="w-[500px] h-[500px] fill-white">
@@ -56,7 +56,7 @@ export function QualityPromiseBanner() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between pb-8 sm:pb-10 border-b border-[#234437] gap-5">
+        <div className="flex flex-col md:flex-row md:items-end justify-between pb-8 sm:pb-10 border-b border-[#3D302A] gap-5">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[#D4AF37] text-[10.5px] uppercase tracking-widest font-semibold mb-3">
               <Award className="w-3.5 h-3.5" />

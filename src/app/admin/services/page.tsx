@@ -222,7 +222,7 @@ export default function AdminServicesPage() {
 
         <button
           onClick={() => handleOpenModal()}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12.5px] font-semibold transition-all shadow-2xs cursor-pointer self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1C1714] hover:bg-[#2C221E] text-white text-[12.5px] font-semibold transition-all shadow-2xs cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           <span>New Service</span>
@@ -233,7 +233,7 @@ export default function AdminServicesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {loading ? (
           <div className="md:col-span-2 p-12 text-center text-[#78716C]">
-            <div className="w-8 h-8 border-2 border-[#1E3A2F] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <div className="w-8 h-8 border-2 border-[#2C221E] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-[13px]">Loading services from Cloudflare D1...</p>
           </div>
         ) : services.length === 0 ? (
@@ -241,7 +241,7 @@ export default function AdminServicesPage() {
             <p className="text-[14px] text-[#78716C] mb-3">No services found in database.</p>
             <button
               onClick={() => handleOpenModal()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1E3A2F] text-white text-[12.5px] font-semibold"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#2C221E] text-white text-[12.5px] font-semibold"
             >
               <Plus className="w-4 h-4" /> Add First Service
             </button>
@@ -258,7 +258,7 @@ export default function AdminServicesPage() {
             return (
               <div
                 key={srv.id}
-                className="bg-white rounded-2xl border border-[#EDE8DE] p-5 shadow-2xs flex flex-col justify-between hover:border-[#1E3A2F]/30 transition-all"
+                className="bg-white rounded-2xl border border-[#EDE8DE] p-5 shadow-2xs flex flex-col justify-between hover:border-[#2C221E]/30 transition-all"
               >
                 <div>
                   <div className="flex items-start gap-4 mb-4">
@@ -309,7 +309,7 @@ export default function AdminServicesPage() {
                     onClick={() => handleToggleActive(srv)}
                     className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer ${
                       srv.active === 1
-                        ? 'bg-[#15803D]/10 text-[#15803D] border-[#15803D]/20'
+                        ? 'bg-[#15803D]/10 text-[#9A7B56] border-[#15803D]/20'
                         : 'bg-stone-100 text-stone-500 border-stone-200'
                     }`}
                   >
@@ -319,7 +319,7 @@ export default function AdminServicesPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleOpenModal(srv)}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#EDE8DE] hover:border-[#1E3A2F] text-[12px] font-medium text-[#1C1917] transition-all cursor-pointer"
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#EDE8DE] hover:border-[#2C221E] text-[12px] font-medium text-[#1C1917] transition-all cursor-pointer"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                       <span>Edit</span>
@@ -375,7 +375,7 @@ export default function AdminServicesPage() {
                   }}
                   required
                   placeholder="e.g. Free In-Home Measurement"
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
 
@@ -389,7 +389,7 @@ export default function AdminServicesPage() {
                   onChange={(e) => setEditingService({ ...editingService, slug: e.target.value })}
                   required
                   placeholder="free-in-home-measurement"
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] font-mono focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] font-mono focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
 
@@ -401,7 +401,7 @@ export default function AdminServicesPage() {
                   <select
                     value={editingService.icon_name || 'Sparkles'}
                     onChange={(e) => setEditingService({ ...editingService, icon_name: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] bg-white focus:outline-hidden focus:border-[#1E3A2F]"
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] bg-white focus:outline-hidden focus:border-[#9A7B56]"
                   >
                     {ICON_OPTIONS.map((opt) => (
                       <option key={opt.name} value={opt.name}>
@@ -421,7 +421,7 @@ export default function AdminServicesPage() {
                     onChange={(e) =>
                       setEditingService({ ...editingService, display_order: Number(e.target.value) })
                     }
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#1E3A2F]"
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#9A7B56]"
                   />
                 </div>
               </div>
@@ -436,7 +436,7 @@ export default function AdminServicesPage() {
                   onChange={(e) => setEditingService({ ...editingService, short_desc: e.target.value })}
                   required
                   placeholder="Brief 1-2 sentence description shown on service cards."
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
 
@@ -449,7 +449,7 @@ export default function AdminServicesPage() {
                   value={editingService.full_desc || ''}
                   onChange={(e) => setEditingService({ ...editingService, full_desc: e.target.value })}
                   placeholder="Detailed breakdown of what is included in this service..."
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
 
@@ -464,7 +464,7 @@ export default function AdminServicesPage() {
                     value={editingService.image || ''}
                     onChange={(e) => setEditingService({ ...editingService, image: e.target.value })}
                     required
-                    className="flex-1 px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] font-mono focus:outline-hidden focus:border-[#1E3A2F]"
+                    className="flex-1 px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] font-mono focus:outline-hidden focus:border-[#9A7B56]"
                   />
                   <label className="px-3.5 py-2 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] hover:bg-[#F2ECE1] text-[12px] font-semibold text-[#1C1917] cursor-pointer flex items-center gap-1.5 shrink-0">
                     <Upload className="w-3.5 h-3.5" />
@@ -489,7 +489,7 @@ export default function AdminServicesPage() {
                   placeholder="Laser accurate, Free doorstep demo, 5-year warranty"
                   value={highlightsText}
                   onChange={(e) => setHighlightsText(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#9A7B56]"
                 />
                 <p className="text-[10.5px] text-[#8C827A] mt-1">Separate key feature pills with commas.</p>
               </div>
@@ -502,7 +502,7 @@ export default function AdminServicesPage() {
                     onChange={(e) =>
                       setEditingService({ ...editingService, requires_site_visit: e.target.checked ? 1 : 0 })
                     }
-                    className="rounded text-[#1E3A2F]"
+                    className="rounded text-[#2C221E]"
                   />
                   <span>Requires Site Visit</span>
                 </label>
@@ -512,7 +512,7 @@ export default function AdminServicesPage() {
                     type="checkbox"
                     checked={editingService.active === 1}
                     onChange={(e) => setEditingService({ ...editingService, active: e.target.checked ? 1 : 0 })}
-                    className="rounded text-[#1E3A2F]"
+                    className="rounded text-[#2C221E]"
                   />
                   <span>Active on Website</span>
                 </label>
@@ -543,7 +543,7 @@ export default function AdminServicesPage() {
                   <button
                     type="submit"
                     disabled={submitting || uploadingImage}
-                    className="px-5 py-2 rounded-xl bg-[#1E3A2F] text-white text-[12.5px] font-semibold hover:bg-[#152B23]"
+                    className="px-5 py-2 rounded-xl bg-[#2C221E] text-white text-[12.5px] font-semibold hover:bg-[#2C221E]"
                   >
                     {submitting ? 'Saving...' : 'Save Service'}
                   </button>

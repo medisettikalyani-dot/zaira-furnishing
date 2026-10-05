@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
+  ArrowRight,
   Save,
   Upload,
   Plus,
@@ -15,6 +16,7 @@ import {
   Sparkles,
   Layers,
   Settings,
+  RotateCcw,
 } from 'lucide-react';
 import {
   DbProduct,
@@ -70,6 +72,7 @@ export default function AdminProductEditPage({ params }: { params: Promise<{ id:
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVariantImage, setUploadingVariantImage] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'details' | 'images' | 'variants' | 'specs' | 'customization'>('details');
+  const [removedImages, setRemovedImages] = useState<DbProductImage[]>([]);
 
   useEffect(() => {
     // Load categories
@@ -160,6 +163,10 @@ export default function AdminProductEditPage({ params }: { params: Promise<{ id:
 
   const handleRemoveImage = (index: number) => {
     setProduct((prev) => {
+      const target = (prev.images || [])[index];
+      if (target) {
+        setRemovedImages((prevRemoved) => [target, ...prevRemoved]);
+      }
       const filtered = (prev.images || []).filter((_, i) => i !== index);
       // Ensure at least one is main if available
       if (filtered.length > 0 && !filtered.some((img) => img.is_main === 1)) {
@@ -167,6 +174,25 @@ export default function AdminProductEditPage({ params }: { params: Promise<{ id:
       }
       return { ...prev, images: filtered };
     });
+  };
+
+  const handleRestoreImage = (imageToRestore: DbProductImage) => {
+    setProduct((prev) => {
+      const current = prev.images || [];
+      return {
+        ...prev,
+        images: [...current, { ...imageToRestore, is_main: current.length === 0 ? 1 : 0 }],
+      };
+    });
+    setRemovedImages((prev) => prev.filter((img) => img.image_url !== imageToRestore.image_url));
+  };
+
+  const handleRestoreAllImages = () => {
+    setProduct((prev) => ({
+      ...prev,
+      images: [...(prev.images || []), ...removedImages],
+    }));
+    setRemovedImages([]);
   };
 
   // Variant operations
@@ -288,8 +314,10 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
   };
 
   // Save product
-  const handleSaveProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveProduct = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+    }
     if (!product.name || !product.slug || !product.category_id) {
       alert('Please fill in product name, slug, and category');
       return;
@@ -350,7 +378,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
   if (loading) {
     return (
       <div className="p-12 text-center text-[#78716C]">
-        <div className="w-8 h-8 border-2 border-[#1E3A2F] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <div className="w-8 h-8 border-2 border-[#2C221E] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
         <p className="text-[13px]">Loading product data from Cloudflare D1...</p>
       </div>
     );
@@ -392,7 +420,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
           <button
             onClick={handleSaveProduct}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12.5px] font-semibold transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#1C1714] hover:bg-[#2C221E] text-white text-[12.5px] font-semibold transition-all shadow-2xs cursor-pointer disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             <span>{saving ? 'Saving to D1...' : 'Save Product'}</span>
@@ -404,57 +432,82 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
       <div className="flex items-center gap-2 border-b border-[#EDE8DE] pb-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab('details')}
-          className={`px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === 'details'
-              ? 'bg-[#1E3A2F] text-white'
+              ? 'bg-[#2C221E] text-white shadow-2xs'
               : 'text-[#57534E] hover:bg-[#FAF7F2]'
           }`}
         >
-          General Details
+          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+            activeTab === 'details' ? 'bg-white text-[#2C221E]' : 'bg-[#EDE8DE] text-[#57534E]'
+          }`}>
+            1
+          </span>
+          <span>General Details</span>
         </button>
 
         <button
           onClick={() => setActiveTab('images')}
-          className={`px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === 'images'
-              ? 'bg-[#1E3A2F] text-white'
+              ? 'bg-[#2C221E] text-white shadow-2xs'
               : 'text-[#57534E] hover:bg-[#FAF7F2]'
           }`}
         >
-          Product Images ({product.images?.length || 0})
+          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+            activeTab === 'images' ? 'bg-white text-[#2C221E]' : 'bg-[#EDE8DE] text-[#57534E]'
+          }`}>
+            2
+          </span>
+          <span>Product Images ({product.images?.length || 0})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('variants')}
-          className={`px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === 'variants'
-              ? 'bg-[#1E3A2F] text-white'
+              ? 'bg-[#2C221E] text-white shadow-2xs'
               : 'text-[#57534E] hover:bg-[#FAF7F2]'
           }`}
         >
-          Variants & Colors ({product.variants?.length || 0})
+          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+            activeTab === 'variants' ? 'bg-white text-[#2C221E]' : 'bg-[#EDE8DE] text-[#57534E]'
+          }`}>
+            3
+          </span>
+          <span>Variants & Colors ({product.variants?.length || 0})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('specs')}
-          className={`px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === 'specs'
-              ? 'bg-[#1E3A2F] text-white'
+              ? 'bg-[#2C221E] text-white shadow-2xs'
               : 'text-[#57534E] hover:bg-[#FAF7F2]'
           }`}
         >
-          Specifications ({product.specifications?.length || 0})
+          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+            activeTab === 'specs' ? 'bg-white text-[#2C221E]' : 'bg-[#EDE8DE] text-[#57534E]'
+          }`}>
+            4
+          </span>
+          <span>Specifications ({product.specifications?.length || 0})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('customization')}
-          className={`px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[12.5px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === 'customization'
-              ? 'bg-[#1E3A2F] text-white'
+              ? 'bg-[#2C221E] text-white shadow-2xs'
               : 'text-[#57534E] hover:bg-[#FAF7F2]'
           }`}
         >
-          Customization Rules ({product.customization_configs?.length || 0})
+          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+            activeTab === 'customization' ? 'bg-white text-[#2C221E]' : 'bg-[#EDE8DE] text-[#57534E]'
+          }`}>
+            5
+          </span>
+          <span>Customization Rules ({product.customization_configs?.length || 0})</span>
         </button>
       </div>
 
@@ -469,9 +522,32 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
               <input
                 type="text"
                 value={product.name || ''}
-                onChange={(e) => setProduct({ ...product, name: e.target.value })}
+                onChange={(e) => {
+                  const newName = e.target.value;
+                  if (isNew) {
+                    const autoSlug = newName
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]+/g, '-')
+                      .replace(/^-+|-+$/g, '');
+                    setProduct((prev) => {
+                      const oldAutoSlug = (prev.name || '')
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/^-+|-+$/g, '');
+                      const shouldUpdateSlug = !prev.slug || prev.slug === oldAutoSlug;
+                      return {
+                        ...prev,
+                        name: newName,
+                        display_name: prev.display_name === prev.name || !prev.display_name ? newName : prev.display_name,
+                        slug: shouldUpdateSlug ? autoSlug : prev.slug,
+                      };
+                    });
+                  } else {
+                    setProduct({ ...product, name: newName });
+                  }
+                }}
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#9A7B56]"
               />
             </div>
 
@@ -483,7 +559,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                 type="text"
                 value={product.display_name || ''}
                 onChange={(e) => setProduct({ ...product, display_name: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#9A7B56]"
               />
             </div>
 
@@ -496,7 +572,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                 value={product.slug || ''}
                 onChange={(e) => setProduct({ ...product, slug: e.target.value })}
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] font-mono focus:outline-hidden focus:border-[#1E3A2F]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] font-mono focus:outline-hidden focus:border-[#9A7B56]"
               />
             </div>
 
@@ -508,7 +584,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                 value={product.category_id || ''}
                 onChange={(e) => setProduct({ ...product, category_id: e.target.value, subcategory_id: null })}
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] bg-white focus:outline-hidden focus:border-[#1E3A2F]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] bg-white focus:outline-hidden focus:border-[#9A7B56]"
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -526,7 +602,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                 <select
                   value={product.subcategory_id || ''}
                   onChange={(e) => setProduct({ ...product, subcategory_id: e.target.value || null })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] bg-white focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] bg-white focus:outline-hidden focus:border-[#9A7B56]"
                 >
                   <option value="">None (Top-Level Category Only)</option>
                   {subcategories.map((s) => (
@@ -551,7 +627,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                     custom_made: e.target.value === 'custom_made' ? 1 : 0,
                   })
                 }
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] bg-white focus:outline-hidden focus:border-[#1E3A2F]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] bg-white focus:outline-hidden focus:border-[#9A7B56]"
               >
                 <option value="standard">Standard E-Commerce (Add to Cart directly)</option>
                 <option value="custom_made">Custom Made / Atelier (Enquire / Custom Dimensions)</option>
@@ -567,7 +643,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                 value={product.base_price ?? 0}
                 onChange={(e) => setProduct({ ...product, base_price: Number(e.target.value) })}
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#9A7B56]"
               />
             </div>
 
@@ -580,7 +656,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                 placeholder="piece, panel, metre, roll, sqft..."
                 value={product.unit || ''}
                 onChange={(e) => setProduct({ ...product, unit: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#9A7B56]"
               />
             </div>
           </div>
@@ -591,7 +667,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                 type="checkbox"
                 checked={product.starting_price === 1}
                 onChange={(e) => setProduct({ ...product, starting_price: e.target.checked ? 1 : 0 })}
-                className="rounded text-[#1E3A2F]"
+                className="rounded text-[#2C221E]"
               />
               <span>Display as &quot;From ₹...&quot;</span>
             </label>
@@ -601,7 +677,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                 type="checkbox"
                 checked={product.featured === 1}
                 onChange={(e) => setProduct({ ...product, featured: e.target.checked ? 1 : 0 })}
-                className="rounded text-[#1E3A2F]"
+                className="rounded text-[#2C221E]"
               />
               <span>Homepage Featured</span>
             </label>
@@ -611,7 +687,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                 type="checkbox"
                 checked={product.active === 1}
                 onChange={(e) => setProduct({ ...product, active: e.target.checked ? 1 : 0 })}
-                className="rounded text-[#1E3A2F]"
+                className="rounded text-[#2C221E]"
               />
               <span>Active Status</span>
             </label>
@@ -625,7 +701,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
               type="text"
               value={product.short_description || ''}
               onChange={(e) => setProduct({ ...product, short_description: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#9A7B56]"
             />
           </div>
 
@@ -637,8 +713,41 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
               rows={4}
               value={product.description || ''}
               onChange={(e) => setProduct({ ...product, description: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#9A7B56]"
             />
+          </div>
+
+          {/* ─── Tab 1 Footer: General Details -> Product Images ─── */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-[#EDE8DE] mt-6">
+            <span className="text-[12px] font-medium text-[#78716C]">
+              Step 1 of 5: General Details
+            </span>
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={handleSaveProduct}
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#D5CDBF] text-[#57534E] hover:text-[#1C1917] hover:border-[#1C1917] text-[13px] font-semibold transition-all cursor-pointer bg-white"
+              >
+                <Save className="w-4 h-4 text-[#9A7B56]" />
+                <span>{saving ? 'Saving...' : 'Save Draft'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!product.name?.trim()) {
+                    alert('Please enter a product title / name before proceeding.');
+                    return;
+                  }
+                  setActiveTab('images');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[13px] font-semibold transition-all shadow-sm cursor-pointer"
+              >
+                <span>Next: Product Images</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -654,7 +763,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
               </p>
             </div>
 
-            <label className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12.5px] font-semibold transition-all shadow-2xs cursor-pointer shrink-0">
+            <label className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1C1714] hover:bg-[#2C221E] text-white text-[12.5px] font-semibold transition-all shadow-2xs cursor-pointer shrink-0">
               <Upload className="w-4 h-4" />
               <span>{uploadingImage ? 'Uploading to R2...' : 'Upload Image to R2'}</span>
               <input
@@ -672,7 +781,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
               <div
                 key={img.id || idx}
                 className={`relative rounded-2xl border overflow-hidden bg-[#FAF7F2] p-2 flex flex-col justify-between ${
-                  img.is_main === 1 ? 'border-[#1E3A2F] ring-2 ring-[#1E3A2F]' : 'border-[#EDE8DE]'
+                  img.is_main === 1 ? 'border-[#2C221E] ring-2 ring-[#2C221E]' : 'border-[#EDE8DE]'
                 }`}
               >
                 <div className="aspect-[4/3] rounded-xl overflow-hidden relative bg-white">
@@ -683,7 +792,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                     className="w-full h-full object-cover"
                   />
                   {img.is_main === 1 && (
-                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-[#1E3A2F] text-white text-[9.5px] font-bold uppercase tracking-wider shadow-xs">
+                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-[#2C221E] text-white text-[9.5px] font-bold uppercase tracking-wider shadow-xs">
                       Main
                     </span>
                   )}
@@ -706,12 +815,12 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                       <button
                         type="button"
                         onClick={() => handleSetMainImage(idx)}
-                        className="text-[#1E3A2F] hover:underline font-medium cursor-pointer"
+                        className="text-[#2C221E] hover:underline font-medium cursor-pointer"
                       >
                         Set Main
                       </button>
                     ) : (
-                      <span className="text-[#15803D] font-bold flex items-center gap-1">
+                      <span className="text-[#9A7B56] font-bold flex items-center gap-1">
                         <Check className="w-3 h-3" /> Primary
                       </span>
                     )}
@@ -727,6 +836,93 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* ─── Recently Removed Images / Restore Bar ─── */}
+          {removedImages.length > 0 && (
+            <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-amber-50/80 border border-amber-200/90 space-y-3 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-amber-900 font-semibold text-sm">
+                  <RotateCcw className="w-4 h-4 text-amber-700" />
+                  <span>Recently Removed Images ({removedImages.length})</span>
+                  <span className="text-xs font-normal text-amber-800 hidden sm:inline">— Accidental deletion? You can restore them below before saving.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRestoreAllImages}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer w-fit"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Restore All Images</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 pt-1">
+                {removedImages.map((img, idx) => (
+                  <div
+                    key={`removed-${idx}-${img.image_url}`}
+                    className="relative group rounded-xl overflow-hidden border border-amber-300 bg-white shadow-xs p-1.5 flex flex-col justify-between"
+                  >
+                    <div className="aspect-square w-full rounded-lg overflow-hidden bg-stone-100 relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={img.image_url}
+                        alt={img.alt_text || 'Removed product image'}
+                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                      />
+                    </div>
+                    <div className="pt-2 pb-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleRestoreImage(img)}
+                        className="w-full inline-flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-stone-900 hover:bg-[#1C1714] text-white text-[11px] font-medium transition-colors cursor-pointer"
+                        title="Restore this image to the gallery"
+                      >
+                        <RotateCcw className="w-3 h-3 text-amber-400" />
+                        <span>Restore</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ─── Tab 2 Footer: Product Images -> Variants & Colors ─── */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-[#EDE8DE] mt-6">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('details');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#D5CDBF] text-[#57534E] hover:text-[#1C1917] hover:border-[#1C1917] text-[13px] font-semibold transition-all cursor-pointer bg-white"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back: General Details</span>
+            </button>
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={handleSaveProduct}
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#D5CDBF] text-[#57534E] hover:text-[#1C1917] hover:border-[#1C1917] text-[13px] font-semibold transition-all cursor-pointer bg-white"
+              >
+                <Save className="w-4 h-4 text-[#9A7B56]" />
+                <span>{saving ? 'Saving...' : 'Save Draft'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('variants');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[13px] font-semibold transition-all shadow-sm cursor-pointer"
+              >
+                <span>Next: Variants & Colors</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -826,7 +1022,7 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                           updated[idx].in_stock = e.target.checked ? 1 : 0;
                           setProduct({ ...product, variants: updated });
                         }}
-                        className="rounded text-[#1E3A2F]"
+                        className="rounded text-[#2C221E]"
                       />
                       <span>In Stock</span>
                     </label>
@@ -923,6 +1119,43 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
               </div>
             ))}
           </div>
+
+          {/* ─── Tab 3 Footer: Variants & Colors -> Specifications ─── */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-[#EDE8DE] mt-6">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('images');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#D5CDBF] text-[#57534E] hover:text-[#1C1917] hover:border-[#1C1917] text-[13px] font-semibold transition-all cursor-pointer bg-white"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back: Product Images</span>
+            </button>
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={handleSaveProduct}
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#D5CDBF] text-[#57534E] hover:text-[#1C1917] hover:border-[#1C1917] text-[13px] font-semibold transition-all cursor-pointer bg-white"
+              >
+                <Save className="w-4 h-4 text-[#9A7B56]" />
+                <span>{saving ? 'Saving...' : 'Save Draft'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('specs');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[13px] font-semibold transition-all shadow-sm cursor-pointer"
+              >
+                <span>Next: Specifications</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -980,6 +1213,43 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                 </button>
               </div>
             ))}
+          </div>
+
+          {/* ─── Tab 4 Footer: Specifications -> Customization Rules ─── */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-[#EDE8DE] mt-6">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('variants');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#D5CDBF] text-[#57534E] hover:text-[#1C1917] hover:border-[#1C1917] text-[13px] font-semibold transition-all cursor-pointer bg-white"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back: Variants & Colors</span>
+            </button>
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={handleSaveProduct}
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#D5CDBF] text-[#57534E] hover:text-[#1C1917] hover:border-[#1C1917] text-[13px] font-semibold transition-all cursor-pointer bg-white"
+              >
+                <Save className="w-4 h-4 text-[#9A7B56]" />
+                <span>{saving ? 'Saving...' : 'Save Draft'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('customization');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[13px] font-semibold transition-all shadow-sm cursor-pointer"
+              >
+                <span>Next: Customization Rules</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1075,6 +1345,32 @@ const formatOptionsForInput = (raw: string | null | undefined): string => {
                 )}
               </div>
             ))}
+          </div>
+
+          {/* ─── Tab 5 Footer: Customization Rules -> Complete & Save ─── */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-[#EDE8DE] mt-6">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('specs');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#D5CDBF] text-[#57534E] hover:text-[#1C1917] hover:border-[#1C1917] text-[13px] font-semibold transition-all cursor-pointer bg-white"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back: Specifications</span>
+            </button>
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={handleSaveProduct}
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-8 py-2.5 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[13px] font-semibold transition-all shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" />
+                <span>{saving ? 'Saving to D1...' : 'Complete & Save Product'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

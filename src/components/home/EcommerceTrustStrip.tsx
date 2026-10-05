@@ -55,7 +55,7 @@ export function EcommerceTrustStrip() {
                   idx === 4 ? 'sm:col-span-2 md:col-span-1' : ''
                 }`}
               >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#FAF7F2] sm:bg-white border border-[#EAE4D8] shadow-xs flex items-center justify-center text-[#1E3A2F] shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#FAF7F2] sm:bg-white border border-[#EAE4D8] shadow-xs flex items-center justify-center text-[#2C221E] shrink-0">
                   <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-[#9A7B56]" />
                 </div>
                 <div>

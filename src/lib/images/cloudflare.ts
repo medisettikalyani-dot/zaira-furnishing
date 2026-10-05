@@ -17,7 +17,11 @@ export interface CloudflareImageOptions {
   fit?: 'cover' | 'contain' | 'crop' | 'scale-down';
 }
 
-const CLOUDFLARE_R2_BASE_URL = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_URL || '';
+const CLOUDFLARE_R2_BASE_URL =
+  process.env.NEXT_PUBLIC_CLOUDFLARE_R2_URL ||
+  process.env.CLOUDFLARE_R2_PUBLIC_URL ||
+  process.env.NEXT_PUBLIC_R2_URL ||
+  '';
 
 /**
  * Resolves an image key or URL to a Cloudflare R2 URL or dev fallback URL.

@@ -119,9 +119,16 @@ CREATE TABLE IF NOT EXISTS product_specifications (
 CREATE TABLE IF NOT EXISTS customization_configs (
     id TEXT PRIMARY KEY,
     product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-    config_key TEXT NOT NULL,
-    config_value TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    field_key TEXT NOT NULL,
+    field_label TEXT NOT NULL,
+    field_type TEXT NOT NULL DEFAULT 'select',
+    options TEXT,
+    default_value TEXT,
+    min_value REAL,
+    max_value REAL,
+    unit TEXT,
+    is_required INTEGER NOT NULL DEFAULT 0,
+    display_order INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS services (
@@ -143,14 +150,12 @@ CREATE TABLE IF NOT EXISTS services (
 CREATE TABLE IF NOT EXISTS cms_content (
     id TEXT PRIMARY KEY,
     section_key TEXT UNIQUE NOT NULL,
-    title TEXT NOT NULL,
+    title TEXT,
     subtitle TEXT,
-    body_text TEXT,
-    media_url TEXT,
-    cta_text TEXT,
-    cta_link TEXT,
-    display_order INTEGER NOT NULL DEFAULT 0,
-    active INTEGER NOT NULL DEFAULT 1,
+    content TEXT,
+    image_url TEXT,
+    secondary_image_url TEXT,
+    updated_by TEXT REFERENCES users(id),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -332,10 +337,29 @@ CREATE TABLE IF NOT EXISTS contact_inquiries (
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS admin_notifications (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL,
+    reference_id TEXT NOT NULL,
+    reference_number TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    customer_name TEXT NOT NULL,
+    customer_phone TEXT NOT NULL,
+    customer_email TEXT,
+    amount REAL,
+    action_url TEXT NOT NULL,
+    is_read INTEGER NOT NULL DEFAULT 0,
+    read_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_products_slug ON products(slug);
 CREATE INDEX IF NOT EXISTS idx_products_cat ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
 CREATE INDEX IF NOT EXISTS idx_reviews_product ON product_reviews(product_id);
+CREATE INDEX IF NOT EXISTS idx_admin_notif_read ON admin_notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_admin_notif_created ON admin_notifications(created_at);
 `;
 
 let initializationPromise: Promise<boolean> | null = null;
@@ -409,6 +433,64 @@ export async function ensureDatabaseSchema(db: DatabaseClient): Promise<boolean>
         "SELECT name FROM sqlite_master WHERE type='table' AND name='products'"
       );
       if (check?.name) {
+        // Self-heal customization_configs if created with legacy schema missing field_key
+        try {
+          const cfgInfo = await db.query<{ name: string }>("PRAGMA table_info(customization_configs)");
+          if (cfgInfo && cfgInfo.length > 0 && !cfgInfo.some((c) => c.name === 'field_key')) {
+            console.log('[DATABASE AUTO-MIGRATE] Repairing legacy customization_configs schema...');
+            await db.execute('DROP TABLE IF EXISTS customization_configs');
+            await db.execute(`
+              CREATE TABLE IF NOT EXISTS customization_configs (
+                  id TEXT PRIMARY KEY,
+                  product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+                  field_key TEXT NOT NULL,
+                  field_label TEXT NOT NULL,
+                  field_type TEXT NOT NULL DEFAULT 'select',
+                  options TEXT,
+                  default_value TEXT,
+                  min_value REAL,
+                  max_value REAL,
+                  unit TEXT,
+                  is_required INTEGER NOT NULL DEFAULT 0,
+                  display_order INTEGER NOT NULL DEFAULT 0
+              )
+            `);
+          }
+        } catch (repairErr) {
+          console.warn('[DATABASE AUTO-MIGRATE] Customization configs schema check:', repairErr);
+        }
+
+        // Self-heal admin_notifications if table does not exist
+        try {
+          const notifCheck = await db.queryOne<{ name: string }>(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='admin_notifications'"
+          );
+          if (!notifCheck?.name) {
+            await db.execute(`
+              CREATE TABLE IF NOT EXISTS admin_notifications (
+                  id TEXT PRIMARY KEY,
+                  type TEXT NOT NULL,
+                  reference_id TEXT NOT NULL,
+                  reference_number TEXT NOT NULL,
+                  title TEXT NOT NULL,
+                  message TEXT NOT NULL,
+                  customer_name TEXT NOT NULL,
+                  customer_phone TEXT NOT NULL,
+                  customer_email TEXT,
+                  amount REAL,
+                  action_url TEXT NOT NULL,
+                  is_read INTEGER NOT NULL DEFAULT 0,
+                  read_at TEXT,
+                  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+              );
+              CREATE INDEX IF NOT EXISTS idx_admin_notif_read ON admin_notifications(is_read);
+              CREATE INDEX IF NOT EXISTS idx_admin_notif_created ON admin_notifications(created_at);
+            `);
+          }
+        } catch (notifErr) {
+          console.warn('[DATABASE AUTO-MIGRATE] Admin notifications schema check:', notifErr);
+        }
+
         const prodCount = await db.queryOne<{ c: number }>("SELECT COUNT(*) as c FROM products");
         if ((prodCount?.c || 0) > 0) {
           return true;

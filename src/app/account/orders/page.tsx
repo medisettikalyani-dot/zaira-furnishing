@@ -46,8 +46,8 @@ export default function MyOrdersPage() {
     if (raw === 'COMPLETED') {
       return {
         label: 'Completed',
-        classes: 'bg-[#1E3A2F]/10 text-[#1E3A2F] border-[#1E3A2F]/20',
-        dot: 'bg-[#1E3A2F]',
+        classes: 'bg-[#2C221E]/10 text-[#2C221E] border-[#2C221E]/20',
+        dot: 'bg-[#2C221E]',
       };
     }
     if (raw === 'CANCELLED') {
@@ -60,8 +60,8 @@ export default function MyOrdersPage() {
     if (raw === 'CONFIRMED') {
       return {
         label: 'Confirmed',
-        classes: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-        dot: 'bg-emerald-600',
+        classes: 'bg-[#FBF8F3] text-[#7A5832] border-[#E8DFC8]',
+        dot: 'bg-[#9A7B56]',
       };
     }
     if (raw === 'PENDING') {
@@ -77,13 +77,13 @@ export default function MyOrdersPage() {
       case 'order_received':
         return { label: 'Order Received', classes: 'bg-[#FAF7F2] text-[#866945] border-[#E8DCCB]', dot: 'bg-[#866945]' };
       case 'details_confirmed':
-        return { label: 'Confirmed', classes: 'bg-emerald-50 text-emerald-800 border-emerald-200', dot: 'bg-emerald-600' };
+        return { label: 'Confirmed', classes: 'bg-[#FBF8F3] text-[#7A5832] border-[#E8DFC8]', dot: 'bg-[#9A7B56]' };
       case 'tailoring_preparation':
         return { label: 'Processing', classes: 'bg-amber-50 text-amber-800 border-amber-200', dot: 'bg-amber-600' };
       case 'ready_for_dispatch':
         return { label: 'Ready', classes: 'bg-blue-50 text-blue-800 border-blue-200', dot: 'bg-blue-600' };
       case 'delivered_installed':
-        return { label: 'Completed', classes: 'bg-[#1E3A2F]/10 text-[#1E3A2F] border-[#1E3A2F]/20', dot: 'bg-[#1E3A2F]' };
+        return { label: 'Completed', classes: 'bg-[#2C221E]/10 text-[#2C221E] border-[#2C221E]/20', dot: 'bg-[#2C221E]' };
       case 'cancelled':
         return { label: 'Cancelled', classes: 'bg-rose-50 text-rose-800 border-rose-200', dot: 'bg-rose-600' };
       default:
@@ -95,7 +95,7 @@ export default function MyOrdersPage() {
     return (
       <div className="bg-[#FAF7F2] min-h-screen pt-10 sm:pt-16 pb-24 text-[#1C1917]">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <div className="w-8 h-8 border-2 border-[#1E3A2F] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-8 h-8 border-2 border-[#2C221E] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-[13px] text-[#78716C]">Loading your orders...</p>
         </div>
       </div>
@@ -132,7 +132,7 @@ export default function MyOrdersPage() {
           {orders.length > 0 && (
             <Link
               href="/categories"
-              className="inline-flex items-center gap-1.5 text-[12px] uppercase tracking-wider font-semibold text-[#1E3A2F] hover:text-[#9A7B56] transition-colors"
+              className="inline-flex items-center gap-1.5 text-[12px] uppercase tracking-wider font-semibold text-[#2C221E] hover:text-[#9A7B56] transition-colors"
             >
               <span>Explore Categories</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -157,7 +157,7 @@ export default function MyOrdersPage() {
 
             <Link
               href="/categories"
-              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-xs"
+              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-xs"
             >
               <span>Explore Categories</span>
               <ArrowRight className="w-4 h-4" />
@@ -268,7 +268,7 @@ export default function MyOrdersPage() {
                       <div className="flex items-center gap-2 pt-2 sm:pt-0">
                         <Link
                           href={`/account/orders/${order.id}`}
-                          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-[#D8CFBF] hover:border-[#1E3A2F] text-[#1C1917] hover:text-[#1E3A2F] text-[11px] uppercase tracking-wider font-semibold transition-all shadow-2xs"
+                          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-[#D8CFBF] hover:border-[#2C221E] text-[#1C1917] hover:text-[#9A7B56] text-[11px] uppercase tracking-wider font-semibold transition-all shadow-2xs"
                         >
                           <FileText className="w-3.5 h-3.5" />
                           <span>View Order</span>
@@ -276,7 +276,7 @@ export default function MyOrdersPage() {
 
                         <Link
                           href={`/account/orders/${order.id}/track`}
-                          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11px] uppercase tracking-wider font-semibold transition-all shadow-xs"
+                          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#1C1714] hover:bg-[#2C221E] text-white text-[11px] uppercase tracking-wider font-semibold transition-all shadow-xs"
                         >
                           <Compass className="w-3.5 h-3.5" />
                           <span>Track Order</span>

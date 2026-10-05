@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight, Sparkles } from 'lucide-react';
 import { Product } from '@/lib/data/types';
 import { FeaturedProductCard } from './FeaturedProductCard';
 
@@ -78,6 +78,10 @@ export function FeaturedCollection({
         {/* ─── 1. Header with Title & Navigation Controls ─── */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12">
           <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF3E6] border border-[#D4AF37]/40 text-[#823423] text-[10.5px] font-bold uppercase tracking-[0.2em] mb-2.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span>Trending In Hyderabad</span>
+            </div>
             <h2 className="font-serif text-[28px] sm:text-[36px] lg:text-[40px] text-[#1C1917] font-medium tracking-tight mb-2 leading-[1.18]">
               {title}
             </h2>

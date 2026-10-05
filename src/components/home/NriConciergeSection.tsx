@@ -48,9 +48,9 @@ export function NriConciergeSection() {
   return (
     <section className="py-14 sm:py-20 lg:py-24 bg-[#FAF7F2] border-t border-[#EAE4D8] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-          
+
           {/* Left Column: Story & CTAs (7 cols) */}
           <div className="lg:col-span-7">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#9A7B56]/10 border border-[#9A7B56]/20 text-[#9A7B56] text-[11px] uppercase tracking-widest font-semibold mb-3">
@@ -76,7 +76,7 @@ export function NriConciergeSection() {
                     className="p-4 rounded-2xl bg-white border border-[#EAE4D8] shadow-xs flex flex-col justify-between"
                   >
                     <div>
-                      <div className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#EAE4D8] flex items-center justify-center text-[#1E3A2F] mb-3">
+                      <div className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#EAE4D8] flex items-center justify-center text-[#2C221E] mb-3">
                         <Icon className="w-4 h-4 text-[#9A7B56]" />
                       </div>
                       <h4 className="font-serif text-[15px] font-semibold text-[#1C1917] mb-1">
@@ -128,7 +128,7 @@ export function NriConciergeSection() {
               <div className="absolute inset-x-4 bottom-4 p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-[#EAE4D8] shadow-lg">
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="text-[#D4AF37] text-[12px]">★★★★★</span>
-                  <span className="text-[11px] font-semibold text-[#1E3A2F]">
+                  <span className="text-[11px] font-semibold text-[#2C221E]">
                     Remote Villa Handover
                   </span>
                 </div>

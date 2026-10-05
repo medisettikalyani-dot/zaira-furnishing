@@ -271,14 +271,13 @@ export function Header() {
 
       {/* ─── E-COMMERCE MAIN HEADER (Zaira Furnishings Tuscan Terracotta & Espresso Theme) ─── */}
       <header
-        className={`sticky top-0 z-40 w-full transition-all duration-300 bg-[#2C221E] text-white shadow-md border-b border-[#3D302A] ${
-          isScrolled ? 'shadow-xl' : 'shadow-md'
-        }`}
+        className={`sticky top-0 z-40 w-full transition-all duration-300 bg-[#2C221E] text-white shadow-md border-b border-[#3D302A] ${isScrolled ? 'shadow-xl' : 'shadow-md'
+          }`}
       >
         {/* ROW 1: Social Icons (Left) + Signature Gold Logo Plaque (Center) + Phone Hotline, Search & Cart (Right) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3">
           <div className="flex items-center justify-between gap-3 sm:gap-6">
-            
+
             {/* LEFT: Social Media Icons & Mobile Menu Toggle */}
             <div className="flex items-center gap-3">
               {/* Mobile Hamburger Button */}
@@ -337,34 +336,27 @@ export function Header() {
               </div>
             </div>
 
-            {/* CENTER: Iconic Gold Logo Plaque */}
-            <Link href="/" className="shrink-0 flex flex-col items-center group cursor-pointer text-center">
-              <div className="bg-[#D4AF37] hover:bg-[#E5C378] px-4 sm:px-6 py-1.5 sm:py-2 rounded-xs shadow-md border-b-2 border-[#A88B27] flex items-center gap-2 sm:gap-2.5 transition-all duration-200 group-hover:scale-[1.02]">
-                {/* Terracotta Brand Icon */}
-                <div className="w-5 h-5 sm:w-6 sm:h-6 text-[#9E4733] flex items-center justify-center shrink-0">
-                  <svg viewBox="0 0 28 28" fill="none" className="w-full h-full">
-                    <path d="M14 2 L24 9 L14 16 L4 9 Z" fill="#9E4733" />
-                    <path d="M4 9 L14 16 L14 26 L4 19 Z" fill="#2C221E" />
-                    <path d="M24 9 L14 16 L14 26 L24 19 Z" fill="#B85842" />
-                  </svg>
+            {/* CENTER: Signature Atelier Brand Identity */}
+            <Link href="/" className="shrink-0 flex flex-col items-center group cursor-pointer text-center py-0.5">
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                {/* Gold Monogram Jewel */}
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-[#D4AF37] via-[#C5A059] to-[#9A7B56] text-[#1C1714] flex items-center justify-center font-serif text-[15px] sm:text-[17px] font-black shadow-md border border-[#F3E2B3]/60 group-hover:scale-105 transition-transform">
+                  Z
                 </div>
                 <div className="flex flex-col text-left leading-none">
-                  <span className="font-serif font-black text-[18px] sm:text-[23px] tracking-wider text-[#2C221E] uppercase leading-none">
+                  <span className="font-serif font-black text-[18px] sm:text-[23px] tracking-[0.14em] text-white uppercase leading-none group-hover:text-[#D4AF37] transition-colors">
                     ZAIRA
                   </span>
-                  <span className="text-[7.5px] sm:text-[8.5px] font-black tracking-[0.24em] text-[#9E4733] uppercase leading-none mt-0.5">
-                    FURNISHINGS
+                  <span className="text-[7.5px] sm:text-[8.5px] font-bold tracking-[0.32em] text-[#D4AF37] uppercase leading-none mt-1">
+                    FURNISHING ATELIER
                   </span>
                 </div>
               </div>
-              <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-[0.26em] text-[#F3E2B3] font-extrabold mt-1 text-center leading-none">
-                CURATING LUXURY LIVING
-              </span>
             </Link>
 
             {/* RIGHT: Search Icon + Wishlist & Shopping Bag */}
             <div className="flex items-center gap-3.5 sm:gap-5 shrink-0">
-              
+
               {/* Search Toggle Icon */}
               <button
                 type="button"
@@ -520,7 +512,7 @@ export function Header() {
         <div ref={navBarRef} className="hidden lg:block bg-[#1E1714] border-t border-[#3D302A]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <nav className="flex items-center justify-between text-[12px] xl:text-[12.5px] font-medium tracking-normal text-white py-1.5 overflow-x-auto no-scrollbar">
-              
+
               {/* 1. Explore All Collections ⌵ Dropdown */}
               <div
                 className="relative group"
@@ -652,133 +644,142 @@ export function Header() {
         </div>
       </header>
 
-      {/* ─── Mobile Slide-Over Menu ─── */}
+      {/* ─── Mobile Slide-Over Menu (Ultra-Luxury Atelier Drawer) ─── */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden animate-in fade-in duration-200">
           <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-[#FDFBF7] shadow-2xl z-50 flex flex-col justify-between p-6 border-r border-[#EAE4D8] overflow-y-auto">
+          <div
+            style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))' }}
+            className="fixed inset-y-0 left-0 w-[88vw] max-w-sm bg-[#FAF8F5] shadow-2xl z-50 flex flex-col justify-between p-5 sm:p-6 border-r border-[#EAE4D8] overflow-y-auto animate-in slide-in-from-left duration-300"
+          >
             <div>
-              {/* Header */}
-              <div className="flex items-center justify-between pb-5 border-b border-[#EAE4D8]">
-                <div className="flex flex-col">
-                  <span className="font-serif text-[20px] tracking-wider text-[#1E3A2F] font-semibold">
-                    ZAIRA FURNISHING
-                  </span>
-                  <span className="text-[8.5px] uppercase tracking-[0.25em] text-[#78716C] font-medium">
-                    Atelier & Showroom
-                  </span>
+              {/* Header with Monogram Crest */}
+              <div className="flex items-center justify-between pb-4 border-b border-[#EAE4D8]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#2C221E] text-[#D4AF37] flex items-center justify-center font-serif text-lg font-black border border-[#D4AF37]/40 shadow-xs">
+                    Z
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-serif text-[17px] tracking-wider text-[#2C221E] font-bold leading-tight uppercase">
+                      ZAIRA FURNISHING
+                    </span>
+                    <span className="text-[8.5px] uppercase tracking-[0.24em] text-[#9A7B56] font-bold mt-0.5">
+                      Flagship Atelier · Hyderabad
+                    </span>
+                  </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-1.5 text-[#1C1917] hover:text-[#1E3A2F]"
+                  className="w-9 h-9 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#1C1917] transition-colors cursor-pointer"
+                  aria-label="Close menu"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
+              {/* Quick Contact Bar for Mobile Users */}
+              <div className="grid grid-cols-2 gap-2 my-4">
+                <a
+                  href={`tel:${ZAIRA_WHATSAPP_DISPLAY.replace(/\s+/g, '')}`}
+                  className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white border border-[#EAE4D8] text-[#1C1714] text-[11px] font-bold uppercase tracking-wider shadow-2xs hover:border-[#9A7B56] transition-colors"
+                >
+                  <Phone className="w-3.5 h-3.5 text-[#9A7B56]" />
+                  <span>Call Atelier</span>
+                </a>
+                <a
+                  href={ZAIRA_WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#25D366] text-white text-[11px] font-bold uppercase tracking-wider shadow-2xs hover:bg-[#20BA5C] transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.699c.97.53 1.77.813 2.796.814 3.18 0 5.767-2.587 5.768-5.766.001-3.181-2.586-5.767-5.768-5.767zm3.385 8.188c-.14.394-.713.729-1.002.766-.279.035-.635.055-1.834-.442-1.444-.598-2.378-2.062-2.45-2.158-.071-.096-.583-.775-.583-1.479 0-.704.368-1.05.5-1.193.132-.143.288-.179.384-.179.096 0 .192.001.276.005.09.004.21.034.32.298.114.275.39 1.05.424 1.127.034.077.057.167.006.269-.051.102-.077.165-.153.254-.076.089-.16.198-.229.266-.077.076-.157.159-.068.312.09.153.399.658.857 1.066.589.524 1.085.687 1.239.764.153.077.243.064.333-.039.09-.102.385-.448.487-.602.102-.154.204-.128.344-.077.14.051.888.419 1.041.496.153.076.255.115.293.179.038.064.038.371-.102.765z" />
+                  </svg>
+                  <span>WhatsApp</span>
+                </a>
+              </div>
+
               {/* Navigation Links */}
-              <div className="py-6 flex flex-col space-y-3">
+              <div className="py-2 flex flex-col space-y-1">
                 <Link
                   href="/"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
+                  className="text-[13px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#823423] py-2.5 border-b border-[#F2ECE1] flex items-center justify-between"
                 >
                   <span>Home</span>
-                  <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
+                  <ArrowRight className="w-3.5 h-3.5 text-[#A8A29E]" />
                 </Link>
+
                 <Link
                   href="/categories"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#9A7B56] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
+                  className="text-[13px] uppercase tracking-[0.14em] font-bold text-[#823423] py-2.5 border-b border-[#F2ECE1] flex items-center justify-between"
                 >
-                  <span>Shop by Category</span>
-                  <ArrowRight className="w-4 h-4 text-[#9A7B56]" />
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                    <span>All Collections (9 Categories)</span>
+                  </span>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#823423]" />
                 </Link>
-                {categories.map((cat) => (
+
+                {categories.slice(0, 7).map((cat) => (
                   <Link
                     key={cat.id}
                     href={getCategoryHref(cat.slug)}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
+                    className="text-[13px] uppercase tracking-[0.14em] font-medium text-[#1C1917] hover:text-[#823423] py-2.5 border-b border-[#F2ECE1] flex items-center justify-between pl-2"
                   >
                     <span>{cat.name}</span>
-                    <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
+                    <ArrowRight className="w-3 h-3 text-[#C4B9A1]" />
                   </Link>
                 ))}
 
                 <Link
-                  href="/categories"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
-                >
-                  <span>All Categories</span>
-                  <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
-                </Link>
-
-                <Link
                   href="/services"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
+                  className="text-[13px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#823423] py-2.5 border-b border-[#F2ECE1] flex items-center justify-between"
                 >
-                  <span>Services</span>
-                  <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
+                  <span>Atelier Services &amp; Fitting</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#A8A29E]" />
                 </Link>
 
                 <Link
                   href="/about"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
+                  className="text-[13px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#823423] py-2.5 border-b border-[#F2ECE1] flex items-center justify-between"
                 >
-                  <span>About</span>
-                  <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
-                </Link>
-
-                <Link
-                  href="/contact"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
-                >
-                  <span>Contact</span>
-                  <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
-                </Link>
-
-                <Link
-                  href="/account"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
-                >
-                  <span className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-[#9A7B56]" />
-                    <span>My Account</span>
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
+                  <span>About Zaira</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#A8A29E]" />
                 </Link>
 
                 <Link
                   href="/account/orders"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#866945] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
+                  className="text-[13px] uppercase tracking-[0.14em] font-semibold text-[#823423] py-2.5 border-b border-[#F2ECE1] flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2">
-                    <PackageCheck className="w-4 h-4 text-[#9A7B56]" />
-                    <span>My Orders & Tracking</span>
+                    <PackageCheck className="w-4 h-4 text-[#823423]" />
+                    <span>Track Order Status</span>
                   </span>
-                  <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
+                  <ArrowRight className="w-3.5 h-3.5 text-[#823423]" />
                 </Link>
               </div>
 
               {/* Consultation Callout */}
-              <div className="bg-[#FAF7F2] p-4 rounded-xl border border-[#EAE4D8] mb-6">
-                <p className="text-[12px] font-semibold text-[#1E3A2F] mb-1">
-                  Free In-Home Measurement
-                </p>
+              <div className="bg-[#FAF7F2] p-4 rounded-2xl border border-[#EAE4D8] mt-4 mb-3 shadow-2xs">
+                <div className="flex items-center gap-1.5 mb-1 text-[#823423]">
+                  <Ruler className="w-4 h-4 text-[#D4AF37]" />
+                  <p className="text-[12px] font-bold uppercase tracking-wider">
+                    Free In-Home Measurement
+                  </p>
+                </div>
                 <p className="text-[11px] text-[#78716C] leading-relaxed mb-3">
-                  Laser precision window measuring & 500+ fabric swatches at your doorstep across Hyderabad.
+                  Laser precision window measuring &amp; 500+ fabric swatches at your doorstep across Hyderabad.
                 </p>
                 <button
                   type="button"
@@ -786,7 +787,7 @@ export function Header() {
                     setMobileMenuOpen(false);
                     openBookingModal('Free In-Home Measurement');
                   }}
-                  className="block w-full py-2.5 text-center text-[11px] uppercase tracking-wider font-semibold bg-[#1E3A2F] text-white rounded-xl shadow-xs cursor-pointer"
+                  className="block w-full py-2.5 text-center text-[11px] uppercase tracking-wider font-bold bg-[#1C1714] hover:bg-[#2C221E] text-white rounded-xl shadow-xs cursor-pointer transition-colors"
                 >
                   Book Free Visit
                 </button>
@@ -794,18 +795,21 @@ export function Header() {
             </div>
 
             {/* Showroom Details */}
-            <div className="pt-4 border-t border-[#EAE4D8] text-[11px] text-[#78716C] space-y-1">
-              <p className="font-semibold text-[#1C1917]">Puppalguda Showroom</p>
-              <p>Alkapur Twp, Hyderabad 500089</p>
-              <a
-                href={ZAIRA_WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Chat with Zaira Furnishing on WhatsApp"
-                className="inline-block font-medium text-[#1E3A2F] hover:text-[#9A7B56] transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#9A7B56] rounded-xs"
-              >
-                {ZAIRA_WHATSAPP_DISPLAY}
-              </a>
+            <div className="pt-3 border-t border-[#EAE4D8] text-[11px] text-[#78716C] space-y-0.5">
+              <p className="font-semibold text-[#1C1917]">Puppalguda &amp; Financial District</p>
+              <p className="text-[#8C827A]">Alkapur Twp, Hyderabad 500089</p>
+              <div className="pt-1">
+                <a
+                  href={ZAIRA_WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Chat with Zaira Furnishing on WhatsApp"
+                  className="inline-flex items-center gap-1 font-semibold text-[#823423] hover:underline"
+                >
+                  <span>Concierge Hotline:</span>
+                  <span>{ZAIRA_WHATSAPP_DISPLAY}</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -819,12 +823,15 @@ export function Header() {
             onClick={() => setIsCartOpen(false)}
           />
 
-          <div className="relative w-full max-w-md bg-[#FDFBF7] shadow-2xl z-50 flex flex-col justify-between p-4 sm:p-6 border-l border-[#EAE4D8] overflow-y-auto">
+          <div
+            style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))' }}
+            className="relative w-full max-w-md bg-[#FDFBF7] shadow-2xl z-50 flex flex-col justify-between p-4 sm:p-6 border-l border-[#EAE4D8] overflow-y-auto animate-in slide-in-from-right duration-300"
+          >
             <div>
               {/* Header */}
               <div className="flex items-center justify-between pb-4 border-b border-[#EAE4D8]">
                 <div className="flex items-center gap-2">
-                  <ShoppingBag className="w-5 h-5 text-[#1E3A2F]" />
+                  <ShoppingBag className="w-5 h-5 text-[#2C221E]" />
                   <span className="font-serif text-[17px] sm:text-[18px] text-[#1C1917] font-medium">
                     Your Shopping Bag ({cartCount})
                   </span>

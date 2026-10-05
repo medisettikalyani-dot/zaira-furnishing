@@ -294,7 +294,7 @@ export default function AdminCategoriesPage() {
             });
             setModalOpen(true);
           }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12.5px] font-semibold transition-all shadow-2xs cursor-pointer self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1C1714] hover:bg-[#2C221E] text-white text-[12.5px] font-semibold transition-all shadow-2xs cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           <span>New Category</span>
@@ -308,7 +308,7 @@ export default function AdminCategoriesPage() {
           onClick={() => setFilterStatus('active')}
           className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer ${
             filterStatus === 'active'
-              ? 'bg-[#1E3A2F] text-white'
+              ? 'bg-[#2C221E] text-white'
               : 'text-[#57534E] hover:text-[#1C1917] hover:bg-stone-100'
           }`}
         >
@@ -319,7 +319,7 @@ export default function AdminCategoriesPage() {
           onClick={() => setFilterStatus('all')}
           className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer ${
             filterStatus === 'all'
-              ? 'bg-[#1E3A2F] text-white'
+              ? 'bg-[#2C221E] text-white'
               : 'text-[#57534E] hover:text-[#1C1917] hover:bg-stone-100'
           }`}
         >
@@ -331,7 +331,7 @@ export default function AdminCategoriesPage() {
             onClick={() => setFilterStatus('disabled')}
             className={`px-3.5 py-1.5 rounded-lg text-[12px] font-semibold transition-colors cursor-pointer ${
               filterStatus === 'disabled'
-                ? 'bg-[#1E3A2F] text-white'
+                ? 'bg-[#2C221E] text-white'
                 : 'text-[#57534E] hover:text-[#1C1917] hover:bg-stone-100'
             }`}
           >
@@ -344,7 +344,7 @@ export default function AdminCategoriesPage() {
       <div className="bg-white rounded-2xl border border-[#EDE8DE] shadow-2xs overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-[#78716C]">
-            <div className="w-8 h-8 border-2 border-[#1E3A2F] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <div className="w-8 h-8 border-2 border-[#2C221E] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-[13px]">Loading categories from Cloudflare D1...</p>
           </div>
         ) : displayedCategories.length === 0 ? (
@@ -397,7 +397,7 @@ export default function AdminCategoriesPage() {
                         onClick={() => handleToggleActive(cat)}
                         className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer ${
                           cat.active === 1
-                            ? 'bg-[#15803D]/10 text-[#15803D] border-[#15803D]/20'
+                            ? 'bg-[#15803D]/10 text-[#9A7B56] border-[#15803D]/20'
                             : 'bg-stone-100 text-stone-500 border-stone-200'
                         }`}
                       >
@@ -407,7 +407,7 @@ export default function AdminCategoriesPage() {
                       {cat.subcategory_count > 0 && (
                         <button
                           onClick={() => toggleSubcategories(cat.id)}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#EDE8DE] hover:border-[#1E3A2F] text-[12px] font-medium text-[#1C1917] transition-all cursor-pointer"
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#EDE8DE] hover:border-[#2C221E] text-[12px] font-medium text-[#1C1917] transition-all cursor-pointer"
                         >
                           <Layers className="w-3.5 h-3.5 text-[#9A7B56]" />
                           <span>Subcategories ({cat.subcategory_count})</span>
@@ -420,7 +420,7 @@ export default function AdminCategoriesPage() {
                           setEditingCategory(cat);
                           setModalOpen(true);
                         }}
-                        className="p-1.5 rounded-lg text-[#57534E] hover:text-[#1E3A2F] hover:bg-black/5 transition-all cursor-pointer"
+                        className="p-1.5 rounded-lg text-[#57534E] hover:text-[#9A7B56] hover:bg-black/5 transition-all cursor-pointer"
                         title="Edit category"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -456,7 +456,7 @@ export default function AdminCategoriesPage() {
                             });
                             setSubModalOpen(true);
                           }}
-                          className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#1E3A2F] hover:text-[#9A7B56] cursor-pointer"
+                          className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#2C221E] hover:text-[#9A7B56] cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Add Subcategory Type</span>
@@ -487,7 +487,7 @@ export default function AdminCategoriesPage() {
                                   setEditingSubcategory(sub);
                                   setSubModalOpen(true);
                                 }}
-                                className="p-1 text-[#8C827A] hover:text-[#1E3A2F] cursor-pointer"
+                                className="p-1 text-[#8C827A] hover:text-[#9A7B56] cursor-pointer"
                                 title="Edit subcategory"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
@@ -545,7 +545,7 @@ export default function AdminCategoriesPage() {
                     });
                   }}
                   required
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
 
@@ -558,7 +558,7 @@ export default function AdminCategoriesPage() {
                   value={editingCategory.slug || ''}
                   onChange={(e) => setEditingCategory({ ...editingCategory, slug: e.target.value })}
                   required
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] font-mono focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] font-mono focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
 
@@ -570,7 +570,7 @@ export default function AdminCategoriesPage() {
                   type="text"
                   value={editingCategory.tagline || ''}
                   onChange={(e) => setEditingCategory({ ...editingCategory, tagline: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
 
@@ -582,7 +582,7 @@ export default function AdminCategoriesPage() {
                   rows={2}
                   value={editingCategory.description || ''}
                   onChange={(e) => setEditingCategory({ ...editingCategory, description: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
 
@@ -597,7 +597,7 @@ export default function AdminCategoriesPage() {
                     value={editingCategory.image || ''}
                     onChange={(e) => setEditingCategory({ ...editingCategory, image: e.target.value })}
                     required
-                    className="flex-1 px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] font-mono focus:outline-hidden focus:border-[#1E3A2F]"
+                    className="flex-1 px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] font-mono focus:outline-hidden focus:border-[#9A7B56]"
                   />
                   <label className="px-3.5 py-2 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] hover:bg-[#F2ECE1] text-[12px] font-semibold text-[#1C1917] cursor-pointer flex items-center gap-1.5 shrink-0">
                     <Upload className="w-3.5 h-3.5" />
@@ -619,7 +619,7 @@ export default function AdminCategoriesPage() {
                     type="checkbox"
                     checked={editingCategory.featured === 1}
                     onChange={(e) => setEditingCategory({ ...editingCategory, featured: e.target.checked ? 1 : 0 })}
-                    className="rounded text-[#1E3A2F]"
+                    className="rounded text-[#2C221E]"
                   />
                   <span>Featured on Home</span>
                 </label>
@@ -629,7 +629,7 @@ export default function AdminCategoriesPage() {
                     type="checkbox"
                     checked={editingCategory.active === 1}
                     onChange={(e) => setEditingCategory({ ...editingCategory, active: e.target.checked ? 1 : 0 })}
-                    className="rounded text-[#1E3A2F]"
+                    className="rounded text-[#2C221E]"
                   />
                   <span>Active Status</span>
                 </label>
@@ -659,7 +659,7 @@ export default function AdminCategoriesPage() {
                   <button
                     type="submit"
                     disabled={submitting || uploadingImage}
-                    className="px-5 py-2 rounded-xl bg-[#1E3A2F] text-white text-[12.5px] font-semibold hover:bg-[#152B23] transition-all disabled:opacity-50"
+                    className="px-5 py-2 rounded-xl bg-[#2C221E] text-white text-[12.5px] font-semibold hover:bg-[#2C221E] transition-all disabled:opacity-50"
                   >
                     {submitting ? 'Saving...' : 'Save to D1'}
                   </button>
@@ -703,7 +703,7 @@ export default function AdminCategoriesPage() {
                     });
                   }}
                   required
-                  className="w-full px-3 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
 
@@ -716,7 +716,7 @@ export default function AdminCategoriesPage() {
                   value={editingSubcategory.slug || ''}
                   onChange={(e) => setEditingSubcategory({ ...editingSubcategory, slug: e.target.value })}
                   required
-                  className="w-full px-3 py-2 rounded-xl border border-[#D5CDBF] text-[13px] font-mono focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3 py-2 rounded-xl border border-[#D5CDBF] text-[13px] font-mono focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
 
@@ -728,7 +728,7 @@ export default function AdminCategoriesPage() {
                   rows={2}
                   value={editingSubcategory.description || ''}
                   onChange={(e) => setEditingSubcategory({ ...editingSubcategory, description: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full px-3 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
 
@@ -743,7 +743,7 @@ export default function AdminCategoriesPage() {
                     placeholder="/images/..."
                     value={editingSubcategory.image || ''}
                     onChange={(e) => setEditingSubcategory({ ...editingSubcategory, image: e.target.value })}
-                    className="flex-1 px-3 py-2 rounded-xl border border-[#D5CDBF] text-[12px] font-mono focus:outline-hidden focus:border-[#1E3A2F]"
+                    className="flex-1 px-3 py-2 rounded-xl border border-[#D5CDBF] text-[12px] font-mono focus:outline-hidden focus:border-[#9A7B56]"
                   />
                   <label className="px-3 py-2 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] hover:bg-[#F2ECE1] text-[11.5px] font-semibold text-[#1C1917] cursor-pointer flex items-center gap-1 shrink-0">
                     <Upload className="w-3.5 h-3.5" />
@@ -783,7 +783,7 @@ export default function AdminCategoriesPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-4 py-1.5 rounded-xl bg-[#1E3A2F] text-white text-[12px] font-semibold hover:bg-[#152B23]"
+                    className="px-4 py-1.5 rounded-xl bg-[#2C221E] text-white text-[12px] font-semibold hover:bg-[#2C221E]"
                   >
                     Save Subcategory
                   </button>

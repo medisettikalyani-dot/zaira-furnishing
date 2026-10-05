@@ -133,7 +133,7 @@ export default function OrderTrackingPage() {
     return (
       <div className="bg-[#FAF7F2] min-h-screen pt-12 pb-24 text-[#1C1917]">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <div className="w-8 h-8 border-2 border-[#1E3A2F] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-8 h-8 border-2 border-[#2C221E] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-[13px] text-[#78716C]">Loading tracking progress...</p>
         </div>
       </div>
@@ -157,14 +157,14 @@ export default function OrderTrackingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/account/orders"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-xs"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-xs"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to My Orders</span>
             </Link>
             <Link
               href="/categories"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-[#D8CFBF] text-[#1C1917] hover:border-[#1E3A2F] text-[11.5px] uppercase tracking-wider font-semibold transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-[#D8CFBF] text-[#1C1917] hover:border-[#2C221E] text-[11.5px] uppercase tracking-wider font-semibold transition-all"
             >
               <span>Explore Categories</span>
             </Link>
@@ -305,13 +305,13 @@ export default function OrderTrackingPage() {
                 <button
                   type="button"
                   onClick={copyRef}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#FAF7F2] border border-[#D8CFBF] hover:bg-white text-[10.5px] font-semibold text-[#1E3A2F] transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#FAF7F2] border border-[#D8CFBF] hover:bg-white text-[10.5px] font-semibold text-[#2C221E] transition-colors cursor-pointer"
                   title="Copy Reference"
                 >
                   {copiedRef ? (
                     <>
-                      <Check className="w-3 h-3 text-emerald-600" />
-                      <span className="text-emerald-700">Copied</span>
+                      <Check className="w-3 h-3 text-[#9A7B56]" />
+                      <span className="text-[#9A7B56]">Copied</span>
                     </>
                   ) : (
                     <>
@@ -328,7 +328,7 @@ export default function OrderTrackingPage() {
                 type="button"
                 onClick={() => fetchOrderTracking(true)}
                 disabled={isRefreshing}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#FAF7F2] border border-[#D8CFBF] hover:border-[#1E3A2F] text-[#1C1917] hover:text-[#1E3A2F] text-[11px] uppercase tracking-wider font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#FAF7F2] border border-[#D8CFBF] hover:border-[#2C221E] text-[#1C1917] hover:text-[#9A7B56] text-[11px] uppercase tracking-wider font-semibold transition-colors cursor-pointer disabled:opacity-50"
                 title="Refresh order status"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -337,7 +337,7 @@ export default function OrderTrackingPage() {
 
               <Link
                 href={`/account/orders/${order.id}`}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#FAF7F2] border border-[#D8CFBF] hover:border-[#1E3A2F] text-[#1C1917] hover:text-[#1E3A2F] text-[11px] uppercase tracking-wider font-semibold transition-colors"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#FAF7F2] border border-[#D8CFBF] hover:border-[#2C221E] text-[#1C1917] hover:text-[#9A7B56] text-[11px] uppercase tracking-wider font-semibold transition-colors"
               >
                 <FileText className="w-3.5 h-3.5" />
                 <span>View Full Details</span>
@@ -369,7 +369,7 @@ export default function OrderTrackingPage() {
             </div>
             <div>
               <span className="text-[#8C827A] block text-[10.5px] uppercase font-semibold">Service Type</span>
-              <span className="text-[#1E3A2F] font-medium">
+              <span className="text-[#2C221E] font-medium">
                 {order.deliveryOption === 'service_visit' ? 'In-Home Sizing & Installation' : 'White-Glove Delivery'}
               </span>
             </div>
@@ -437,7 +437,7 @@ export default function OrderTrackingPage() {
                   Order Progress Timeline
                 </h2>
                 <p className="text-[12px] text-[#78716C] mt-0.5">
-                  Current State: <strong className="text-[#1E3A2F]">{timelineStages[currentStageIndex]?.name}</strong>
+                  Current State: <strong className="text-[#2C221E]">{timelineStages[currentStageIndex]?.name}</strong>
                 </p>
               </div>
               <span className="text-[11px] text-[#8C827A] bg-[#FAF7F2] px-2.5 py-1 rounded-md border border-[#EDE8DE]">
@@ -458,7 +458,7 @@ export default function OrderTrackingPage() {
                     <div
                       className={`absolute -left-6 sm:-left-8 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-colors z-10 ${
                         isCompleted
-                          ? 'bg-[#1E3A2F] text-white shadow-xs ring-4 ring-white'
+                          ? 'bg-[#2C221E] text-white shadow-xs ring-4 ring-white'
                           : 'bg-white border-2 border-[#D8CFBF] text-[#A8A29E]'
                       }`}
                     >
@@ -480,12 +480,12 @@ export default function OrderTrackingPage() {
                           {stage.name}
                         </h3>
                         {isCurrent && (
-                          <span className="px-2 py-0.5 rounded text-[9.5px] uppercase font-bold tracking-wider bg-[#1E3A2F] text-white">
+                          <span className="px-2 py-0.5 rounded text-[9.5px] uppercase font-bold tracking-wider bg-[#2C221E] text-white">
                             Current Stage
                           </span>
                         )}
                         {isCompleted && !isCurrent && (
-                          <span className="text-[11px] text-emerald-700 font-medium">
+                          <span className="text-[11px] text-[#9A7B56] font-medium">
                             ✓ Done
                           </span>
                         )}
@@ -532,7 +532,7 @@ export default function OrderTrackingPage() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
           <Link
             href={`/account/orders/${order.id}`}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white border border-[#D8CFBF] text-[#1C1917] hover:border-[#1E3A2F] text-[11.5px] uppercase tracking-wider font-semibold transition-all"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white border border-[#D8CFBF] text-[#1C1917] hover:border-[#2C221E] text-[11.5px] uppercase tracking-wider font-semibold transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Order Details</span>
@@ -547,7 +547,7 @@ export default function OrderTrackingPage() {
 
           <Link
             href="/categories"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-xs"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#1C1714] hover:bg-[#2C221E] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-xs"
           >
             <span>Continue Shopping</span>
             <ArrowRight className="w-4 h-4" />

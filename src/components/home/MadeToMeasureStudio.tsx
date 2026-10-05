@@ -141,16 +141,16 @@ export function MadeToMeasureStudio() {
   const fabricWidthMeters = windowWidthFt * 0.3048 * fullness;
   const estimatedFabricCost = Math.round(
     fabricWidthMeters *
-      activeStyle.basePricePerMeter *
-      selectedLining.multiplier *
-      (windowDropFt / 8.5)
+    activeStyle.basePricePerMeter *
+    selectedLining.multiplier *
+    (windowDropFt / 8.5)
   );
   const estimatedTotal = estimatedFabricCost + selectedMotor.addCost;
 
   return (
     <section className="py-14 sm:py-20 lg:py-24 bg-[#FAF7F2] border-t border-[#EAE4D8] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Section Heading */}
         <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#9A7B56]/10 border border-[#9A7B56]/20 text-[#9A7B56] text-[11px] uppercase tracking-widest font-semibold mb-3">
@@ -167,10 +167,10 @@ export function MadeToMeasureStudio() {
 
         {/* ─── Studio Grid ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-          
+
           {/* Left Column: Stitching Style Selector (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
-            
+
             {/* Style Cards Grid */}
             <div>
               <div className="flex items-center justify-between mb-3.5">
@@ -182,7 +182,7 @@ export function MadeToMeasureStudio() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 {STITCHING_STYLES.map((style) => {
                   const isSelected = activeStyle.id === style.id;
                   return (
@@ -193,36 +193,35 @@ export function MadeToMeasureStudio() {
                         setActiveStyle(style);
                         setFullness(style.fullnessDefault);
                       }}
-                      className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
-                        isSelected
-                          ? 'bg-white border-[#1E3A2F] ring-2 ring-[#1E3A2F]/20 shadow-md scale-[1.01]'
+                      className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${isSelected
+                          ? 'bg-white border-[#2C221E] ring-2 ring-[#2C221E]/20 shadow-md scale-[1.01]'
                           : 'bg-white/80 border-[#EAE4D8] hover:border-[#C4B9A1] hover:bg-white'
-                      }`}
+                        }`}
                     >
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <h4 className="font-serif text-[15px] font-semibold text-[#1C1917]">
+                          <h4 className="font-serif text-[13px] sm:text-[15px] font-semibold text-[#1C1917] leading-tight truncate pr-1">
                             {style.name}
                           </h4>
                           {isSelected && (
-                            <span className="w-5 h-5 rounded-full bg-[#1E3A2F] text-white flex items-center justify-center shrink-0">
-                              <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                            <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#2C221E] text-white flex items-center justify-center shrink-0">
+                              <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[2.5]" />
                             </span>
                           )}
                         </div>
-                        <span className="text-[11px] uppercase tracking-wider font-semibold text-[#9A7B56] block mb-1.5">
+                        <span className="text-[9.5px] sm:text-[11px] uppercase tracking-wider font-semibold text-[#9A7B56] block mb-1 truncate">
                           {style.subtitle}
                         </span>
-                        <p className="text-[12px] text-[#6E6862] leading-relaxed line-clamp-2">
+                        <p className="hidden sm:block text-[12px] text-[#6E6862] leading-relaxed line-clamp-2">
                           {style.description}
                         </p>
                       </div>
 
-                      <div className="mt-3 pt-2.5 border-t border-[#F2ECE1] flex items-center justify-between text-[11px]">
-                        <span className="text-[#8C827A] truncate max-w-[170px]">
+                      <div className="mt-2 sm:mt-3 pt-2 sm:pt-2.5 border-t border-[#F2ECE1] flex flex-col sm:flex-row sm:items-center justify-between text-[10.5px] sm:text-[11px] gap-0.5 sm:gap-0">
+                        <span className="text-[#8C827A] truncate max-w-[150px] hidden sm:inline">
                           {style.bestFor}
                         </span>
-                        <span className="font-semibold text-[#1E3A2F]">
+                        <span className="font-semibold text-[#2C221E]">
                           From ₹{style.basePricePerMeter}/m
                         </span>
                       </div>
@@ -243,7 +242,7 @@ export function MadeToMeasureStudio() {
                 <div>
                   <div className="flex justify-between text-[12.5px] mb-1.5">
                     <span className="text-[#57534E] font-medium">Window Width:</span>
-                    <span className="font-bold text-[#1E3A2F]">{windowWidthFt} Feet ({(windowWidthFt * 0.3048).toFixed(1)}m)</span>
+                    <span className="font-bold text-[#2C221E]">{windowWidthFt} Feet ({(windowWidthFt * 0.3048).toFixed(1)}m)</span>
                   </div>
                   <input
                     type="range"
@@ -252,7 +251,7 @@ export function MadeToMeasureStudio() {
                     step="1"
                     value={windowWidthFt}
                     onChange={(e) => setWindowWidthFt(Number(e.target.value))}
-                    className="w-full accent-[#1E3A2F] cursor-pointer"
+                    className="w-full accent-[#2C221E] cursor-pointer"
                   />
                   <div className="flex justify-between text-[10px] text-[#A8A29E] mt-1">
                     <span>4 ft (Standard)</span>
@@ -265,7 +264,7 @@ export function MadeToMeasureStudio() {
                 <div>
                   <div className="flex justify-between text-[12.5px] mb-1.5">
                     <span className="text-[#57534E] font-medium">Drape Drop Height:</span>
-                    <span className="font-bold text-[#1E3A2F]">{windowDropFt} Feet (Floor Drop)</span>
+                    <span className="font-bold text-[#2C221E]">{windowDropFt} Feet (Floor Drop)</span>
                   </div>
                   <input
                     type="range"
@@ -274,7 +273,7 @@ export function MadeToMeasureStudio() {
                     step="0.5"
                     value={windowDropFt}
                     onChange={(e) => setWindowDropFt(Number(e.target.value))}
-                    className="w-full accent-[#1E3A2F] cursor-pointer"
+                    className="w-full accent-[#2C221E] cursor-pointer"
                   />
                   <div className="flex justify-between text-[10px] text-[#A8A29E] mt-1">
                     <span>7 ft (Sill)</span>
@@ -299,11 +298,10 @@ export function MadeToMeasureStudio() {
                       key={f.val}
                       type="button"
                       onClick={() => setFullness(f.val)}
-                      className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
-                        fullness === f.val
-                          ? 'bg-[#1E3A2F] text-white border-[#1E3A2F]'
+                      className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${fullness === f.val
+                          ? 'bg-[#2C221E] text-white border-[#2C221E]'
                           : 'bg-[#FAF7F2] text-[#57534E] border-[#EAE4D8] hover:border-[#C4B9A1]'
-                      }`}
+                        }`}
                     >
                       <span className="font-semibold text-[12px] block">{f.label}</span>
                       <span className={`text-[9.5px] block ${fullness === f.val ? 'text-[#C4B9A1]' : 'text-[#8C827A]'}`}>
@@ -328,15 +326,14 @@ export function MadeToMeasureStudio() {
                       key={lining.id}
                       type="button"
                       onClick={() => setSelectedLining(lining)}
-                      className={`w-full p-2.5 rounded-xl border text-left text-[12px] transition-all cursor-pointer flex items-center justify-between ${
-                        selectedLining.id === lining.id
-                          ? 'bg-[#FAF7F2] border-[#1E3A2F] font-semibold text-[#1C1917]'
+                      className={`w-full p-2.5 rounded-xl border text-left text-[12px] transition-all cursor-pointer flex items-center justify-between ${selectedLining.id === lining.id
+                          ? 'bg-[#FAF7F2] border-[#2C221E] font-semibold text-[#1C1917]'
                           : 'bg-white border-[#EAE4D8] text-[#57534E] hover:border-[#C4B9A1]'
-                      }`}
+                        }`}
                     >
                       <span className="truncate pr-2">{lining.name}</span>
                       {selectedLining.id === lining.id && (
-                        <Check className="w-3.5 h-3.5 text-[#1E3A2F] shrink-0" />
+                        <Check className="w-3.5 h-3.5 text-[#2C221E] shrink-0" />
                       )}
                     </button>
                   ))}
@@ -354,11 +351,10 @@ export function MadeToMeasureStudio() {
                       key={motor.id}
                       type="button"
                       onClick={() => setSelectedMotor(motor)}
-                      className={`w-full p-2.5 rounded-xl border text-left text-[12px] transition-all cursor-pointer flex items-center justify-between ${
-                        selectedMotor.id === motor.id
-                          ? 'bg-[#FAF7F2] border-[#1E3A2F] font-semibold text-[#1C1917]'
+                      className={`w-full p-2.5 rounded-xl border text-left text-[12px] transition-all cursor-pointer flex items-center justify-between ${selectedMotor.id === motor.id
+                          ? 'bg-[#FAF7F2] border-[#2C221E] font-semibold text-[#1C1917]'
                           : 'bg-white border-[#EAE4D8] text-[#57534E] hover:border-[#C4B9A1]'
-                      }`}
+                        }`}
                     >
                       <div className="truncate pr-2">
                         <span className="block truncate">{motor.name}</span>
@@ -369,7 +365,7 @@ export function MadeToMeasureStudio() {
                         )}
                       </div>
                       {selectedMotor.id === motor.id && (
-                        <Check className="w-3.5 h-3.5 text-[#1E3A2F] shrink-0" />
+                        <Check className="w-3.5 h-3.5 text-[#2C221E] shrink-0" />
                       )}
                     </button>
                   ))}
@@ -381,7 +377,7 @@ export function MadeToMeasureStudio() {
 
           {/* Right Column: Live Visualizer & Price Card (5 cols) */}
           <div className="lg:col-span-5 sticky top-24 space-y-5">
-            
+
             {/* Live Visualizer Card */}
             <div className="rounded-3xl bg-white border border-[#EAE4D8] p-5 sm:p-6 shadow-xl overflow-hidden relative">
               <div className="flex items-center justify-between pb-3 border-b border-[#F0EBE1] mb-4">
@@ -393,27 +389,27 @@ export function MadeToMeasureStudio() {
                     {activeStyle.name}
                   </h3>
                 </div>
-                <div className="px-2.5 py-1 rounded-full bg-[#FAF7F2] border border-[#EAE4D8] text-[10.5px] font-semibold text-[#1E3A2F]">
+                <div className="px-2.5 py-1 rounded-full bg-[#FAF7F2] border border-[#EAE4D8] text-[10.5px] font-semibold text-[#2C221E]">
                   {fullness}x Fullness
                 </div>
               </div>
 
               {/* Visual Preview Graphic with Wave Simulation */}
-              <div className="relative aspect-[16/11] rounded-2xl overflow-hidden bg-[#1E3A2F]/5 border border-[#EAE4D8] mb-4">
+              <div className="relative aspect-[16/11] rounded-2xl overflow-hidden bg-[#2C221E]/5 border border-[#EAE4D8] mb-4">
                 <Image
                   src={activeStyle.image}
                   alt={activeStyle.name}
                   fill
                   className="object-cover object-center"
                 />
-                
+
                 {/* Wave Overlay Tag */}
                 <div className="absolute inset-x-3 bottom-3 p-3 rounded-xl bg-white/90 backdrop-blur-md border border-white text-[11.5px] text-[#1C1917] shadow-sm flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Layers className="w-4 h-4 text-[#9A7B56]" />
                     <span>Lining: <strong>{selectedLining.name.split('(')[0]}</strong></span>
                   </div>
-                  <span className="text-[#1E3A2F] font-semibold">
+                  <span className="text-[#2C221E] font-semibold">
                     {selectedMotor.id === 'manual' ? 'Manual Glide' : 'Somfy Smart'}
                   </span>
                 </div>
@@ -445,7 +441,7 @@ export function MadeToMeasureStudio() {
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="font-serif text-[24px] sm:text-[28px] font-bold text-[#1E3A2F]">
+                    <span className="font-serif text-[24px] sm:text-[28px] font-bold text-[#2C221E]">
                       ₹{estimatedTotal.toLocaleString('en-IN')}*
                     </span>
                   </div>
@@ -455,11 +451,11 @@ export function MadeToMeasureStudio() {
               {/* Trust Callouts */}
               <div className="grid grid-cols-2 gap-2 text-[11px] text-[#57534E] mb-5">
                 <div className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#1E3A2F] shrink-0" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#2C221E] shrink-0" />
                   <span>146 Quality Checks</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Cpu className="w-3.5 h-3.5 text-[#1E3A2F] shrink-0" />
+                  <Cpu className="w-3.5 h-3.5 text-[#2C221E] shrink-0" />
                   <span>5-Yr Motor Warranty</span>
                 </div>
               </div>

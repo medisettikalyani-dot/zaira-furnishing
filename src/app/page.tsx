@@ -1,10 +1,11 @@
 import React from 'react';
 import { EcommerceHeroBanner } from '@/components/home/EcommerceHeroBanner';
-import { StunningHomeBanner } from '@/components/home/StunningHomeBanner';
-import { DecorStylingSolutions } from '@/components/home/DecorStylingSolutions';
 import { CategoryIconGrid } from '@/components/home/CategoryIconGrid';
+import { FeaturedCollection } from '@/components/home/FeaturedCollection';
+import { HighQualityProductsSpotlight } from '@/components/home/HighQualityProductsSpotlight';
 import { WhatYouGetAtZaira } from '@/components/home/WhatYouGetAtZaira';
-import { EcommerceProductGrid } from '@/components/home/EcommerceProductGrid';
+import { BrandStorySection } from '@/components/home/BrandStorySection';
+import { FaqSection } from '@/components/home/FaqSection';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { ContactVisitSection } from '@/components/home/ContactVisitSection';
 import {
@@ -19,35 +20,44 @@ export default async function HomePage() {
   const [
     featuredProducts,
     showroomCms,
+    aboutCms,
   ] = await Promise.all([
     getDynamicProducts({ featured: true }),
     getDynamicCmsSection('home_showroom_contact'),
+    getDynamicCmsSection('home_about'),
   ]);
 
   return (
     <div className="flex flex-col w-full bg-[#F8F9FA]">
-      {/* 1. Full-Width Promotional Hero Banner Slider & Trust Strip */}
+      {/* 1. Hero Section: Full-Width Promotional Hero Banner Slider */}
       <EcommerceHeroBanner />
 
-      {/* 2. Curating What Makes Your Home Beautiful Banner */}
-      <StunningHomeBanner />
-
-      {/* 3. Bespoke Home Styling & Atelier Services (6-Card Services Section) */}
-      <DecorStylingSolutions />
-
-      {/* 4. Top Categories Of This Month */}
+      {/* 2. Category: Top Categories of This Month */}
       <CategoryIconGrid />
 
-      {/* 5. What you get at Zaira (Quality, Advisory, Measuring, Installation, Assistance) */}
+      {/* 3. Show Top Trending Products: Carousel of Most Popular Products */}
+      <FeaturedCollection
+        products={featuredProducts}
+        title="Top Trending Products"
+        subtitle="Discover Hyderabad's most sought-after bespoke curtains, motorized blinds, and luxury upholstery."
+      />
+
+      {/* 4. 2,3 High Quality Products: Atelier Masterpieces & Signature Selection */}
+      <HighQualityProductsSpotlight />
+
+      {/* 5. Process: Our 5-Step Process & Experience (Quality, Advisory, Measuring, Installation, Assistance) */}
       <WhatYouGetAtZaira />
 
-      {/* 6. Product Category Showcase & Concierge */}
-      <EcommerceProductGrid products={featuredProducts} />
+      {/* 6. About: About Zaira Furnishing & Brand Heritage */}
+      <BrandStorySection cmsContent={aboutCms} />
 
-      {/* 7. Verified Customer Reviews & Hyderabad Home Transformations */}
+      {/* 7. FAQ: Frequently Asked Questions */}
+      <FaqSection />
+
+      {/* 8. Review: Verified Customer Reviews & Homeowner Transformations */}
       <TestimonialsSection />
 
-      {/* 8. Showroom Experience Visit & Fast In-Home Consultation Booking */}
+      {/* 9. Contact / Location: Flagship Showroom Experience & In-Home Consultation Booking */}
       <ContactVisitSection cmsContent={showroomCms} />
     </div>
   );

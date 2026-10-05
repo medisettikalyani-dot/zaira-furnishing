@@ -272,7 +272,7 @@ export function ProductCustomerReviews({
           <span className="text-[9.5px] uppercase tracking-[0.18em] text-[#9A7B56] font-semibold block mb-0.5">
             Authentic Experiences
           </span>
-          <h2 className="font-serif text-[17px] sm:text-[19px] font-medium text-[#1E3A2F]">
+          <h2 className="font-serif text-[17px] sm:text-[19px] font-medium text-[#2C221E]">
             Customer Reviews
           </h2>
 
@@ -295,7 +295,7 @@ export function ProductCustomerReviews({
                   );
                 })}
               </div>
-              <span className="font-serif text-[15px] sm:text-[16px] font-semibold text-[#1E3A2F]">
+              <span className="font-serif text-[15px] sm:text-[16px] font-semibold text-[#2C221E]">
                 {averageRating} / 5
               </span>
               <span className="text-[11px] text-[#78716C]">
@@ -313,7 +313,7 @@ export function ProductCustomerReviews({
               setIsFormOpen(true);
               setValidationError(null);
             }}
-            className="inline-flex items-center justify-center gap-1.5 h-8.5 px-3.5 rounded-lg bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11px] font-semibold uppercase tracking-wider transition-all duration-200 shadow-xs cursor-pointer active:scale-95 w-full sm:w-auto shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 h-8.5 px-3.5 rounded-lg bg-[#1C1714] hover:bg-[#2C221E] text-white text-[11px] font-semibold uppercase tracking-wider transition-all duration-200 shadow-xs cursor-pointer active:scale-95 w-full sm:w-auto shrink-0"
           >
             <Edit3 className="w-3 h-3 text-[#E6C687]" />
             <span>Write a Review</span>
@@ -323,8 +323,8 @@ export function ProductCustomerReviews({
 
       {/* ─── 2. SUCCESS CONFIRMATION NOTICE ─── */}
       {successNotice && (
-        <div className="my-3.5 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11.5px] flex items-center gap-2 animate-in fade-in duration-200">
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+        <div className="my-3.5 p-3 rounded-lg bg-[#FBF8F3] border-[#E8DFC8] text-[#7A5832] text-[11.5px] flex items-center gap-2 animate-in fade-in duration-200">
+          <CheckCircle2 className="w-3.5 h-3.5 text-[#9A7B56] shrink-0" />
           <span>
             Thank you for sharing your experience! Your review has been saved and published.
           </span>
@@ -336,7 +336,7 @@ export function ProductCustomerReviews({
         <div className="my-3.5 p-3.5 sm:p-4 rounded-lg bg-[#FAF7F2] border border-[#E5DEC9] animate-in fade-in duration-200">
           <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-[#E5DEC9]">
             <div>
-              <h3 className="font-serif text-[15px] sm:text-[16px] font-medium text-[#1E3A2F]">
+              <h3 className="font-serif text-[15px] sm:text-[16px] font-medium text-[#2C221E]">
                 Write a Review
               </h3>
               <p className="text-[11px] text-[#78716C] mt-0.5">
@@ -350,7 +350,7 @@ export function ProductCustomerReviews({
                 setValidationError(null);
               }}
               aria-label="Close review form"
-              className="p-1 text-[#78716C] hover:text-[#1E3A2F] rounded hover:bg-black/5 transition-colors cursor-pointer"
+              className="p-1 text-[#78716C] hover:text-[#9A7B56] rounded hover:bg-black/5 transition-colors cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -397,7 +397,7 @@ export function ProductCustomerReviews({
                   );
                 })}
                 {selectedRating > 0 && (
-                  <span className="ml-2 text-[11.5px] font-medium text-[#1E3A2F]">
+                  <span className="ml-2 text-[11.5px] font-medium text-[#2C221E]">
                     {RATING_LABELS[selectedRating]}
                   </span>
                 )}
@@ -411,8 +411,8 @@ export function ProductCustomerReviews({
                   Your Name <span className="text-rose-600">*</span>
                 </label>
                 {customer && (
-                  <span className="text-[10px] text-emerald-700 font-medium flex items-center gap-1">
-                    <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" /> Logged In
+                  <span className="text-[10px] text-[#9A7B56] font-medium flex items-center gap-1">
+                    <CheckCircle2 className="w-2.5 h-2.5 text-[#9A7B56]" /> Logged In
                   </span>
                 )}
               </div>
@@ -425,7 +425,7 @@ export function ProductCustomerReviews({
                   if (validationError) setValidationError(null);
                 }}
                 placeholder="e.g. Priya Sharma"
-                className="w-full h-8.5 px-3 rounded-lg border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12px] text-[#1C1917] outline-none transition-colors"
+                className="w-full h-8.5 px-3 rounded-lg border border-[#D5CCBA] focus:border-[#9A7B56] bg-white text-[12px] text-[#1C1917] outline-none transition-colors"
               />
             </div>
 
@@ -442,7 +442,7 @@ export function ProductCustomerReviews({
                   if (validationError) setValidationError(null);
                 }}
                 placeholder="Share your experience with this product... (e.g. fabric texture, drape, blackout performance, stitching quality)"
-                className="w-full p-2.5 rounded-lg border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12px] text-[#1C1917] outline-none resize-none transition-colors"
+                className="w-full p-2.5 rounded-lg border border-[#D5CCBA] focus:border-[#9A7B56] bg-white text-[12px] text-[#1C1917] outline-none resize-none transition-colors"
               />
               <div className="flex justify-between items-center text-[10.5px] text-[#8C827A] mt-0.5">
                 <span>Minimum 5 characters</span>
@@ -455,7 +455,7 @@ export function ProductCustomerReviews({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="h-8.5 px-4 rounded-lg bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11px] font-semibold uppercase tracking-wider transition-all duration-200 shadow-xs cursor-pointer active:scale-95 disabled:opacity-70 flex items-center gap-1.5"
+                className="h-8.5 px-4 rounded-lg bg-[#1C1714] hover:bg-[#2C221E] text-white text-[11px] font-semibold uppercase tracking-wider transition-all duration-200 shadow-xs cursor-pointer active:scale-95 disabled:opacity-70 flex items-center gap-1.5"
               >
                 {isSubmitting ? (
                   <>
@@ -496,7 +496,7 @@ export function ProductCustomerReviews({
           <div className="w-9 h-9 rounded-full bg-[#FAF7F2] border border-[#E5DEC9] flex items-center justify-center mx-auto mb-2.5 text-[#9A7B56]">
             <Star className="w-4 h-4 stroke-[1.5]" />
           </div>
-          <h3 className="font-serif text-[15px] sm:text-[16px] font-medium text-[#1E3A2F] mb-1">
+          <h3 className="font-serif text-[15px] sm:text-[16px] font-medium text-[#2C221E] mb-1">
             No reviews yet
           </h3>
           <p className="text-[12px] text-[#78716C] max-w-sm mx-auto mb-3.5 leading-relaxed">
@@ -508,7 +508,7 @@ export function ProductCustomerReviews({
               setIsFormOpen(true);
               setValidationError(null);
             }}
-            className="inline-flex items-center justify-center gap-1.5 h-8.5 px-4 rounded-lg border border-[#1E3A2F] text-[#1E3A2F] hover:bg-[#1E3A2F] hover:text-white text-[11px] font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 h-8.5 px-4 rounded-lg border border-[#2C221E] text-[#2C221E] hover:bg-[#1C1714] hover:text-white text-[11px] font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer"
           >
             <Edit3 className="w-3 h-3" />
             <span>Write a Review</span>
@@ -546,8 +546,8 @@ export function ProductCustomerReviews({
                   {rev.authorName}
                 </span>
                 {rev.isVerifiedPurchase && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-[10px] text-emerald-700 font-medium tracking-wide">
-                    <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#FBF8F3] border border-[#E8DFC8] text-[10px] text-[#7A5832] font-medium tracking-wide">
+                    <CheckCircle2 className="w-2.5 h-2.5 text-[#9A7B56]" />
                     Verified Purchase
                   </span>
                 )}
