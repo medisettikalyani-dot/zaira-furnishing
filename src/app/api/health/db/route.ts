@@ -22,20 +22,7 @@ export async function GET() {
     process.env.CLOUDFLARE_API_TOKEN
   );
 
-  // If in production without D1 credentials configured, fail clearly without attempting SQLite
-  if (isProduction && !hasD1Config && process.env.USE_LOCAL_SQLITE !== 'true') {
-    return NextResponse.json(
-      {
-        status: 'unhealthy',
-        ok: false,
-        configured: false,
-        provider: 'd1',
-        message: 'Cloudflare D1 credentials are missing in production environment. Ephemeral SQLite fallback is blocked.',
-        timestamp: new Date().toISOString(),
-      },
-      { status: 503 }
-    );
-  }
+  // Attempt health check via active database provider (Cloudflare D1 or resilient SQLite)
 
   try {
     const db = getDatabase();

@@ -11,6 +11,13 @@ import {
 } from './types';
 import { Product, ProductImage, ProductVariation, ProductSpecification, Category, Service } from '@/lib/data/types';
 import { normalizeCategorySlug, CATEGORIES } from '@/lib/data/categories';
+import { PRODUCTS, getProductBySlug } from '@/lib/data/products';
+import { SERVICES } from '@/lib/data/services';
+import { CURTAIN_TYPES } from '@/lib/data/curtains';
+import { BLIND_TYPES } from '@/lib/data/blinds';
+import { SOFA_FABRIC_TYPES } from '@/lib/data/sofa-fabrics';
+import { WALLPAPER_TYPES } from '@/lib/data/wallpapers';
+import { CARPET_TYPES } from '@/lib/data/carpets';
 
 /**
  * Maps D1 category record to frontend Category model
@@ -197,8 +204,101 @@ export async function getDynamicCategoryBySlug(slug: string): Promise<Category |
   }
 }
 
+function getStaticSubcategories(categoryId?: string): DbSubcategory[] {
+  const normId = categoryId ? normalizeCategorySlug(categoryId) : undefined;
+  const list: DbSubcategory[] = [];
+  const now = new Date().toISOString();
+
+  if (!normId || normId === 'curtains-drapes' || categoryId === 'cat-1') {
+    CURTAIN_TYPES.forEach((c, idx) => {
+      list.push({
+        id: `subcat-${c.slug}`,
+        category_id: 'cat-1',
+        name: c.name,
+        slug: c.slug,
+        description: c.description,
+        image: c.image,
+        display_order: idx,
+        active: 1,
+        created_at: now,
+        updated_at: now,
+      });
+    });
+  }
+
+  if (!normId || normId === 'window-blinds-shades' || categoryId === 'cat-2') {
+    BLIND_TYPES.forEach((b, idx) => {
+      list.push({
+        id: `subcat-${b.slug}`,
+        category_id: 'cat-2',
+        name: b.name,
+        slug: b.slug,
+        description: b.description,
+        image: b.image,
+        display_order: idx,
+        active: 1,
+        created_at: now,
+        updated_at: now,
+      });
+    });
+  }
+
+  if (!normId || normId === 'sofa-fabrics-upholstery' || categoryId === 'cat-3') {
+    SOFA_FABRIC_TYPES.forEach((s, idx) => {
+      list.push({
+        id: `subcat-${s.slug}`,
+        category_id: 'cat-3',
+        name: s.name,
+        slug: s.slug,
+        description: s.description,
+        image: s.image,
+        display_order: idx,
+        active: 1,
+        created_at: now,
+        updated_at: now,
+      });
+    });
+  }
+
+  if (!normId || normId === 'wallpapers-wall-coverings' || categoryId === 'cat-4') {
+    WALLPAPER_TYPES.forEach((w, idx) => {
+      list.push({
+        id: `subcat-${w.slug}`,
+        category_id: 'cat-4',
+        name: w.name,
+        slug: w.slug,
+        description: w.description,
+        image: w.image,
+        display_order: idx,
+        active: 1,
+        created_at: now,
+        updated_at: now,
+      });
+    });
+  }
+
+  if (!normId || normId === 'carpets-rugs' || categoryId === 'cat-6') {
+    CARPET_TYPES.forEach((c, idx) => {
+      list.push({
+        id: `subcat-${c.slug}`,
+        category_id: 'cat-6',
+        name: c.name,
+        slug: c.slug,
+        description: c.description,
+        image: c.image,
+        display_order: idx,
+        active: 1,
+        created_at: now,
+        updated_at: now,
+      });
+    });
+  }
+
+  return list;
+}
+
 /**
- * Fetch all subcategories from Cloudflare D1
+ * Fetch all subcategories from Cloudflare D1 (with bulletproof static fallback)
  */
 export async function getDynamicSubcategories(categoryId?: string): Promise<DbSubcategory[]> {
   try {
@@ -210,10 +310,12 @@ export async function getDynamicSubcategories(categoryId?: string): Promise<DbSu
       params.push(categoryId, categoryId);
     }
     sql += ' ORDER BY display_order ASC';
-    return await db.query<DbSubcategory>(sql, params);
+    const rows = await db.query<DbSubcategory>(sql, params);
+    if (rows && rows.length > 0) return rows;
+    return getStaticSubcategories(categoryId);
   } catch (err) {
     console.error('Error fetching subcategories from D1:', err);
-    return [];
+    return getStaticSubcategories(categoryId);
   }
 }
 
@@ -232,15 +334,56 @@ export async function getDynamicSubcategoryBySlug(
        WHERE (s.category_id = ? OR c.slug = ?) AND s.slug = ? AND s.active = 1`,
       [categoryIdentifier, categoryIdentifier, subcategorySlug]
     );
-    return row || null;
+    if (row) return row;
+    const staticList = getStaticSubcategories(categoryIdentifier);
+    return staticList.find((s) => s.slug === subcategorySlug) || null;
   } catch (err) {
     console.error(`Error fetching subcategory ${subcategorySlug} from D1:`, err);
-    return null;
+    const staticList = getStaticSubcategories(categoryIdentifier);
+    return staticList.find((s) => s.slug === subcategorySlug) || null;
   }
 }
 
+function filterStaticProducts(filters?: {
+  categorySlug?: string;
+  subcategorySlug?: string;
+  featured?: boolean;
+  search?: string;
+}): Product[] {
+  let result = [...PRODUCTS];
+  if (filters?.categorySlug) {
+    const norm = normalizeCategorySlug(filters.categorySlug);
+    result = result.filter(
+      (p) => p.categorySlug === norm || p.categorySlug === filters.categorySlug
+    );
+  }
+  if (filters?.subcategorySlug) {
+    result = result.filter(
+      (p) =>
+        p.subcategorySlug === filters.subcategorySlug ||
+        p.curtainType === filters.subcategorySlug ||
+        p.blindType === filters.subcategorySlug ||
+        p.sofaFabricType === filters.subcategorySlug ||
+        p.wallpaperType === filters.subcategorySlug ||
+        p.carpetType === filters.subcategorySlug
+    );
+  }
+  if (filters?.featured !== undefined) {
+    result = result.filter((p) => p.featured === filters.featured);
+  }
+  if (filters?.search) {
+    const term = filters.search.toLowerCase();
+    result = result.filter(
+      (p) =>
+        p.name.toLowerCase().includes(term) ||
+        (p.description && p.description.toLowerCase().includes(term))
+    );
+  }
+  return result;
+}
+
 /**
- * Fetch all products from Cloudflare D1 with relational joins
+ * Fetch all products from Cloudflare D1 with relational joins (with bulletproof static fallback)
  */
 export async function getDynamicProducts(filters?: {
   categorySlug?: string;
@@ -282,7 +425,9 @@ export async function getDynamicProducts(filters?: {
     sql += ' ORDER BY p.display_order ASC';
 
     const products = await db.query<DbProduct & { category_name?: string; category_slug?: string; subcategory_slug?: string; subcategory_name?: string }>(sql, params);
-    if (!products || products.length === 0) return [];
+    if (!products || products.length === 0) {
+      return filterStaticProducts(filters);
+    }
 
     // Fetch images, variants, and specifications in batch
     const productIds = products.map((p) => p.id);
@@ -332,12 +477,12 @@ export async function getDynamicProducts(filters?: {
     );
   } catch (err) {
     console.error('Error fetching dynamic products from D1:', err);
-    return [];
+    return filterStaticProducts(filters);
   }
 }
 
 /**
- * Fetch a single product by slug from Cloudflare D1
+ * Fetch a single product by slug from Cloudflare D1 (with bulletproof static fallback)
  */
 export async function getDynamicProductBySlug(slug: string): Promise<Product | null> {
   try {
@@ -351,7 +496,9 @@ export async function getDynamicProductBySlug(slug: string): Promise<Product | n
       [slug]
     );
 
-    if (!product) return null;
+    if (!product) {
+      return getProductBySlug(slug) || null;
+    }
 
     const [images, variants, specs] = await Promise.all([
       db.query<DbProductImage>(
@@ -371,12 +518,12 @@ export async function getDynamicProductBySlug(slug: string): Promise<Product | n
     return mapDbProductToFrontend(product, images, variants, specs, product.category_name);
   } catch (err) {
     console.error(`Error fetching dynamic product by slug ${slug} from D1:`, err);
-    return null;
+    return getProductBySlug(slug) || null;
   }
 }
 
 /**
- * Fetch services from Cloudflare D1
+ * Fetch services from Cloudflare D1 (with bulletproof static fallback)
  */
 export async function getDynamicServices(): Promise<Service[]> {
   try {
@@ -384,15 +531,18 @@ export async function getDynamicServices(): Promise<Service[]> {
     const rows = await db.query<DbService>(
       'SELECT * FROM services WHERE active = 1 ORDER BY display_order ASC'
     );
-    return rows.map(mapDbServiceToFrontend);
+    if (rows && rows.length > 0) {
+      return rows.map(mapDbServiceToFrontend);
+    }
+    return SERVICES;
   } catch (err) {
     console.error('Error fetching services from D1:', err);
-    return [];
+    return SERVICES;
   }
 }
 
 /**
- * Fetch single service by slug from Cloudflare D1
+ * Fetch single service by slug from Cloudflare D1 (with bulletproof static fallback)
  */
 export async function getDynamicServiceBySlug(slug: string): Promise<Service | null> {
   try {
@@ -401,11 +551,13 @@ export async function getDynamicServiceBySlug(slug: string): Promise<Service | n
       'SELECT * FROM services WHERE slug = ? AND active = 1',
       [slug]
     );
-    if (!row) return null;
+    if (!row) {
+      return SERVICES.find((s) => s.slug === slug) || null;
+    }
     return mapDbServiceToFrontend(row);
   } catch (err) {
     console.error(`Error fetching service ${slug} from D1:`, err);
-    return null;
+    return SERVICES.find((s) => s.slug === slug) || null;
   }
 }
 
@@ -480,6 +632,99 @@ function getCategoryBasePath(slug: string): string {
   return `/categories/${slug}`;
 }
 
+function getStaticCategoryDiscovery(): DiscoveryCategory[] {
+  const result: DiscoveryCategory[] = [];
+
+  // 1. Curtains
+  result.push({
+    id: 'disc-curtains-drapes',
+    slug: 'curtains-drapes',
+    tabLabel: 'Curtains',
+    items: CURTAIN_TYPES.map((c) => ({
+      id: `subcat-${c.slug}`,
+      name: c.name,
+      image: c.image,
+      href: `/categories/curtains/${c.slug}`,
+    })),
+  });
+
+  // 2. Window Blinds
+  result.push({
+    id: 'disc-window-blinds-shades',
+    slug: 'window-blinds-shades',
+    tabLabel: 'Window Blinds',
+    items: BLIND_TYPES.map((b) => ({
+      id: `subcat-${b.slug}`,
+      name: b.name,
+      image: b.image || '/images/hero/blinds.jpg',
+      href: `/categories/blinds/${b.slug}`,
+    })),
+  });
+
+  // 3. Sofa Fabrics
+  result.push({
+    id: 'disc-sofa-fabrics-upholstery',
+    slug: 'sofa-fabrics-upholstery',
+    tabLabel: 'Sofa Fabrics',
+    items: SOFA_FABRIC_TYPES.map((s) => ({
+      id: `subcat-${s.slug}`,
+      name: s.name,
+      image: s.image || '/images/hero/sofa_fabrics.jpg',
+      href: `/categories/sofa-fabrics/${s.slug}`,
+    })),
+  });
+
+  // 4. Wallpapers
+  result.push({
+    id: 'disc-wallpapers-wall-coverings',
+    slug: 'wallpapers-wall-coverings',
+    tabLabel: 'Wallpapers',
+    items: WALLPAPER_TYPES.map((w) => ({
+      id: `subcat-${w.slug}`,
+      name: w.name,
+      image: w.image || '/images/hero/wallpapers.jpg',
+      href: `/categories/wallpapers/${w.slug}`,
+    })),
+  });
+
+  // 5. Carpets
+  result.push({
+    id: 'disc-carpets-rugs',
+    slug: 'carpets-rugs',
+    tabLabel: 'Carpets & Rugs',
+    items: CARPET_TYPES.map((c) => ({
+      id: `subcat-${c.slug}`,
+      name: c.name,
+      image: c.image || '/images/hero/rugs.jpg',
+      href: `/categories/carpets/${c.slug}`,
+    })),
+  });
+
+  // Remaining categories from PRODUCTS
+  const remainingCategories = CATEGORIES.filter(
+    (c) => !['curtains-drapes', 'window-blinds-shades', 'sofa-fabrics-upholstery', 'wallpapers-wall-coverings', 'carpets-rugs'].includes(c.slug)
+  );
+
+  for (const cat of remainingCategories) {
+    const catProds = PRODUCTS.filter((p) => p.categorySlug === cat.slug);
+    if (catProds.length > 0) {
+      result.push({
+        id: `disc-${cat.slug}`,
+        slug: cat.slug,
+        tabLabel: getCategoryTabLabel(cat),
+        items: catProds.map((p) => ({
+          id: p.id,
+          name: p.displayName || p.name,
+          image: p.image || cat.image || '/images/hero/living_room.jpg',
+          href: `/products/${p.slug}`,
+        })),
+      });
+    }
+  }
+
+  return result;
+}
+
 /**
  * Fetch dynamic category discovery list for homepage BrowseByCategories
  */
@@ -489,7 +734,7 @@ export async function getDynamicCategoryDiscovery(): Promise<DiscoveryCategory[]
     const categories = await db.query<DbCategory>(
       'SELECT * FROM categories WHERE active = 1 ORDER BY display_order ASC'
     );
-    if (!categories || categories.length === 0) return [];
+    if (!categories || categories.length === 0) return getStaticCategoryDiscovery();
 
     const subcategories = await db.query<DbSubcategory>(
       'SELECT * FROM subcategories WHERE active = 1 ORDER BY display_order ASC'
@@ -537,9 +782,10 @@ export async function getDynamicCategoryDiscovery(): Promise<DiscoveryCategory[]
       }
     }
 
-    return result;
+    if (result.length > 0) return result;
+    return getStaticCategoryDiscovery();
   } catch (err) {
     console.error('Error fetching dynamic category discovery from D1:', err);
-    return [];
+    return getStaticCategoryDiscovery();
   }
 }

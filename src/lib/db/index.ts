@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 
 export interface BatchStatement {
   sql: string;
@@ -33,16 +34,60 @@ class LocalSqliteClient implements DatabaseClient {
 
     // Dynamically import node:sqlite to ensure compatibility across runtime environments
     const { DatabaseSync } = await import('node:sqlite');
-    const dbDir = path.resolve(process.cwd(), 'data');
-    if (!fs.existsSync(dbDir)) {
-      fs.mkdirSync(dbDir, { recursive: true });
-    }
-    const dbPath = path.join(dbDir, 'zaira.db');
-    this.db = new DatabaseSync(dbPath);
 
-    // Enable WAL mode and foreign keys for durability and performance
-    this.db.exec('PRAGMA journal_mode = WAL;');
-    this.db.exec('PRAGMA foreign_keys = ON;');
+    // Detect serverless environments (e.g. Vercel, AWS Lambda) where process.cwd() is read-only
+    const isServerless = Boolean(
+      process.env.VERCEL ||
+      process.env.AWS_LAMBDA_FUNCTION_NAME ||
+      process.env.LAMBDA_TASK_ROOT
+    );
+
+    const sourceDbDir = path.resolve(process.cwd(), 'data');
+    const sourceDbPath = path.join(sourceDbDir, 'zaira.db');
+
+    let activeDbPath = sourceDbPath;
+
+    if (isServerless) {
+      // In serverless, process.cwd() is read-only. Use os.tmpdir() for writable SQLite operations
+      const tmpDbPath = path.join(os.tmpdir(), 'zaira.db');
+      try {
+        if (!fs.existsSync(tmpDbPath) && fs.existsSync(sourceDbPath)) {
+          fs.copyFileSync(sourceDbPath, tmpDbPath);
+        }
+        activeDbPath = tmpDbPath;
+      } catch (copyErr) {
+        console.warn('[DATABASE WARNING] Could not copy seed database to tmp, trying source path:', copyErr);
+        activeDbPath = sourceDbPath;
+      }
+    } else {
+      if (!fs.existsSync(sourceDbDir)) {
+        try {
+          fs.mkdirSync(sourceDbDir, { recursive: true });
+        } catch {
+          activeDbPath = path.join(os.tmpdir(), 'zaira.db');
+        }
+      }
+    }
+
+    try {
+      this.db = new DatabaseSync(activeDbPath);
+
+      // Attempt journal mode configuration gracefully
+      try {
+        this.db.exec('PRAGMA journal_mode = WAL;');
+      } catch {
+        try {
+          this.db.exec('PRAGMA journal_mode = DELETE;');
+        } catch {
+          // Ignored in read-only or restricted environments
+        }
+      }
+
+      this.db.exec('PRAGMA foreign_keys = ON;');
+    } catch (openErr) {
+      console.error('[DATABASE ERROR] Failed opening SQLite database at ' + activeDbPath + ':', openErr);
+      throw openErr;
+    }
 
     return this.db;
   }

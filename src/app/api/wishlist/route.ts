@@ -69,10 +69,10 @@ export async function POST(req: NextRequest) {
 
     const db = getDatabase();
 
-    // 1. Verify product exists and is active
+    // 1. Verify product exists and is active (lookup by ID or slug)
     const product = await db.queryOne<DbProduct>(
-      'SELECT id, active FROM products WHERE id = ?',
-      [productId]
+      'SELECT id, active FROM products WHERE (id = ? OR slug = ?) AND active = 1',
+      [productId, productId]
     );
 
     if (!product || product.active !== 1) {
@@ -82,17 +82,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const canonicalProductId = product.id;
+
     // 2. Insert into wishlist (unique constraint ensures no duplicates)
     const existing = await db.queryOne<{ id: string }>(
       'SELECT id FROM wishlist_items WHERE user_id = ? AND product_id = ?',
-      [customer.id, productId]
+      [customer.id, canonicalProductId]
     );
 
     if (!existing) {
       const id = `wl-${crypto.randomBytes(8).toString('hex')}`;
       await db.execute(
         "INSERT INTO wishlist_items (id, user_id, product_id, created_at) VALUES (?, ?, ?, datetime('now'))",
-        [id, customer.id, productId]
+        [id, customer.id, canonicalProductId]
       );
     }
 

@@ -19,8 +19,8 @@ export async function DELETE(
 
     const db = getDatabase();
     await db.execute(
-      'DELETE FROM wishlist_items WHERE user_id = ? AND product_id = ?',
-      [customer.id, productId]
+      'DELETE FROM wishlist_items WHERE user_id = ? AND (product_id = ? OR product_id = (SELECT id FROM products WHERE slug = ?))',
+      [customer.id, productId, productId]
     );
 
     return NextResponse.json({ success: true, wishlisted: false });

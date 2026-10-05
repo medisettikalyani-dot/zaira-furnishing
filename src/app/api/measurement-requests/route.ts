@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     // 6. Server-side product & variant resolution
     const targetProductId = (productId && typeof productId === 'string' && productId.trim().length > 0)
       ? productId.trim()
-      : 'prod-curt-10'; // Flagship custom made-to-measure product
+      : 'prod-off-custom-made-curtains'; // Flagship custom made-to-measure product
 
     let productCtx;
     try {
@@ -113,8 +113,8 @@ export async function POST(req: NextRequest) {
 
     const { product, variant, categoryName, categorySlug } = productCtx;
 
-    // 7. CRITICAL: Validate product supports custom measurement
-    if (product.custom_measurement_available !== 1) {
+    // 7. Validate product supports custom measurement (in-home consultation requests are always eligible)
+    if (!isConsultation && product.custom_measurement_available !== 1) {
       return NextResponse.json(
         { error: 'This product does not support in-home custom measurement requests.' },
         { status: 400 }

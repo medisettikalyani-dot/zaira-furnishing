@@ -37,10 +37,10 @@ export async function POST(req: NextRequest) {
 
     const db = getDatabase();
 
-    // 1. Verify Product exists and is active
+    // 1. Verify Product exists and is active (lookup by ID or slug)
     const product = await db.queryOne<DbProduct>(
-      'SELECT * FROM products WHERE id = ?',
-      [productId]
+      'SELECT * FROM products WHERE (id = ? OR slug = ?) AND active = 1',
+      [productId, productId]
     );
 
     if (!product || product.active !== 1) {
@@ -50,12 +50,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const canonicalProductId = product.id;
+
     // 2. Verify Variant if provided
     let variant: DbProductVariant | null = null;
     if (variantId) {
       variant = await db.queryOne<DbProductVariant>(
-        'SELECT * FROM product_variants WHERE id = ? AND product_id = ? AND active = 1',
-        [variantId, productId]
+        'SELECT * FROM product_variants WHERE id = ? AND (product_id = ? OR product_id = ?) AND active = 1',
+        [variantId, productId, canonicalProductId]
       );
 
       if (!variant) {
@@ -95,13 +97,13 @@ export async function POST(req: NextRequest) {
     let existingItem: DbCartItem | null = null;
     if (variantId) {
       existingItem = await db.queryOne<DbCartItem>(
-        'SELECT * FROM cart_items WHERE cart_id = ? AND product_id = ? AND variant_id = ? AND (customization_data = ? OR (customization_data IS NULL AND ? IS NULL))',
-        [cart.id, productId, variantId, customJson, customJson]
+        'SELECT * FROM cart_items WHERE cart_id = ? AND (product_id = ? OR product_id = ?) AND variant_id = ? AND (customization_data = ? OR (customization_data IS NULL AND ? IS NULL))',
+        [cart.id, productId, canonicalProductId, variantId, customJson, customJson]
       );
     } else {
       existingItem = await db.queryOne<DbCartItem>(
-        'SELECT * FROM cart_items WHERE cart_id = ? AND product_id = ? AND variant_id IS NULL AND (customization_data = ? OR (customization_data IS NULL AND ? IS NULL))',
-        [cart.id, productId, customJson, customJson]
+        'SELECT * FROM cart_items WHERE cart_id = ? AND (product_id = ? OR product_id = ?) AND variant_id IS NULL AND (customization_data = ? OR (customization_data IS NULL AND ? IS NULL))',
+        [cart.id, productId, canonicalProductId, customJson, customJson]
       );
     }
 
@@ -128,7 +130,7 @@ export async function POST(req: NextRequest) {
     await db.execute(
       `INSERT INTO cart_items (id, cart_id, product_id, variant_id, quantity, unit_price_snapshot, customization_data, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-      [newItemId, cart.id, productId, variantId || null, numQty, unitPriceSnapshot, customJson]
+      [newItemId, cart.id, canonicalProductId, variantId || null, numQty, unitPriceSnapshot, customJson]
     );
 
     await db.execute("UPDATE carts SET updated_at = datetime('now') WHERE id = ?", [cart.id]);
