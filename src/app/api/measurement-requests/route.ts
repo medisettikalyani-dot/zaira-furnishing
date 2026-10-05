@@ -5,10 +5,13 @@ import { verifyAdminRequest } from '@/lib/auth/admin';
 import { getAuthenticatedCustomer } from '@/lib/auth/customer';
 import { DbMeasurementRequest } from '@/lib/db/types';
 import { generateMeasurementRequestNumber, resolveProductAndVariant } from '@/lib/db/requests';
+import { ensureDatabaseSchema } from '@/lib/db/auto-migrate';
 
 // ─── POST /api/measurement-requests ───
 export async function POST(req: NextRequest) {
   try {
+    const db = getDatabase();
+    await ensureDatabaseSchema(db);
     const body = await req.json();
     const {
       productId,
@@ -82,8 +85,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    const db = getDatabase();
 
     // 5. Duplicate protection / Idempotency check
     if (idempotencyKey && typeof idempotencyKey === 'string' && idempotencyKey.trim().length > 0) {

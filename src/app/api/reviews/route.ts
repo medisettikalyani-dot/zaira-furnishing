@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getDatabase } from '@/lib/db';
+import { ensureDatabaseSchema } from '@/lib/db/auto-migrate';
 import { getAuthenticatedCustomer } from '@/lib/auth/customer';
 import {
   getDbProductReviews,
@@ -19,8 +20,6 @@ export async function GET(req: NextRequest) {
     let productId = searchParams.get('productId');
     const slug = searchParams.get('slug');
 
-    const db = getDatabase();
-
     const targetIdentifier = (productId || slug || '').trim();
     if (!targetIdentifier) {
       return NextResponse.json(
@@ -28,6 +27,9 @@ export async function GET(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const db = getDatabase();
+    await ensureDatabaseSchema(db);
 
     const prod = await db.queryOne<DbProduct>(
       'SELECT id FROM products WHERE id = ? OR slug = ?',
@@ -45,10 +47,12 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('API /api/reviews GET error:', error);
-    return NextResponse.json(
-      { error: error?.message || 'Failed to fetch product reviews.' },
-      { status: 500 }
-    );
+    // Graceful fallback: return empty reviews structure so UI never crashes
+    return NextResponse.json({
+      data: [],
+      total: 0,
+      averageRating: null,
+    });
   }
 }
 
@@ -69,37 +73,6 @@ export async function POST(req: NextRequest) {
         { error: 'A valid Product ID or slug is required.' },
         { status: 400 }
       );
-    }
-
-    const db = getDatabase();
-
-    // Verify product exists in database (check by id or slug)
-    let existingProduct = await db.queryOne<DbProduct>(
-      'SELECT id, name, slug FROM products WHERE id = ? OR slug = ?',
-      [productId, rawSlug || productId]
-    );
-
-    if (!existingProduct) {
-      const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-      const targetId = productId;
-      const targetSlug = rawSlug || productId.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
-
-      await db.execute(
-        `INSERT OR IGNORE INTO products (
-          id, category_id, name, slug, description, short_description, product_type, base_price, active, created_at, updated_at
-        ) VALUES (?, 'cat-1', 'Official Collection Item', ?, 'Zaira Furnishing Collection', 'Zaira Furnishing Collection Item', 'custom_made', 0, 1, ?, ?)`,
-        [targetId, targetSlug, now, now]
-      );
-
-      existingProduct = await db.queryOne<DbProduct>(
-        'SELECT id, name, slug FROM products WHERE id = ? OR slug = ?',
-        [targetId, targetSlug]
-      );
-    }
-
-    // Ensure productId is the canonical product primary key
-    if (existingProduct) {
-      productId = existingProduct.id;
     }
 
     // Validate customer name (REQUIRED)
@@ -154,6 +127,52 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const db = getDatabase();
+    await ensureDatabaseSchema(db);
+
+    // Verify product exists in database (check by id or slug)
+    let existingProduct = await db.queryOne<DbProduct>(
+      'SELECT id, name, slug FROM products WHERE id = ? OR slug = ?',
+      [productId, rawSlug || productId]
+    );
+
+    if (!existingProduct) {
+      const { PRODUCTS } = await import('@/lib/data/products');
+      const staticProd = PRODUCTS.find(
+        (p) => p.id === productId || p.slug === (rawSlug || productId) || p.slug === productId
+      );
+
+      const targetId = staticProd?.id || productId;
+      const targetSlug = staticProd?.slug || rawSlug || productId.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+      const categoryId = staticProd?.categorySlug || 'cat-1';
+      const productName = staticProd?.displayName || staticProd?.name || 'Blackout Curtains';
+      const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+      // Ensure category exists first to satisfy foreign key constraint
+      await db.execute(
+        `INSERT OR IGNORE INTO categories (id, name, slug, tagline, description, image, display_order, active, featured, is_customizable)
+         VALUES (?, 'Curtains & Drapes', 'curtains-drapes', 'Bespoke tailoring', 'Luxury drapery', '/images/hero/curtains.jpg', 0, 1, 1, 1)`,
+        [categoryId]
+      );
+
+      await db.execute(
+        `INSERT OR IGNORE INTO products (
+          id, category_id, name, display_name, slug, description, short_description, product_type, base_price, active, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, 'Zaira Furnishing Collection', 'Zaira Furnishing Collection Item', 'custom_made', 0, 1, ?, ?)`,
+        [targetId, categoryId, productName, productName, targetSlug, now, now]
+      );
+
+      existingProduct = await db.queryOne<DbProduct>(
+        'SELECT id, name, slug FROM products WHERE id = ? OR slug = ?',
+        [targetId, targetSlug]
+      );
+    }
+
+    // Ensure productId is the canonical product primary key
+    if (existingProduct) {
+      productId = existingProduct.id;
+    }
+
     // Check if customer is authenticated
     const customer = await getAuthenticatedCustomer(req);
     const userId = customer ? customer.id : null;
@@ -188,6 +207,14 @@ export async function POST(req: NextRequest) {
     );
   } catch (error: any) {
     console.error('API /api/reviews POST error:', error);
+    if (error?.message && error.message.includes('no such table')) {
+      try {
+        const db = getDatabase();
+        await ensureDatabaseSchema(db);
+      } catch (retryErr) {
+        console.error('Auto-migration retry error:', retryErr);
+      }
+    }
     return NextResponse.json(
       { error: error?.message || 'Failed to submit review. Please try again.' },
       { status: 500 }

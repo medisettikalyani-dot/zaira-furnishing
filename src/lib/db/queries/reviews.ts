@@ -142,6 +142,10 @@ export async function createDbProductReview(data: {
     // If not found in database, insert safe catalog record with valid category
     const safeSlug = data.productId.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
     await db.execute(
+      `INSERT OR IGNORE INTO categories (id, name, slug, tagline, description, image, display_order, active, featured, is_customizable)
+       VALUES ('cat-1', 'Curtains & Drapes', 'curtains-drapes', 'Bespoke tailoring', 'Luxury drapery', '/images/hero/curtains.jpg', 0, 1, 1, 1)`
+    );
+    await db.execute(
       `INSERT OR IGNORE INTO products (
         id, category_id, name, slug, description, short_description, product_type, base_price, active, created_at, updated_at
       ) VALUES (?, 'cat-1', 'Official Collection Item', ?, 'Zaira Furnishing Collection', 'Zaira Furnishing Collection Item', 'custom_made', 0, 1, ?, ?)`,

@@ -5,10 +5,13 @@ import { verifyAdminRequest } from '@/lib/auth/admin';
 import { getAuthenticatedCustomer } from '@/lib/auth/customer';
 import { DbQuoteRequest } from '@/lib/db/types';
 import { generateQuoteRequestNumber, resolveProductAndVariant } from '@/lib/db/requests';
+import { ensureDatabaseSchema } from '@/lib/db/auto-migrate';
 
 // ─── POST /api/quote-requests ───
 export async function POST(req: NextRequest) {
   try {
+    const db = getDatabase();
+    await ensureDatabaseSchema(db);
     const body = await req.json();
     const {
       productId,
@@ -49,8 +52,6 @@ export async function POST(req: NextRequest) {
     // 3. Validate quantity
     const parsedQty = typeof quantity === 'number' ? quantity : parseInt(quantity, 10);
     const validQty = isNaN(parsedQty) || parsedQty < 1 ? 1 : parsedQty;
-
-    const db = getDatabase();
 
     // 4. Duplicate protection / Idempotency check
     if (idempotencyKey && typeof idempotencyKey === 'string' && idempotencyKey.trim().length > 0) {

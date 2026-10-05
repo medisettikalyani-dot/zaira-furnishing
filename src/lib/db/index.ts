@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import { CORE_SCHEMA_DDL, ensureDatabaseSchema } from './auto-migrate';
 
 export interface BatchStatement {
   sql: string;
@@ -84,6 +85,39 @@ class LocalSqliteClient implements DatabaseClient {
       }
 
       this.db.exec('PRAGMA foreign_keys = ON;');
+
+      // Auto-initialize schema and catalog data if tables are missing
+      try {
+        const check = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='products'").get();
+        if (!check) {
+          console.log('[DATABASE] "products" table missing in ' + activeDbPath + '. Auto-initializing database schema...');
+          let diskMigrationsRan = false;
+          try {
+            const migrationsDir = path.resolve(process.cwd(), 'migrations');
+            if (fs.existsSync(migrationsDir)) {
+              const files = fs
+                .readdirSync(migrationsDir)
+                .filter((f) => f.endsWith('.sql'))
+                .sort();
+              for (const file of files) {
+                const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf-8');
+                this.db.exec(sql);
+              }
+              diskMigrationsRan = true;
+              console.log('[DATABASE] Successfully applied all disk migrations to ' + activeDbPath);
+            }
+          } catch (migErr) {
+            console.warn('[DATABASE] Disk migrations notice, falling back to embedded schema:', migErr);
+          }
+
+          if (!diskMigrationsRan) {
+            this.db.exec(CORE_SCHEMA_DDL);
+            console.log('[DATABASE] Applied embedded CORE_SCHEMA_DDL to ' + activeDbPath);
+          }
+        }
+      } catch (schemaErr) {
+        console.warn('[DATABASE] Schema auto-migration check notice:', schemaErr);
+      }
     } catch (openErr) {
       console.error('[DATABASE ERROR] Failed opening SQLite database at ' + activeDbPath + ':', openErr);
       throw openErr;
@@ -93,18 +127,37 @@ class LocalSqliteClient implements DatabaseClient {
   }
 
   async query<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
-    const db = await this.getDb();
-    const stmt = db.prepare(sql);
-    // Convert undefined to null and boolean params to 1/0 for SQLite compatibility
-    const sanitize = (val: unknown) => {
-      if (val === undefined) return null;
-      if (typeof val === 'boolean') return val ? 1 : 0;
-      return val;
-    };
-    const sanitizedParams = params.map(sanitize);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rawRows = stmt.all(...sanitizedParams) as any[];
-    return rawRows.map((row) => ({ ...row })) as T[];
+    try {
+      const db = await this.getDb();
+      const stmt = db.prepare(sql);
+      // Convert undefined to null and boolean params to 1/0 for SQLite compatibility
+      const sanitize = (val: unknown) => {
+        if (val === undefined) return null;
+        if (typeof val === 'boolean') return val ? 1 : 0;
+        return val;
+      };
+      const sanitizedParams = params.map(sanitize);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rawRows = stmt.all(...sanitizedParams) as any[];
+      return rawRows.map((row) => ({ ...row })) as T[];
+    } catch (err: any) {
+      if (err?.message && err.message.includes('no such table')) {
+        console.warn('[DATABASE] "no such table" detected in query. Ensuring schema and retrying...');
+        await ensureDatabaseSchema(this);
+        const db = await this.getDb();
+        const stmt = db.prepare(sql);
+        const sanitize = (val: unknown) => {
+          if (val === undefined) return null;
+          if (typeof val === 'boolean') return val ? 1 : 0;
+          return val;
+        };
+        const sanitizedParams = params.map(sanitize);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rawRows = stmt.all(...sanitizedParams) as any[];
+        return rawRows.map((row) => ({ ...row })) as T[];
+      }
+      throw err;
+    }
   }
 
   async queryOne<T = unknown>(sql: string, params: unknown[] = []): Promise<T | null> {
@@ -113,44 +166,74 @@ class LocalSqliteClient implements DatabaseClient {
   }
 
   async execute(sql: string, params: unknown[] = []): Promise<{ changes: number; lastInsertRowid?: number | bigint }> {
-    const db = await this.getDb();
-    const stmt = db.prepare(sql);
-    const sanitize = (val: unknown) => {
-      if (val === undefined) return null;
-      if (typeof val === 'boolean') return val ? 1 : 0;
-      return val;
-    };
-    const sanitizedParams = params.map(sanitize);
-    const result = stmt.run(...sanitizedParams);
-    return {
-      changes: result.changes,
-      lastInsertRowid: result.lastInsertRowid,
-    };
-  }
-
-  async batch(statements: BatchStatement[]): Promise<{ changes: number }[]> {
-    if (statements.length === 0) return [];
-    const db = await this.getDb();
-    db.exec('BEGIN TRANSACTION;');
     try {
-      const results: { changes: number }[] = [];
+      const db = await this.getDb();
+      const stmt = db.prepare(sql);
       const sanitize = (val: unknown) => {
         if (val === undefined) return null;
         if (typeof val === 'boolean') return val ? 1 : 0;
         return val;
       };
-
-      for (const s of statements) {
-        const stmt = db.prepare(s.sql);
-        const sanitizedParams = (s.params || []).map(sanitize);
+      const sanitizedParams = params.map(sanitize);
+      const result = stmt.run(...sanitizedParams);
+      return {
+        changes: result.changes,
+        lastInsertRowid: result.lastInsertRowid,
+      };
+    } catch (err: any) {
+      if (err?.message && err.message.includes('no such table')) {
+        console.warn('[DATABASE] "no such table" detected in execute. Ensuring schema and retrying...');
+        await ensureDatabaseSchema(this);
+        const db = await this.getDb();
+        const stmt = db.prepare(sql);
+        const sanitize = (val: unknown) => {
+          if (val === undefined) return null;
+          if (typeof val === 'boolean') return val ? 1 : 0;
+          return val;
+        };
+        const sanitizedParams = params.map(sanitize);
         const result = stmt.run(...sanitizedParams);
-        results.push({ changes: result.changes });
+        return {
+          changes: result.changes,
+          lastInsertRowid: result.lastInsertRowid,
+        };
       }
+      throw err;
+    }
+  }
 
-      db.exec('COMMIT;');
-      return results;
-    } catch (err) {
-      db.exec('ROLLBACK;');
+  async batch(statements: BatchStatement[]): Promise<{ changes: number }[]> {
+    if (statements.length === 0) return [];
+    try {
+      const db = await this.getDb();
+      db.exec('BEGIN TRANSACTION;');
+      try {
+        const results: { changes: number }[] = [];
+        const sanitize = (val: unknown) => {
+          if (val === undefined) return null;
+          if (typeof val === 'boolean') return val ? 1 : 0;
+          return val;
+        };
+
+        for (const s of statements) {
+          const stmt = db.prepare(s.sql);
+          const sanitizedParams = (s.params || []).map(sanitize);
+          const result = stmt.run(...sanitizedParams);
+          results.push({ changes: result.changes });
+        }
+
+        db.exec('COMMIT;');
+        return results;
+      } catch (err) {
+        db.exec('ROLLBACK;');
+        throw err;
+      }
+    } catch (err: any) {
+      if (err?.message && err.message.includes('no such table')) {
+        console.warn('[DATABASE] "no such table" detected in batch. Ensuring schema and retrying...');
+        await ensureDatabaseSchema(this);
+        return this.batch(statements);
+      }
       throw err;
     }
   }
@@ -190,11 +273,34 @@ class CloudflareD1HttpClient implements DatabaseClient {
   private accountId: string;
   private databaseId: string;
   private apiToken: string;
+  private schemaVerified = false;
+  private schemaInitPromise: Promise<boolean> | null = null;
 
   constructor(accountId: string, databaseId: string, apiToken: string) {
     this.accountId = accountId;
     this.databaseId = databaseId;
     this.apiToken = apiToken;
+  }
+
+  private async ensureSchemaChecked(): Promise<void> {
+    if (this.schemaVerified) return;
+    if (this.schemaInitPromise) {
+      await this.schemaInitPromise;
+      return;
+    }
+    this.schemaInitPromise = (async () => {
+      try {
+        await ensureDatabaseSchema(this);
+        this.schemaVerified = true;
+        return true;
+      } catch (err) {
+        console.warn('[CLOUDFLARE D1] Initial schema check warning:', err);
+        return false;
+      } finally {
+        this.schemaInitPromise = null;
+      }
+    })();
+    await this.schemaInitPromise;
   }
 
   private sanitizeParams(params: unknown[] = []): unknown[] {
@@ -233,7 +339,17 @@ class CloudflareD1HttpClient implements DatabaseClient {
   }
 
   async query<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
-    return this.rawQuery<T>(sql, params);
+    try {
+      await this.ensureSchemaChecked();
+      return await this.rawQuery<T>(sql, params);
+    } catch (err: any) {
+      if (err?.message && err.message.includes('no such table')) {
+        console.warn('[CLOUDFLARE D1] "no such table" error. Running schema migration and retrying...');
+        await ensureDatabaseSchema(this);
+        return await this.rawQuery<T>(sql, params);
+      }
+      throw err;
+    }
   }
 
   async queryOne<T = unknown>(sql: string, params: unknown[] = []): Promise<T | null> {
@@ -243,74 +359,91 @@ class CloudflareD1HttpClient implements DatabaseClient {
 
   async execute(sql: string, params: unknown[] = []): Promise<{ changes: number; lastInsertRowid?: number | bigint }> {
     const trimmed = sql.trim().toUpperCase();
-    // D1 HTTP API does not support interactive transaction commands over single HTTP calls.
-    // Gracefully handle BEGIN/COMMIT/ROLLBACK as no-ops; true atomicity is provided by db.batch()
     if (trimmed === 'BEGIN' || trimmed === 'BEGIN TRANSACTION' || trimmed === 'COMMIT' || trimmed === 'ROLLBACK') {
       return { changes: 0 };
     }
 
-    const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/d1/database/${this.databaseId}/query`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.apiToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        sql,
-        params: this.sanitizeParams(params),
-      }),
-    });
+    try {
+      await this.ensureSchemaChecked();
+      const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/d1/database/${this.databaseId}/query`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sql,
+          params: this.sanitizeParams(params),
+        }),
+      });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Cloudflare D1 execute failed: ${res.status} ${errText}`);
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Cloudflare D1 execute failed: ${res.status} ${errText}`);
+      }
+
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(`Cloudflare D1 execute error: ${JSON.stringify(data.errors)}`);
+      }
+
+      const meta = data.result?.[0]?.meta;
+      return {
+        changes: meta?.changes || 0,
+        lastInsertRowid: meta?.last_row_id,
+      };
+    } catch (err: any) {
+      if (err?.message && err.message.includes('no such table')) {
+        console.warn('[CLOUDFLARE D1] "no such table" error on execute. Auto-migrating and retrying...');
+        await ensureDatabaseSchema(this);
+        return await this.execute(sql, params);
+      }
+      throw err;
     }
-
-    const data = await res.json();
-    if (!data.success) {
-      throw new Error(`Cloudflare D1 execute error: ${JSON.stringify(data.errors)}`);
-    }
-
-    const meta = data.result?.[0]?.meta;
-    return {
-      changes: meta?.changes || 0,
-      lastInsertRowid: meta?.last_row_id,
-    };
   }
 
   async batch(statements: BatchStatement[]): Promise<{ changes: number }[]> {
     if (statements.length === 0) return [];
+    try {
+      await this.ensureSchemaChecked();
+      const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/d1/database/${this.databaseId}/query`;
+      const payload = statements.map((s) => ({
+        sql: s.sql,
+        params: this.sanitizeParams(s.params),
+      }));
 
-    const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/d1/database/${this.databaseId}/query`;
-    const payload = statements.map((s) => ({
-      sql: s.sql,
-      params: this.sanitizeParams(s.params),
-    }));
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.apiToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Cloudflare D1 batch failed: ${res.status} ${errText}`);
+      }
 
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Cloudflare D1 batch failed: ${res.status} ${errText}`);
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(`Cloudflare D1 batch error: ${JSON.stringify(data.errors)}`);
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (data.result || []).map((r: any) => ({
+        changes: r?.meta?.changes || 0,
+      }));
+    } catch (err: any) {
+      if (err?.message && err.message.includes('no such table')) {
+        console.warn('[CLOUDFLARE D1] "no such table" error on batch. Auto-migrating and retrying...');
+        await ensureDatabaseSchema(this);
+        return await this.batch(statements);
+      }
+      throw err;
     }
-
-    const data = await res.json();
-    if (!data.success) {
-      throw new Error(`Cloudflare D1 batch error: ${JSON.stringify(data.errors)}`);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (data.result || []).map((r: any) => ({
-      changes: r?.meta?.changes || 0,
-    }));
   }
 
   async runMigration(sql: string): Promise<void> {
