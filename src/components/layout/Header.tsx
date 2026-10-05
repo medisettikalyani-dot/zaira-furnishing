@@ -19,10 +19,20 @@ import {
   Sparkles,
   PackageCheck,
   User,
+  Ruler,
+  Phone,
+  Flame,
+  Percent,
 } from 'lucide-react';
 import { useStore } from '@/lib/context/StoreContext';
-import { getCategoryHref } from '@/lib/data/categories';
-import { DbCategory } from '@/lib/db/types';
+import { getCategoryHref, getSubcategoryHref } from '@/lib/data/categories';
+import { DbCategory, DbSubcategory } from '@/lib/db/types';
+import { ZAIRA_WHATSAPP_DISPLAY, ZAIRA_WHATSAPP_URL } from '@/lib/whatsapp';
+import { ConciergeTopBar } from '@/components/layout/ConciergeTopBar';
+
+interface HeaderCategory extends DbCategory {
+  subcategories?: DbSubcategory[];
+}
 
 interface HeaderProductResult {
   id: string;
@@ -33,15 +43,16 @@ interface HeaderProductResult {
   base_price?: number | null;
   currency?: string | null;
   category_name?: string | null;
+  images?: string | string[];
 }
 
 export function Header() {
   const pathname = usePathname();
   const [prevPathname, setPrevPathname] = useState(pathname);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [shopMenuOpen, setShopMenuOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [activeNavMenu, setActiveNavMenu] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
   const {
@@ -53,16 +64,18 @@ export function Header() {
     removeFromCart,
     updateQuantity,
     wishlistCount,
+    openBookingModal,
   } = useStore();
 
-  const shopMenuRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const navBarRef = useRef<HTMLDivElement>(null);
 
   // Close menus on route change
   if (prevPathname !== pathname) {
     setPrevPathname(pathname);
     setMobileMenuOpen(false);
-    setSearchOpen(false);
-    setShopMenuOpen(false);
+    setSearchFocused(false);
+    setActiveNavMenu(null);
     setIsCartOpen(false);
   }
 
@@ -75,11 +88,14 @@ export function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Click outside to close shop dropdown
+  // Click outside to close search dropdown or mega menu
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (shopMenuRef.current && !shopMenuRef.current.contains(e.target as Node)) {
-        setShopMenuOpen(false);
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setSearchFocused(false);
+      }
+      if (navBarRef.current && !navBarRef.current.contains(e.target as Node)) {
+        setActiveNavMenu(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -87,7 +103,7 @@ export function Header() {
   }, []);
 
   // Dynamic D1 categories state
-  const [categories, setCategories] = useState<DbCategory[]>([]);
+  const [categories, setCategories] = useState<HeaderCategory[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -112,24 +128,20 @@ export function Header() {
   // Dynamic D1 search state
   const [searchResults, setSearchResults] = useState<HeaderProductResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
 
   useEffect(() => {
     const query = searchQuery.trim();
     if (!query) {
       setSearchResults([]);
       setIsSearching(false);
-      setSearchError(null);
       return;
     }
 
     setIsSearching(true);
-    setSearchError(null);
-
     const abortController = new AbortController();
     const timeoutId = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=8`, {
+        const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=6`, {
           signal: abortController.signal,
         });
         if (!res.ok) throw new Error('Search request failed');
@@ -142,13 +154,12 @@ export function Header() {
       } catch (err: any) {
         if (err.name !== 'AbortError') {
           console.error('Header search error:', err);
-          setSearchError('Unable to complete search. Please try again.');
           setSearchResults([]);
         }
       } finally {
         setIsSearching(false);
       }
-    }, 250);
+    }, 200);
 
     return () => {
       clearTimeout(timeoutId);
@@ -156,246 +167,487 @@ export function Header() {
     };
   }, [searchQuery]);
 
+  const navCategories = [
+    {
+      name: 'Curtains',
+      href: '/categories/curtains',
+      id: 'curtains',
+      badge: 'Popular',
+      sublinks: [
+        { label: '100% Thermal Blackout', href: '/categories/curtains/blackout' },
+        { label: 'French Sheer Voiles', href: '/categories/curtains/sheer' },
+        { label: 'Luxury Velvet Drapes', href: '/categories/curtains/velvet' },
+        { label: 'Belgian Pure Linen', href: '/categories/curtains/linen' },
+        { label: 'Custom Made-to-Measure', href: '/#bespoke-studio' },
+      ],
+    },
+    {
+      name: 'Blinds',
+      href: '/categories/blinds',
+      id: 'blinds',
+      badge: 'Motorized',
+      sublinks: [
+        { label: 'Motorized Somfy Smart Blinds', href: '/categories/blinds/motorized-smart' },
+        { label: 'Architectural Roller Blinds', href: '/categories/blinds/roller' },
+        { label: 'Zebra (Day & Night) Blinds', href: '/categories/blinds/zebra' },
+        { label: 'Basswood Wooden Venetian', href: '/categories/blinds/wooden' },
+        { label: 'Honeycomb / Roman Blinds', href: '/categories/blinds' },
+      ],
+    },
+    {
+      name: 'Sofa Fabrics',
+      href: '/categories/sofa-fabrics',
+      id: 'sofa-fabrics',
+      sublinks: [
+        { label: 'Italian Textured Bouclé', href: '/categories/sofa-fabrics/boucle' },
+        { label: 'Heavy Chenille & Velvet', href: '/categories/sofa-fabrics/velvet-chenille' },
+        { label: 'Stain-Resistant Performance', href: '/categories/sofa-fabrics/performance' },
+        { label: 'Natural Cotton Linen', href: '/categories/sofa-fabrics/linen-cotton' },
+      ],
+    },
+    {
+      name: 'Wallpapers',
+      href: '/categories/wallpapers',
+      id: 'wallpapers',
+      sublinks: [
+        { label: 'Handwoven Grasscloth', href: '/categories/wallpapers/textured-grasscloth' },
+        { label: 'Scenic Panoramic Murals', href: '/categories/wallpapers/panoramic-murals' },
+        { label: 'Textured Fabric Coverings', href: '/categories/wallpapers' },
+      ],
+    },
+    {
+      name: 'Mattresses',
+      href: '/categories/mattresses-sleep-systems',
+      id: 'mattresses',
+      sublinks: [
+        { label: 'Zero-Motion Pocket Springs', href: '/categories/mattresses-sleep-systems' },
+        { label: '100% Organic Natural Latex', href: '/categories/mattresses-sleep-systems' },
+        { label: 'Orthopedic Spine Support', href: '/categories/mattresses-sleep-systems' },
+      ],
+    },
+    {
+      name: 'Flooring',
+      href: '/categories/wooden-flooring-sports-floor',
+      id: 'flooring',
+      sublinks: [
+        { label: 'European Oak Parquet', href: '/categories/wooden-flooring-sports-floor' },
+        { label: 'Luxury Herringbone Wood', href: '/categories/wooden-flooring-sports-floor' },
+        { label: 'SPC Waterproof Vinyl Flooring', href: '/categories/wooden-flooring-sports-floor' },
+      ],
+    },
+    {
+      name: 'Rugs & Carpets',
+      href: '/categories/carpets',
+      id: 'rugs',
+      sublinks: [
+        { label: 'Hand-Tufted Wool & Silk', href: '/categories/carpets/hand-tufted' },
+        { label: 'Custom Luxury Area Rugs', href: '/categories/carpets' },
+      ],
+    },
+    {
+      name: 'Bed & Bath',
+      href: '/categories/bed-linen-bath',
+      id: 'bed-bath',
+      sublinks: [
+        { label: '1000 TC Egyptian Bed Linen', href: '/categories/bed-linen-bath' },
+        { label: 'Plush Micro-Cotton Towels', href: '/categories/bed-linen-bath' },
+      ],
+    },
+    {
+      name: 'Cushions',
+      href: '/categories/cushions-pillows',
+      id: 'cushions',
+      sublinks: [
+        { label: 'Embroidered Velvet Pillows', href: '/categories/cushions-pillows' },
+        { label: 'Handloom Cotton Covers', href: '/categories/cushions-pillows' },
+      ],
+    },
+  ];
+
   return (
     <>
-      {/* ─── Sticky Navigation Header ─── */}
+      {/* ─── Top Concierge & Flagship Announcement Strip ─── */}
+      <ConciergeTopBar />
+
+      {/* ─── E-COMMERCE MAIN HEADER (Zaira Furnishings Tuscan Terracotta & Espresso Theme) ─── */}
       <header
-        className={`sticky top-0 z-40 w-full transition-all duration-300 ${
-          isScrolled
-            ? 'bg-[#FAF7F2]/95 backdrop-blur-md border-b border-[#EAE4D8] shadow-xs py-3'
-            : 'bg-[#FDFBF7]/90 backdrop-blur-xs border-b border-[#F0ECE1] py-3.5 sm:py-4'
+        className={`sticky top-0 z-40 w-full transition-all duration-300 bg-[#2C221E] text-white shadow-md border-b border-[#3D302A] ${
+          isScrolled ? 'shadow-xl' : 'shadow-md'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            {/* Mobile: Hamburger Button */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-1.5 -ml-1 text-[#1C1917] hover:text-[#1E3A2F] transition-colors focus:outline-hidden"
-              aria-label="Toggle navigation menu"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-
-            {/* Brand Logo */}
-            <div className="flex items-center">
-              <Link href="/" className="group inline-flex items-center gap-2 sm:gap-3">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-                  <svg viewBox="0 0 36 36" className="w-7 h-7 sm:w-8 sm:h-8 fill-none">
-                    <path d="M18 3 L31 14 L18 22 L5 14 Z" fill="#9CA488" />
-                    <path d="M5 14 L18 22 L18 33 L5 25 Z" fill="#1E3A2F" />
-                    <path d="M31 14 L18 22 L18 33 L31 25 Z" fill="#587465" />
-                    <path
-                      d="M18 10 L23 14 L23 24 L13 24 L13 14 Z"
-                      stroke="#FAF7F2"
-                      strokeWidth="1.2"
-                      strokeOpacity="0.7"
-                    />
-                  </svg>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-serif text-[19px] sm:text-[23px] tracking-[0.15em] font-semibold text-[#1E3A2F] uppercase leading-none">
-                    ZAIRA
-                  </span>
-                  <span className="text-[7.5px] sm:text-[9px] uppercase tracking-[0.3em] text-[#6E6862] font-semibold mt-0.5 sm:mt-1 leading-none">
-                    FURNISHING
-                  </span>
-                </div>
-              </Link>
-            </div>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-7 xl:gap-8">
-              <Link
-                href="/"
-                className={`text-[13.5px] tracking-[0.04em] font-medium transition-colors ${
-                  pathname === '/' ? 'text-[#1E3A2F] font-semibold' : 'text-[#57534E] hover:text-[#1E3A2F]'
-                }`}
-              >
-                Home
-              </Link>
-
-              {/* Shop Dropdown */}
-              <div className="relative" ref={shopMenuRef}>
-                <button
-                  type="button"
-                  onClick={() => setShopMenuOpen(!shopMenuOpen)}
-                  onMouseEnter={() => setShopMenuOpen(true)}
-                  className={`inline-flex items-center gap-1 text-[13.5px] tracking-[0.04em] font-medium transition-colors ${
-                    pathname.startsWith('/categories') || pathname.startsWith('/products')
-                      ? 'text-[#1E3A2F] font-semibold'
-                      : 'text-[#57534E] hover:text-[#1E3A2F]'
-                  }`}
-                >
-                  <span>Shop</span>
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                      shopMenuOpen ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-
-                {/* Dropdown Menu */}
-                {shopMenuOpen && (
-                  <div
-                    onMouseLeave={() => setShopMenuOpen(false)}
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[560px] bg-white rounded-2xl shadow-xl border border-[#EAE4D8] p-5 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
-                  >
-                    <div className="flex items-center justify-between pb-3 border-b border-[#F2ECE1] mb-3.5">
-                      <span className="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#9A7B56]">
-                        Furnishing Collections
-                      </span>
-                      <Link
-                        href="/categories"
-                        onClick={() => setShopMenuOpen(false)}
-                        className="text-[11.5px] uppercase tracking-wider font-semibold text-[#1E3A2F] hover:text-[#9A7B56] inline-flex items-center gap-1 transition-colors"
-                      >
-                        <span>All {categories.length || 9} Categories</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </Link>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 max-h-[380px] overflow-y-auto">
-                      {categories.map((cat) => (
-                        <Link
-                          key={cat.id}
-                          href={getCategoryHref(cat.slug)}
-                          onClick={() => setShopMenuOpen(false)}
-                          className="p-3 rounded-xl hover:bg-[#FAF7F2] border border-transparent hover:border-[#EAE4D8] transition-all group/item"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-serif text-[14.5px] font-medium text-[#1C1917] group-hover/item:text-[#1E3A2F]">
-                              {cat.name}
-                            </span>
-                          </div>
-                          <p className="text-[11.5px] text-[#78716C] line-clamp-1 mt-1 font-light">
-                            {cat.description || cat.tagline || ''}
-                          </p>
-                        </Link>
-                      ))}
-                    </div>
-
-                    <div className="mt-4 pt-3.5 border-t border-[#F2ECE1] flex items-center justify-between bg-[#FAF7F2] -mx-5 -mb-5 p-4 rounded-b-2xl">
-                      <div className="flex items-center gap-2 text-[12px] text-[#57534E]">
-                        <Sparkles className="w-3.5 h-3.5 text-[#9A7B56]" />
-                        <span>Complimentary in-home laser measurement included</span>
-                      </div>
-                      <Link
-                        href="/products"
-                        className="text-[11px] uppercase tracking-widest font-semibold text-[#1E3A2F] hover:underline"
-                      >
-                        Explore All Products
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Direct Curtains Highlight */}
-              <Link
-                href="/categories/curtains"
-                className={`text-[13.5px] tracking-[0.04em] font-medium transition-colors ${
-                  pathname.startsWith('/categories/curtains')
-                    ? 'text-[#1E3A2F] font-semibold'
-                    : 'text-[#57534E] hover:text-[#1E3A2F]'
-                }`}
-              >
-                Curtains
-              </Link>
-
-              <Link
-                href="/services"
-                className={`text-[13.5px] tracking-[0.04em] font-medium transition-colors ${
-                  pathname === '/services' ? 'text-[#1E3A2F] font-semibold' : 'text-[#57534E] hover:text-[#1E3A2F]'
-                }`}
-              >
-                Services
-              </Link>
-
-              <Link
-                href="/about"
-                className={`text-[13.5px] tracking-[0.04em] font-medium transition-colors ${
-                  pathname === '/about' ? 'text-[#1E3A2F] font-semibold' : 'text-[#57534E] hover:text-[#1E3A2F]'
-                }`}
-              >
-                About
-              </Link>
-
-              <Link
-                href="/contact"
-                className={`text-[13.5px] tracking-[0.04em] font-medium transition-colors ${
-                  pathname === '/contact' ? 'text-[#1E3A2F] font-semibold' : 'text-[#57534E] hover:text-[#1E3A2F]'
-                }`}
-              >
-                Contact
-              </Link>
-            </nav>
-
-            {/* Header Right Actions */}
-            <div className="flex items-center gap-1 sm:gap-2.5">
-              {/* Search Trigger */}
+        {/* ROW 1: Social Icons (Left) + Signature Gold Logo Plaque (Center) + Phone Hotline, Search & Cart (Right) */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3">
+          <div className="flex items-center justify-between gap-3 sm:gap-6">
+            
+            {/* LEFT: Social Media Icons & Mobile Menu Toggle */}
+            <div className="flex items-center gap-3">
+              {/* Mobile Hamburger Button */}
               <button
                 type="button"
-                onClick={() => setSearchOpen(true)}
-                className="p-1.5 sm:p-2 text-[#1C1917] hover:text-[#1E3A2F] transition-colors rounded-full hover:bg-black/5 cursor-pointer"
-                aria-label="Search catalog"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden p-1.5 -ml-1 text-white hover:text-[#FDE68A] transition-colors"
+                aria-label="Toggle navigation menu"
               >
-                <Search className="w-5 h-5 stroke-[1.6]" />
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
 
-              {/* Wishlist Trigger */}
+              {/* Social Media Links */}
+              <div className="hidden sm:flex items-center gap-3 text-white/90">
+                {/* Facebook */}
+                <a
+                  href="https://facebook.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#D4AF37] transition-all hover:scale-110 p-1"
+                  aria-label="Facebook"
+                  title="Follow Zaira on Facebook"
+                >
+                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                  </svg>
+                </a>
+
+                {/* Instagram */}
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#D4AF37] transition-all hover:scale-110 p-1"
+                  aria-label="Instagram"
+                  title="Follow Zaira on Instagram"
+                >
+                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                  </svg>
+                </a>
+
+                {/* WhatsApp */}
+                <a
+                  href={ZAIRA_WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#25D366] hover:text-[#22c55e] transition-all hover:scale-110 p-1 flex items-center gap-1.5"
+                  aria-label="WhatsApp"
+                  title="Chat with Zaira on WhatsApp"
+                >
+                  <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.699c.97.53 1.77.813 2.796.814 3.18 0 5.767-2.587 5.768-5.766.001-3.181-2.586-5.767-5.768-5.767zm3.385 8.188c-.14.394-.713.729-1.002.766-.279.035-.635.055-1.834-.442-1.444-.598-2.378-2.062-2.45-2.158-.071-.096-.583-.775-.583-1.479 0-.704.368-1.05.5-1.193.132-.143.288-.179.384-.179.096 0 .192.001.276.005.09.004.21.034.32.298.114.275.39 1.05.424 1.127.034.077.057.167.006.269-.051.102-.077.165-.153.254-.076.089-.16.198-.229.266-.077.076-.157.159-.068.312.09.153.399.658.857 1.066.589.524 1.085.687 1.239.764.153.077.243.064.333-.039.09-.102.385-.448.487-.602.102-.154.204-.128.344-.077.14.051.888.419 1.041.496.153.076.255.115.293.179.038.064.038.371-.102.765z" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            {/* CENTER: Iconic Gold Logo Plaque */}
+            <Link href="/" className="shrink-0 flex flex-col items-center group cursor-pointer text-center">
+              <div className="bg-[#D4AF37] hover:bg-[#E5C378] px-4 sm:px-6 py-1.5 sm:py-2 rounded-xs shadow-md border-b-2 border-[#A88B27] flex items-center gap-2 sm:gap-2.5 transition-all duration-200 group-hover:scale-[1.02]">
+                {/* Terracotta Brand Icon */}
+                <div className="w-5 h-5 sm:w-6 sm:h-6 text-[#9E4733] flex items-center justify-center shrink-0">
+                  <svg viewBox="0 0 28 28" fill="none" className="w-full h-full">
+                    <path d="M14 2 L24 9 L14 16 L4 9 Z" fill="#9E4733" />
+                    <path d="M4 9 L14 16 L14 26 L4 19 Z" fill="#2C221E" />
+                    <path d="M24 9 L14 16 L14 26 L24 19 Z" fill="#B85842" />
+                  </svg>
+                </div>
+                <div className="flex flex-col text-left leading-none">
+                  <span className="font-serif font-black text-[18px] sm:text-[23px] tracking-wider text-[#2C221E] uppercase leading-none">
+                    ZAIRA
+                  </span>
+                  <span className="text-[7.5px] sm:text-[8.5px] font-black tracking-[0.24em] text-[#9E4733] uppercase leading-none mt-0.5">
+                    FURNISHINGS
+                  </span>
+                </div>
+              </div>
+              <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-[0.26em] text-[#F3E2B3] font-extrabold mt-1 text-center leading-none">
+                CURATING LUXURY LIVING
+              </span>
+            </Link>
+
+            {/* RIGHT: Search Icon + Wishlist & Shopping Bag */}
+            <div className="flex items-center gap-3.5 sm:gap-5 shrink-0">
+              
+              {/* Search Toggle Icon */}
+              <button
+                type="button"
+                onClick={() => setSearchFocused(!searchFocused)}
+                className="p-2 text-white hover:text-[#D4AF37] transition-all hover:scale-110 cursor-pointer rounded-full hover:bg-white/5"
+                aria-label="Search store products"
+                title="Search Products"
+              >
+                <Search className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+              </button>
+
+              {/* Wishlist Link with Badge */}
               <Link
                 href="/account"
-                className="relative p-1.5 sm:p-2 text-[#1C1917] hover:text-[#1E3A2F] transition-colors rounded-full hover:bg-black/5"
-                aria-label="View wishlist"
+                className="relative p-2 text-white hover:text-[#D4AF37] transition-all hover:scale-110 rounded-full hover:bg-white/5"
+                aria-label="Wishlist"
+                title="Wishlist"
               >
-                <Heart className="w-5 h-5 stroke-[1.6]" />
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2]" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[17px] h-[17px] px-1 text-[10px] font-bold text-white bg-[#9A7B56] rounded-full shadow-2xs">
+                  <span className="absolute top-0 right-0 min-w-[17px] h-[17px] px-1 text-[9.5px] font-bold text-white bg-[#9E4733] rounded-full flex items-center justify-center shadow-xs border border-[#2C221E]">
                     {wishlistCount}
                   </span>
                 )}
               </Link>
 
-              {/* My Orders Trigger */}
-              <Link
-                href="/account/orders"
-                className="p-1.5 sm:p-2 text-[#1C1917] hover:text-[#1E3A2F] transition-colors rounded-full hover:bg-black/5"
-                aria-label="My Orders"
-                title="My Orders & Tracking"
-              >
-                <PackageCheck className="w-5 h-5 stroke-[1.6]" />
-              </Link>
-
-              {/* Shopping Bag Trigger */}
+              {/* Shopping Cart Bag */}
               <button
                 type="button"
                 onClick={() => setIsCartOpen(true)}
-                className="relative p-1.5 sm:p-2 text-[#1C1917] hover:text-[#1E3A2F] transition-colors rounded-full hover:bg-black/5 cursor-pointer"
-                aria-label="View shopping bag"
+                className="relative p-2 text-white hover:text-[#D4AF37] transition-all hover:scale-110 cursor-pointer rounded-full hover:bg-white/5"
+                aria-label="Shopping Cart"
+                title="View Bag"
               >
-                <ShoppingBag className="w-5 h-5 stroke-[1.6]" />
-                {cartCount > 0 ? (
-                  <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[17px] h-[17px] px-1 text-[10px] font-bold text-white bg-[#1E3A2F] rounded-full shadow-2xs animate-in zoom-in duration-200">
+                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2]" />
+                {cartCount > 0 && (
+                  <span className="absolute top-0 right-0 min-w-[17px] h-[17px] px-1 text-[9.5px] font-bold text-white bg-[#9E4733] rounded-full flex items-center justify-center shadow-xs border border-[#2C221E]">
                     {cartCount}
-                  </span>
-                ) : (
-                  <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[17px] h-[17px] px-1 text-[10px] font-bold text-white bg-[#1E3A2F] rounded-full shadow-2xs">
-                    0
                   </span>
                 )}
               </button>
 
-              {/* Book Measurement CTA Button (Desktop) */}
-              <Link
-                href="/services#free-in-home-measurement"
-                className="hidden xl:inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[11.5px] uppercase tracking-wider font-semibold bg-[#1E3A2F] text-white hover:bg-[#152B23] transition-all ml-1.5 shadow-2xs"
-              >
-                <Calendar className="w-3.5 h-3.5 text-[#C4B9A1]" />
-                <span>Book Visit</span>
-              </Link>
             </div>
+
+          </div>
+
+          {/* Expandable Instant Search Bar (Opens when Search icon is clicked) */}
+          {searchFocused && (
+            <div ref={searchContainerRef} className="mt-3 relative z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+              <div className="w-full flex items-center border-2 border-[#D4AF37] rounded-xl overflow-hidden bg-white text-gray-900 shadow-2xl">
+                <div className="pl-4 pr-2 text-[#9E4733]">
+                  <Search className="w-4 h-4 text-[#9E4733]" />
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search curtains, blinds, sofa fabrics, wallpapers, rugs, mattresses..."
+                  autoFocus
+                  className="w-full py-2.5 text-[13.5px] text-gray-900 placeholder-gray-500 bg-transparent focus:outline-hidden"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="p-1.5 text-gray-400 hover:text-gray-700"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setSearchFocused(false)}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-[11px] uppercase tracking-wider transition-colors shrink-0"
+                >
+                  Close
+                </button>
+              </div>
+
+              {/* Instant Search Results Dropdown */}
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-[#E7E2D6] p-4 text-gray-900 z-50">
+                {isSearching ? (
+                  <div className="py-6 text-center text-[13px] text-gray-500">
+                    <p className="font-semibold text-[#9E4733]">Searching store catalog...</p>
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <div>
+                    <div className="flex items-center justify-between pb-2 mb-3 border-b border-gray-100 text-[11px] uppercase tracking-wider text-[#9E4733] font-bold">
+                      <span>Matching Furnishings ({searchResults.length})</span>
+                      <Link href="/categories" onClick={() => setSearchFocused(false)} className="text-[#9E4733] hover:underline">
+                        View All
+                      </Link>
+                    </div>
+                    <div className="space-y-2 max-h-72 overflow-y-auto">
+                      {searchResults.map((item) => (
+                        <Link
+                          key={item.id}
+                          href={`/products/${item.slug}`}
+                          onClick={() => setSearchFocused(false)}
+                          className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F6F1E9] transition-colors border border-transparent hover:border-[#E7E2D6]"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-[#F6F1E9] border border-[#E7E2D6] flex items-center justify-center text-[#9E4733]">
+                              <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                            </div>
+                            <div>
+                              <p className="text-[13px] font-semibold text-gray-900 leading-tight">
+                                {item.display_name || item.name}
+                              </p>
+                              <p className="text-[11px] text-gray-500">{item.category_name || 'Furnishing'}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[13px] font-bold text-[#9E4733]">
+                              ₹{(item.base_price || item.starting_price || 0).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ) : searchQuery ? (
+                  <div className="py-4 text-center text-[13px] text-gray-600">
+                    No products found for &ldquo;{searchQuery}&rdquo;. Try browsing popular categories below.
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">
+                      Popular Searches
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {['Blackout Curtains', 'Motorized Blinds', 'Bouclé Sofa Fabric', 'Natural Latex Mattress', 'Grasscloth Wallpaper', 'Oak Flooring', 'Carpets & Rugs'].map(
+                        (tag) => (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => setSearchQuery(tag)}
+                            className="px-3 py-1 bg-[#F6F1E9] hover:bg-[#9E4733] hover:text-white text-gray-700 text-[11.5px] rounded-full border border-gray-200 transition-colors cursor-pointer"
+                          >
+                            {tag}
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ROW 2: ZAIRA CLEAN CATEGORY & SERVICE NAVIGATION BAR */}
+        <div ref={navBarRef} className="hidden lg:block bg-[#1E1714] border-t border-[#3D302A]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav className="flex items-center justify-between text-[12px] xl:text-[12.5px] font-medium tracking-normal text-white py-1.5 overflow-x-auto no-scrollbar">
+              
+              {/* 1. Explore All Collections ⌵ Dropdown */}
+              <div
+                className="relative group"
+                onMouseEnter={() => setActiveNavMenu('explore')}
+                onMouseLeave={() => setActiveNavMenu(null)}
+              >
+                <Link
+                  href="/categories"
+                  className="inline-flex items-center gap-1 hover:text-[#D4AF37] transition-colors py-1 cursor-pointer whitespace-nowrap font-bold text-[#F3E2B3]"
+                >
+                  <span>Explore All</span>
+                  <ChevronDown className="w-3 h-3 group-hover:rotate-180 transition-transform opacity-70" />
+                </Link>
+
+                {/* Dropdown with Zaira's 9 Categories */}
+                {activeNavMenu === 'explore' && (
+                  <div className="absolute top-full left-0 w-64 bg-white rounded-b-xl shadow-2xl border border-gray-200 py-2.5 z-50 text-gray-900 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="px-4 pb-2 mb-1 border-b border-gray-100 text-[10.5px] font-bold uppercase tracking-wider text-[#9E4733]">
+                      Product Categories
+                    </div>
+                    {navCategories.map((cat) => (
+                      <Link
+                        key={cat.id}
+                        href={cat.href}
+                        onClick={() => setActiveNavMenu(null)}
+                        className="flex items-center justify-between px-4 py-2 hover:bg-[#F6F1E9] hover:text-[#9E4733] transition-colors text-[13px] font-medium"
+                      >
+                        <span>{cat.name}</span>
+                        <ArrowRight className="w-3.5 h-3.5 text-gray-400" />
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <span className="text-white/20 select-none">•</span>
+
+              {/* 2. Curtains */}
+              <Link
+                href="/categories/curtains"
+                className="hover:text-[#D4AF37] transition-colors py-1 cursor-pointer whitespace-nowrap"
+              >
+                Window Curtains
+              </Link>
+
+              <span className="text-white/20 select-none">•</span>
+
+              {/* 3. Blinds */}
+              <Link
+                href="/categories/blinds"
+                className="hover:text-[#D4AF37] transition-colors py-1 cursor-pointer whitespace-nowrap"
+              >
+                Window Blinds
+              </Link>
+
+              <span className="text-white/20 select-none">•</span>
+
+              {/* 4. Sofa Fabrics */}
+              <Link
+                href="/categories/sofa-fabrics"
+                className="hover:text-[#D4AF37] transition-colors py-1 cursor-pointer whitespace-nowrap"
+              >
+                Sofa Fabrics
+              </Link>
+
+              <span className="text-white/20 select-none">•</span>
+
+              {/* 5. Wallpapers */}
+              <Link
+                href="/categories/wallpapers"
+                className="hover:text-[#D4AF37] transition-colors py-1 cursor-pointer whitespace-nowrap"
+              >
+                Wallpapers
+              </Link>
+
+              <span className="text-white/20 select-none">•</span>
+
+              {/* 6. Mattresses */}
+              <Link
+                href="/categories/mattresses-sleep-systems"
+                className="hover:text-[#D4AF37] transition-colors py-1 cursor-pointer whitespace-nowrap"
+              >
+                Mattresses
+              </Link>
+
+              <span className="text-white/20 select-none">•</span>
+
+              {/* 7. Wooden Flooring */}
+              <Link
+                href="/categories/wooden-flooring-sports-floor"
+                className="hover:text-[#D4AF37] transition-colors py-1 cursor-pointer whitespace-nowrap"
+              >
+                Wooden Flooring
+              </Link>
+
+              <span className="text-white/20 select-none">•</span>
+
+              {/* 8. Carpets & Rugs */}
+              <Link
+                href="/categories/carpets"
+                className="hover:text-[#D4AF37] transition-colors py-1 cursor-pointer whitespace-nowrap"
+              >
+                Carpets &amp; Rugs
+              </Link>
+
+              <span className="text-white/20 select-none">•</span>
+
+              {/* 9. Bed Linen */}
+              <Link
+                href="/categories/bed-linen-bath"
+                className="hover:text-[#D4AF37] transition-colors py-1 cursor-pointer whitespace-nowrap"
+              >
+                Bed Linen
+              </Link>
+
+              <span className="text-white/20 select-none">•</span>
+
+              {/* 10. Book Free Measurement Action Button */}
+              <button
+                type="button"
+                onClick={() => openBookingModal('Free Doorstep In-Home Measurement')}
+                className="px-3 py-1 rounded-full bg-[#D4AF37] hover:bg-[#E5C378] text-[#1E1714] font-bold text-[11.5px] transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
+              >
+                Book Free Home Visit
+              </button>
+
+            </nav>
           </div>
         </div>
       </header>
@@ -460,11 +712,11 @@ export function Header() {
                 ))}
 
                 <Link
-                  href="/products"
+                  href="/categories"
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-[14px] uppercase tracking-[0.14em] font-semibold text-[#1C1917] hover:text-[#1E3A2F] py-2 border-b border-[#F2ECE1] flex items-center justify-between"
                 >
-                  <span>All Products</span>
+                  <span>All Categories</span>
                   <ArrowRight className="w-4 h-4 text-[#A8A29E]" />
                 </Link>
 
@@ -523,17 +775,21 @@ export function Header() {
               {/* Consultation Callout */}
               <div className="bg-[#FAF7F2] p-4 rounded-xl border border-[#EAE4D8] mb-6">
                 <p className="text-[12px] font-semibold text-[#1E3A2F] mb-1">
-                  Book In-Home Measurement
+                  Free In-Home Measurement
                 </p>
                 <p className="text-[11px] text-[#78716C] leading-relaxed mb-3">
-                  We bring fabric swatches and laser tools directly to your doorstep.
+                  Laser precision window measuring & 500+ fabric swatches at your doorstep across Hyderabad.
                 </p>
-                <Link
-                  href="/services#free-in-home-measurement"
-                  className="block w-full py-2.5 text-center text-[11px] uppercase tracking-wider font-semibold bg-[#1E3A2F] text-white rounded-lg"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    openBookingModal('Free In-Home Measurement');
+                  }}
+                  className="block w-full py-2.5 text-center text-[11px] uppercase tracking-wider font-semibold bg-[#1E3A2F] text-white rounded-xl shadow-xs cursor-pointer"
                 >
                   Book Free Visit
-                </Link>
+                </button>
               </div>
             </div>
 
@@ -541,112 +797,15 @@ export function Header() {
             <div className="pt-4 border-t border-[#EAE4D8] text-[11px] text-[#78716C] space-y-1">
               <p className="font-semibold text-[#1C1917]">Puppalguda Showroom</p>
               <p>Alkapur Twp, Hyderabad 500089</p>
-              <p className="font-medium text-[#1E3A2F]">+91 63001 45763</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Search Dialog Modal ─── */}
-      {searchOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4">
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-xs"
-            onClick={() => setSearchOpen(false)}
-          />
-
-          <div className="relative w-full max-w-2xl bg-white rounded-2xl border border-[#EAE4D8] shadow-2xl p-6 z-50">
-            <div className="flex items-center justify-between pb-4 border-b border-[#EAE4D8]">
-              <div className="flex items-center gap-3 flex-1">
-                <Search className="w-5 h-5 text-[#9A7B56]" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search curtains, fabrics, blinds, wallpapers, rugs..."
-                  autoFocus
-                  className="w-full bg-transparent text-[16px] text-[#1C1917] placeholder-[#A8A29E] focus:outline-hidden"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setSearchOpen(false)}
-                className="p-1 text-[#78716C] hover:text-[#1C1917]"
+              <a
+                href={ZAIRA_WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Chat with Zaira Furnishing on WhatsApp"
+                className="inline-block font-medium text-[#1E3A2F] hover:text-[#9A7B56] transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#9A7B56] rounded-xs"
               >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Search Results Preview */}
-            <div className="mt-4 max-h-80 overflow-y-auto">
-              {searchQuery.trim() === '' ? (
-                <div className="py-8 text-center text-[#78716C] text-[13px]">
-                  <p className="font-serif text-[16px] text-[#1C1917] font-medium mb-1">
-                    Explore our collections
-                  </p>
-                  <p>Type to search across all catalog products and furnishings.</p>
-                  <div className="flex flex-wrap gap-2 justify-center mt-4">
-                    {['Blackout Curtains', 'Sheer Voile', 'Velvet', 'Roller Blinds', 'Grasscloth Wallpaper', 'Sofa Fabric'].map(
-                      (tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => setSearchQuery(tag)}
-                          className="px-3 py-1.5 text-[11px] bg-[#FAF7F2] border border-[#EAE4D8] rounded-full text-[#57534E] hover:border-[#1E3A2F] hover:text-[#1E3A2F]"
-                        >
-                          {tag}
-                        </button>
-                      )
-                    )}
-                  </div>
-                </div>
-              ) : isSearching ? (
-                <div className="py-8 text-center text-[#78716C] text-[13px]">
-                  <p className="font-serif text-[15px] text-[#1C1917] font-medium mb-1">
-                    Searching catalog...
-                  </p>
-                  <p className="text-[11.5px] text-[#A8A29E]">Querying our atelier collections</p>
-                </div>
-              ) : searchError ? (
-                <div className="py-8 text-center text-[#78716C] text-[13px]">
-                  {searchError}
-                </div>
-              ) : searchResults.length > 0 ? (
-                <div className="space-y-2">
-                  <p className="text-[11px] uppercase tracking-wider text-[#78716C] mb-2">
-                    Found {searchResults.length} items
-                  </p>
-                  {searchResults.map((prod) => {
-                    const priceValue = prod.base_price || prod.starting_price || 0;
-                    const currencySymbol = prod.currency || '₹';
-                    return (
-                      <Link
-                        key={prod.id}
-                        href={`/products/${prod.slug}`}
-                        onClick={() => setSearchOpen(false)}
-                        className="flex items-center justify-between p-3 hover:bg-[#FAF7F2] rounded-xl border border-transparent hover:border-[#EAE4D8] transition-colors"
-                      >
-                        <div>
-                          <p className="text-[14px] font-serif font-medium text-[#1C1917]">
-                            {prod.display_name || prod.name}
-                          </p>
-                          <p className="text-[11px] text-[#9A7B56]">{prod.category_name || 'Bespoke Collection'}</p>
-                        </div>
-                        <div className="text-right">
-                          <span className="font-serif text-[14px] font-semibold text-[#1C1917]">
-                            {currencySymbol}
-                            {priceValue.toLocaleString('en-IN')}
-                          </span>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="py-8 text-center text-[#78716C] text-[13px]">
-                  No products found matching &ldquo;{searchQuery}&rdquo;.
-                </div>
-              )}
+                {ZAIRA_WHATSAPP_DISPLAY}
+              </a>
             </div>
           </div>
         </div>
@@ -787,17 +946,17 @@ export function Header() {
                 <Link
                   href="/cart"
                   onClick={() => setIsCartOpen(false)}
-                  className="block w-full py-3.5 rounded-full text-center text-[12px] uppercase tracking-widest font-semibold bg-[#1E3A2F] text-white hover:bg-[#152B23] transition-colors shadow-xs"
+                  className="block w-full py-3.5 rounded-full text-center text-[12px] uppercase tracking-widest font-semibold bg-[#1C1714] text-white hover:bg-[#9A7B56] transition-colors shadow-xs"
                 >
                   View Bag & Checkout (COD)
                 </Link>
               ) : (
                 <Link
-                  href="/products"
+                  href="/categories"
                   onClick={() => setIsCartOpen(false)}
-                  className="block w-full py-3 text-center text-[12px] uppercase tracking-widest font-medium bg-[#1E3A2F] text-white hover:bg-[#152B23] rounded-full transition-colors"
+                  className="block w-full py-3 text-center text-[12px] uppercase tracking-widest font-medium bg-[#1C1714] text-white hover:bg-[#9A7B56] rounded-full transition-colors"
                 >
-                  Browse Catalog
+                  Browse Categories
                 </Link>
               )}
 

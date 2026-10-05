@@ -267,7 +267,18 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   try {
     const { id } = await params;
+    const { searchParams } = new URL(req.url);
+    const permanent = searchParams.get('permanent') === 'true';
     const db = getDatabase();
+
+    if (permanent) {
+      await db.execute('DELETE FROM product_images WHERE product_id = ?', [id]);
+      await db.execute('DELETE FROM product_variants WHERE product_id = ?', [id]);
+      await db.execute('DELETE FROM product_specifications WHERE product_id = ?', [id]);
+      await db.execute('DELETE FROM customization_configs WHERE product_id = ?', [id]);
+      await db.execute('DELETE FROM products WHERE id = ?', [id]);
+      return NextResponse.json({ success: true, deleted: true });
+    }
 
     // Soft-deactivate product
     await db.execute("UPDATE products SET active = 0, updated_at = datetime('now') WHERE id = ?", [id]);

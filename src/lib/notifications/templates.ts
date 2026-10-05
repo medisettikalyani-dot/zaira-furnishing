@@ -12,7 +12,7 @@ interface OrderItemData extends DbOrderItem {
   product_type: string;
 }
 
-const SUPPORT_PHONE = '+91 63001 45763';
+const SUPPORT_PHONE = '07947415666';
 const SUPPORT_EMAIL = 'concierge@zairafurnishing.com';
 const SHOWROOM_ADDRESS = 'Rd Number 5, Kyetian Goud Nilayam, Alkapur Twp, Puppalguda, Hyderabad, Telangana 500089';
 

@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { getAuthenticatedCustomer } from '@/lib/auth/customer';
+import {
+  getAuthenticatedCustomer,
+  createCustomerSession,
+  CUSTOMER_SESSION_COOKIE,
+  SESSION_MAX_AGE_SECONDS,
+} from '@/lib/auth/customer';
 import { getDatabase } from '@/lib/db';
-import { DbProduct, DbProductVariant, DbCart, DbCartItem, DbOrder, DbOrderItem } from '@/lib/db/types';
+import { DbProduct, DbProductVariant, DbCart, DbCartItem, DbOrder, DbOrderItem, DbUser } from '@/lib/db/types';
 import { triggerNewOrderNotifications } from '@/lib/notifications/service';
 
 // Helper to generate sequential human-readable collision-safe order number
@@ -75,12 +80,9 @@ export async function GET(req: NextRequest) {
 
 // ─── POST /api/orders (Create genuine D1 COD Order) ───
 export async function POST(req: NextRequest) {
-  const customer = await getAuthenticatedCustomer(req);
-  if (!customer) {
-    return NextResponse.json({ error: 'Unauthorized. Please log in to place an order.' }, { status: 401 });
-  }
-
   try {
+    const customer = await getAuthenticatedCustomer(req);
+
     const body = await req.json().catch(() => null);
     if (!body) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
@@ -103,6 +105,7 @@ export async function POST(req: NextRequest) {
       paymentMethod = 'COD',
       order_source,
       orderSource,
+      isBuyNow = false,
     } = body;
 
     // Validate order source (WEB, WHATSAPP, QUOTE, MEASUREMENT) - defaults to WEB
@@ -127,10 +130,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Valid 10-digit mobile number is required' }, { status: 400 });
     }
 
+    const cleanPhone = customerPhone.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const finalEmail = customerEmail ? customerEmail.trim() : customer.email;
-    if (!finalEmail || !emailRegex.test(finalEmail)) {
-      return NextResponse.json({ error: 'Valid email address is required' }, { status: 400 });
+    const cleanEmail = customerEmail ? customerEmail.trim() : (customer?.email || '');
+    const finalEmail = cleanEmail || `${cleanPhone.replace(/\D/g, '')}@guest.zaira.local`;
+    if (cleanEmail && !emailRegex.test(cleanEmail)) {
+      return NextResponse.json({ error: 'Please enter a valid email address' }, { status: 400 });
     }
 
     // 2. Validate delivery address
@@ -160,11 +165,39 @@ export async function POST(req: NextRequest) {
 
     const db = getDatabase();
 
+    // Determine or create User record
+    let userId: string;
+    let sessionTokenToSet: string | null = null;
+
+    if (customer) {
+      userId = customer.id;
+    } else {
+      const existingUser = await db.queryOne<DbUser>(
+        'SELECT * FROM users WHERE email = ? OR (phone = ? AND role = ?)',
+        [finalEmail, cleanPhone, 'CUSTOMER']
+      );
+      if (existingUser) {
+        userId = existingUser.id;
+      } else {
+        userId = `usr-${crypto.randomBytes(8).toString('hex')}`;
+        await db.execute(
+          `INSERT INTO users (id, role, name, email, phone, status, created_at, updated_at)
+           VALUES (?, 'CUSTOMER', ?, ?, ?, 'active', datetime('now'), datetime('now'))`,
+          [userId, customerName.trim(), finalEmail, cleanPhone]
+        );
+      }
+      try {
+        sessionTokenToSet = await createCustomerSession(userId);
+      } catch (sessErr) {
+        console.warn('Could not establish customer session for order:', sessErr);
+      }
+    }
+
     // 3. Idempotency Check (prevent accidental double-click duplicate orders)
     if (idempotencyKey && typeof idempotencyKey === 'string') {
       const existingOrder = await db.queryOne<DbOrder>(
         'SELECT * FROM orders WHERE user_id = ? AND idempotency_key = ?',
-        [customer.id, idempotencyKey.trim()]
+        [userId, idempotencyKey.trim()]
       );
 
       if (existingOrder) {
@@ -195,33 +228,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. Fetch Customer Cart from D1
-    let cart = await db.queryOne<DbCart>(
-      'SELECT * FROM carts WHERE user_id = ?',
-      [customer.id]
-    );
-
+    // 4. Fetch Cart Items or Buy Now Single Item
+    let cart: DbCart | null = null;
     let cartItems: DbCartItem[] = [];
-    if (cart) {
-      cartItems = await db.query<DbCartItem>(
-        'SELECT * FROM cart_items WHERE cart_id = ?',
-        [cart.id]
-      );
-    }
 
-    // Support items payload passed from checkout body (e.g. fresh client bag synchronization)
-    if ((!cartItems || cartItems.length === 0) && Array.isArray(body.items) && body.items.length > 0) {
-      if (!cart) {
-        const cartId = `cart-${customer.id}`;
-        await db.execute(
-          "INSERT INTO carts (id, user_id, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))",
-          [cartId, customer.id]
+    if (isBuyNow) {
+      if (!Array.isArray(body.items) || body.items.length === 0) {
+        return NextResponse.json(
+          { error: 'No product selected for Buy Now order.' },
+          { status: 400 }
         );
-        cart = { id: cartId, user_id: customer.id, created_at: '', updated_at: '' };
       }
       cartItems = body.items.map((it: any) => ({
-        id: it.id || `item-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        cart_id: cart!.id,
+        id: it.id || `bn-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        cart_id: '',
         product_id: it.productId || it.product_id,
         variant_id: it.variantId || it.variant_id || null,
         quantity: Math.max(1, parseInt(it.quantity, 10) || 1),
@@ -230,6 +250,41 @@ export async function POST(req: NextRequest) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }));
+    } else {
+      cart = await db.queryOne<DbCart>(
+        'SELECT * FROM carts WHERE user_id = ?',
+        [userId]
+      );
+
+      if (cart) {
+        cartItems = await db.query<DbCartItem>(
+          'SELECT * FROM cart_items WHERE cart_id = ?',
+          [cart.id]
+        );
+      }
+
+      // Support items payload passed from checkout body (e.g. fresh client bag synchronization)
+      if ((!cartItems || cartItems.length === 0) && Array.isArray(body.items) && body.items.length > 0) {
+        if (!cart) {
+          const cartId = `cart-${userId}`;
+          await db.execute(
+            "INSERT INTO carts (id, user_id, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))",
+            [cartId, userId]
+          );
+          cart = { id: cartId, user_id: userId, created_at: '', updated_at: '' };
+        }
+        cartItems = body.items.map((it: any) => ({
+          id: it.id || `item-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          cart_id: cart!.id,
+          product_id: it.productId || it.product_id,
+          variant_id: it.variantId || it.variant_id || null,
+          quantity: Math.max(1, parseInt(it.quantity, 10) || 1),
+          unit_price_snapshot: 0,
+          customization_data: typeof it.customizationData === 'object' ? JSON.stringify(it.customizationData) : it.customization_data || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }));
+      }
     }
 
     if (!cartItems || cartItems.length === 0) {
@@ -319,23 +374,20 @@ export async function POST(req: NextRequest) {
     const orderNumber = await generateOrderNumber(db);
     const siteVisitRequired = deliveryOption === 'service_visit' ? 1 : 0;
 
-    // 8. Atomic Database Transaction
-    await db.execute('BEGIN TRANSACTION');
-
-    try {
-      // Insert Order record
-      await db.execute(
-        `INSERT INTO orders (
+    // 8. Atomic Database Transaction (Compatible with both Cloudflare D1 batching & SQLite WAL)
+    const statements: { sql: string; params: unknown[] }[] = [
+      {
+        sql: `INSERT INTO orders (
           id, order_number, user_id, status, payment_method, payment_status,
           customer_name, customer_email, customer_phone, delivery_address,
           city, state, pincode, landmark, delivery_option, site_visit_required,
           site_visit_date, site_visit_time, subtotal, discount, delivery_charge,
           total_amount, notes, idempotency_key, order_source, created_at, updated_at
         ) VALUES (?, ?, ?, 'CONFIRMED', 'COD', 'PENDING', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-        [
+        params: [
           orderId,
           orderNumber,
-          customer.id,
+          userId,
           customerName.trim(),
           finalEmail,
           customerPhone.trim(),
@@ -355,46 +407,51 @@ export async function POST(req: NextRequest) {
           notes ? notes.trim() : null,
           idempotencyKey ? idempotencyKey.trim() : null,
           finalOrderSource,
-        ]
-      );
+        ],
+      },
+    ];
 
-      // Insert Order Items with complete historical snapshots
-      for (const item of validatedItems) {
-        const itemId = `oi-${crypto.randomBytes(8).toString('hex')}`;
-        await db.execute(
-          `INSERT INTO order_items (
-            id, order_id, product_id, variant_id, product_name_snapshot,
-            variant_name_snapshot, quantity, unit_price_snapshot, line_total,
-            customization_data, product_type, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-          [
-            itemId,
-            orderId,
-            item.productId,
-            item.variantId,
-            item.productName,
-            item.variantName,
-            item.quantity,
-            item.unitPrice,
-            item.lineTotal,
-            item.customizationData,
-            item.productType,
-          ]
-        );
-      }
+    for (const item of validatedItems) {
+      const itemId = `oi-${crypto.randomBytes(8).toString('hex')}`;
+      statements.push({
+        sql: `INSERT INTO order_items (
+          id, order_id, product_id, variant_id, product_name_snapshot,
+          variant_name_snapshot, quantity, unit_price_snapshot, line_total,
+          customization_data, product_type, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+        params: [
+          itemId,
+          orderId,
+          item.productId,
+          item.variantId,
+          item.productName,
+          item.variantName,
+          item.quantity,
+          item.unitPrice,
+          item.lineTotal,
+          item.customizationData,
+          item.productType,
+        ],
+      });
+    }
 
-      // Clear customer's purchased cart items if cart exists
-      if (cart) {
-        await db.execute('DELETE FROM cart_items WHERE cart_id = ?', [cart.id]);
-        await db.execute("UPDATE carts SET updated_at = datetime('now') WHERE id = ?", [cart.id]);
-      }
+    // Clear customer's purchased cart items ONLY IF it's regular cart checkout (NOT Buy Now)
+    if (!isBuyNow && cart) {
+      statements.push({
+        sql: 'DELETE FROM cart_items WHERE cart_id = ?',
+        params: [cart.id],
+      });
+      statements.push({
+        sql: "UPDATE carts SET updated_at = datetime('now') WHERE id = ?",
+        params: [cart.id],
+      });
+    }
 
-      // Commit transaction
-      await db.execute('COMMIT');
-    } catch (txError) {
-      await db.execute('ROLLBACK');
-      console.error('Transaction rollback during order creation:', txError);
-      throw txError;
+    try {
+      await db.batch(statements);
+    } catch (batchErr) {
+      console.error('Atomic batch execution failed during order creation:', batchErr);
+      throw batchErr;
     }
 
     // 8.5 Trigger Order Confirmation Notifications (Customer & Admin) after verified commit
@@ -415,7 +472,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 9. Return clean, safe order confirmation data
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       order: {
         id: orderId,
@@ -446,6 +503,18 @@ export async function POST(req: NextRequest) {
         items: validatedItems,
       },
     });
+
+    if (sessionTokenToSet) {
+      response.cookies.set(CUSTOMER_SESSION_COOKIE, sessionTokenToSet, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: SESSION_MAX_AGE_SECONDS,
+        path: '/',
+      });
+    }
+
+    return response;
   } catch (error) {
     console.error('Error placing order:', error);
     return NextResponse.json(

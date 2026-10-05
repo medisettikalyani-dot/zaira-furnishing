@@ -10,15 +10,43 @@ import {
   Plus,
   Trash2,
   Calendar,
+  Sparkles,
+  Ruler,
+  Scissors,
+  Truck,
+  ShieldCheck,
+  Home,
+  Package,
+  Hammer,
+  Cpu,
+  Globe,
+  Building2,
 } from 'lucide-react';
 import { DbService } from '@/lib/db/types';
+
+const ICON_OPTIONS = [
+  { name: 'Sparkles', icon: Sparkles },
+  { name: 'Ruler', icon: Ruler },
+  { name: 'Scissors', icon: Scissors },
+  { name: 'Hammer', icon: Hammer },
+  { name: 'Wrench', icon: Wrench },
+  { name: 'Cpu', icon: Cpu },
+  { name: 'Globe', icon: Globe },
+  { name: 'Building2', icon: Building2 },
+  { name: 'ShieldCheck', icon: ShieldCheck },
+  { name: 'Truck', icon: Truck },
+  { name: 'Home', icon: Home },
+  { name: 'Package', icon: Package },
+];
 
 export default function AdminServicesPage() {
   const [services, setServices] = useState<DbService[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Partial<DbService> | null>(null);
+  const [highlightsText, setHighlightsText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const fetchServices = async () => {
@@ -36,6 +64,45 @@ export default function AdminServicesPage() {
   useEffect(() => {
     fetchServices();
   }, []);
+
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-');
+  };
+
+  const handleOpenModal = (srv?: DbService) => {
+    if (srv) {
+      setEditingService(srv);
+      let hlStr = '';
+      try {
+        const parsed = typeof srv.highlights === 'string' ? JSON.parse(srv.highlights) : srv.highlights;
+        if (Array.isArray(parsed)) hlStr = parsed.join(', ');
+        else hlStr = srv.highlights || '';
+      } catch {
+        hlStr = srv.highlights || '';
+      }
+      setHighlightsText(hlStr);
+    } else {
+      const defaultName = '';
+      setEditingService({
+        name: defaultName,
+        slug: '',
+        short_desc: '',
+        full_desc: '',
+        image: '/images/hero/living_room.jpg',
+        icon_name: 'Sparkles',
+        highlights: JSON.stringify(['Professional service']),
+        requires_site_visit: 1,
+        active: 1,
+        display_order: services.length,
+      });
+      setHighlightsText('Professional service');
+    }
+    setModalOpen(true);
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,11 +136,21 @@ export default function AdminServicesPage() {
 
     setSubmitting(true);
     try {
+      const highlightsArray = highlightsText
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const payload = {
+        ...editingService,
+        highlights: JSON.stringify(highlightsArray),
+      };
+
       const isEdit = !!editingService.id;
       const res = await fetch('/api/admin/services', {
         method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingService),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -88,6 +165,29 @@ export default function AdminServicesPage() {
       alert(err instanceof Error ? err.message : 'Error saving service');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeleteService = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to permanently delete "${name}" from Atelier services?`)) return;
+
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/admin/services?id=${encodeURIComponent(id)}&permanent=true`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete service');
+      }
+
+      if (modalOpen) setModalOpen(false);
+      await fetchServices();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error deleting service');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -116,26 +216,12 @@ export default function AdminServicesPage() {
             Services Management ({services.length})
           </h1>
           <p className="text-[13px] text-[#78716C]">
-            Manage the 8 verified in-home measurement, demo, tailoring, and smart installation services in D1.
+            Manage all {services.length} verified in-home measurement, demo, tailoring, and installation services.
           </p>
         </div>
 
         <button
-          onClick={() => {
-            setEditingService({
-              name: '',
-              slug: '',
-              short_desc: '',
-              full_desc: '',
-              image: '/images/hero/living_room.jpg',
-              icon_name: 'Sparkles',
-              highlights: JSON.stringify(['Professional service']),
-              requires_site_visit: 1,
-              active: 1,
-              display_order: services.length,
-            });
-            setModalOpen(true);
-          }}
+          onClick={() => handleOpenModal()}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12.5px] font-semibold transition-all shadow-2xs cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
@@ -149,6 +235,16 @@ export default function AdminServicesPage() {
           <div className="md:col-span-2 p-12 text-center text-[#78716C]">
             <div className="w-8 h-8 border-2 border-[#1E3A2F] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-[13px]">Loading services from Cloudflare D1...</p>
+          </div>
+        ) : services.length === 0 ? (
+          <div className="md:col-span-2 p-12 text-center bg-white rounded-2xl border border-[#EDE8DE]">
+            <p className="text-[14px] text-[#78716C] mb-3">No services found in database.</p>
+            <button
+              onClick={() => handleOpenModal()}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1E3A2F] text-white text-[12.5px] font-semibold"
+            >
+              <Plus className="w-4 h-4" /> Add First Service
+            </button>
           </div>
         ) : (
           services.map((srv, idx) => {
@@ -208,7 +304,7 @@ export default function AdminServicesPage() {
                   )}
                 </div>
 
-                <div className="pt-3 border-t border-[#F2ECE1] flex items-center justify-between">
+                <div className="pt-3 border-t border-[#F2ECE1] flex items-center justify-between gap-2">
                   <button
                     onClick={() => handleToggleActive(srv)}
                     className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer ${
@@ -220,16 +316,24 @@ export default function AdminServicesPage() {
                     {srv.active === 1 ? 'Active on Site' : 'Disabled'}
                   </button>
 
-                  <button
-                    onClick={() => {
-                      setEditingService(srv);
-                      setModalOpen(true);
-                    }}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#EDE8DE] hover:border-[#1E3A2F] text-[12px] font-medium text-[#1C1917] transition-all cursor-pointer"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                    <span>Edit Service</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleOpenModal(srv)}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#EDE8DE] hover:border-[#1E3A2F] text-[12px] font-medium text-[#1C1917] transition-all cursor-pointer"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteService(srv.id, srv.name)}
+                      disabled={deletingId === srv.id}
+                      className="p-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-all cursor-pointer"
+                      title="Delete Service"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -237,7 +341,7 @@ export default function AdminServicesPage() {
         )}
       </div>
 
-      {/* ─── Service Edit Modal ─── */}
+      {/* ─── Service Edit / Add Modal ─── */}
       {modalOpen && editingService && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl max-h-[90vh] overflow-y-auto">
@@ -261,23 +365,65 @@ export default function AdminServicesPage() {
                 <input
                   type="text"
                   value={editingService.name || ''}
-                  onChange={(e) => setEditingService({ ...editingService, name: e.target.value })}
+                  onChange={(e) => {
+                    const newName = e.target.value;
+                    setEditingService((prev) => ({
+                      ...prev,
+                      name: newName,
+                      slug: !prev?.id ? generateSlug(newName) : prev?.slug,
+                    }));
+                  }}
                   required
+                  placeholder="e.g. Free In-Home Measurement"
                   className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
                 />
               </div>
 
               <div>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
-                  Slug (Anchor identifier)
+                  Slug (URL identifier)
                 </label>
                 <input
                   type="text"
                   value={editingService.slug || ''}
                   onChange={(e) => setEditingService({ ...editingService, slug: e.target.value })}
                   required
+                  placeholder="free-in-home-measurement"
                   className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] font-mono focus:outline-hidden focus:border-[#1E3A2F]"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                    Service Icon
+                  </label>
+                  <select
+                    value={editingService.icon_name || 'Sparkles'}
+                    onChange={(e) => setEditingService({ ...editingService, icon_name: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] bg-white focus:outline-hidden focus:border-[#1E3A2F]"
+                  >
+                    {ICON_OPTIONS.map((opt) => (
+                      <option key={opt.name} value={opt.name}>
+                        {opt.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                    Display Order
+                  </label>
+                  <input
+                    type="number"
+                    value={editingService.display_order ?? 0}
+                    onChange={(e) =>
+                      setEditingService({ ...editingService, display_order: Number(e.target.value) })
+                    }
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#1E3A2F]"
+                  />
+                </div>
               </div>
 
               <div>
@@ -289,6 +435,7 @@ export default function AdminServicesPage() {
                   value={editingService.short_desc || ''}
                   onChange={(e) => setEditingService({ ...editingService, short_desc: e.target.value })}
                   required
+                  placeholder="Brief 1-2 sentence description shown on service cards."
                   className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#1E3A2F]"
                 />
               </div>
@@ -301,6 +448,7 @@ export default function AdminServicesPage() {
                   rows={3}
                   value={editingService.full_desc || ''}
                   onChange={(e) => setEditingService({ ...editingService, full_desc: e.target.value })}
+                  placeholder="Detailed breakdown of what is included in this service..."
                   className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#1E3A2F]"
                 />
               </div>
@@ -334,28 +482,16 @@ export default function AdminServicesPage() {
 
               <div>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
-                  Highlights (comma-separated):
+                  Highlights (comma-separated tags):
                 </label>
                 <input
                   type="text"
-                  placeholder="Laser accuracy, Free doorstep demo, 5-year warranty..."
-                  value={
-                    typeof editingService.highlights === 'string'
-                      ? (() => {
-                          try {
-                            return JSON.parse(editingService.highlights).join(', ');
-                          } catch {
-                            return editingService.highlights;
-                          }
-                        })()
-                      : ''
-                  }
-                  onChange={(e) => {
-                    const items = e.target.value.split(',').map((s) => s.trim()).filter(Boolean);
-                    setEditingService({ ...editingService, highlights: JSON.stringify(items) });
-                  }}
+                  placeholder="Laser accurate, Free doorstep demo, 5-year warranty"
+                  value={highlightsText}
+                  onChange={(e) => setHighlightsText(e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#1E3A2F]"
                 />
+                <p className="text-[10.5px] text-[#8C827A] mt-1">Separate key feature pills with commas.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-2">
@@ -382,21 +518,36 @@ export default function AdminServicesPage() {
                 </label>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-[#EDE8DE]">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#D5CDBF] text-[12.5px] font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting || uploadingImage}
-                  className="px-5 py-2 rounded-xl bg-[#1E3A2F] text-white text-[12.5px] font-semibold hover:bg-[#152B23]"
-                >
-                  {submitting ? 'Saving...' : 'Save Service to D1'}
-                </button>
+              <div className="flex items-center justify-between pt-4 border-t border-[#EDE8DE]">
+                {editingService.id ? (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteService(editingService.id!, editingService.name || 'Service')}
+                    className="px-3.5 py-2 rounded-xl border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 text-[12.5px] font-medium flex items-center gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete</span>
+                  </button>
+                ) : (
+                  <div />
+                )}
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-[#D5CDBF] text-[12.5px] font-medium text-[#57534E]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting || uploadingImage}
+                    className="px-5 py-2 rounded-xl bg-[#1E3A2F] text-white text-[12.5px] font-semibold hover:bg-[#152B23]"
+                  >
+                    {submitting ? 'Saving...' : 'Save Service'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -405,3 +556,4 @@ export default function AdminServicesPage() {
     </div>
   );
 }
+

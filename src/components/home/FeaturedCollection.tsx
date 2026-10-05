@@ -88,10 +88,10 @@ export function FeaturedCollection({
 
           <div className="flex items-center gap-4">
             <Link
-              href="/products"
+              href="/categories"
               className="hidden sm:inline-flex items-center gap-1.5 text-[12px] font-semibold tracking-wider uppercase text-[#1C1917] hover:text-[#9A7B56] transition-colors"
             >
-              <span>View All</span>
+              <span>Explore Categories</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
 

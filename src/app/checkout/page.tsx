@@ -25,7 +25,7 @@ import {
   FileText,
   Compass,
 } from 'lucide-react';
-import { useStore, Order } from '@/lib/context/StoreContext';
+import { useStore, Order, CartItem } from '@/lib/context/StoreContext';
 import {
   ZAIRA_WHATSAPP_NUMBER,
   ZAIRA_WHATSAPP_DISPLAY,
@@ -48,6 +48,33 @@ export default function CheckoutPage() {
 
   // ─── CHECKOUT STEPS: 1: Details, 2: Delivery, 3: Payment, 4: Review, 5: Success ───
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+
+  // ─── BUY NOW STATE (Independent Single-Product Path) ───
+  const [isBuyNow, setIsBuyNow] = useState(false);
+  const [buyNowItem, setBuyNowItem] = useState<CartItem | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('buyNow') === '1') {
+        try {
+          const stored = sessionStorage.getItem('zaira_buy_now_item');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed && (parsed.productId || parsed.id)) {
+              setIsBuyNow(true);
+              setBuyNowItem(parsed);
+              return;
+            }
+          }
+        } catch (e) {
+          console.error('Error reading Buy Now payload:', e);
+        }
+      }
+      setIsBuyNow(false);
+      setBuyNowItem(null);
+    }
+  }, []);
 
   // ─── FORM STATE ───
   const [fullName, setFullName] = useState('');
@@ -97,18 +124,23 @@ export default function CheckoutPage() {
     }
   }, [idempotencyKey]);
 
-  // Detect custom-made products in the cart from D1 productType or customization
-  const hasCustomProducts = cart.some((item) => {
+  // ─── ACTIVE CHECKOUT ITEMS: BUY NOW OR CART ───
+  const activeItems = isBuyNow && buyNowItem ? [buyNowItem] : cart;
+  const activeCount = isBuyNow && buyNowItem ? buyNowItem.quantity : cartCount;
+  const activeTotal = isBuyNow && buyNowItem ? buyNowItem.totalPrice : cartTotal;
+
+  // Detect custom-made products in the active items
+  const hasCustomProducts = activeItems.some((item) => {
     if (item.customDimensions || (item.sizeLabel && item.sizeLabel.toLowerCase().includes('custom'))) {
       return true;
     }
     return item.productType === 'custom_made' || item.customizationData?.productType === 'custom_made';
   });
 
-  const hasUnavailableItems = cart.some((item) => item.isAvailable === false);
+  const hasUnavailableItems = isBuyNow ? false : cart.some((item) => item.isAvailable === false);
 
   const shippingCost = 0; // Complimentary white-glove delivery
-  const totalPayable = cartTotal + shippingCost;
+  const totalPayable = activeTotal + shippingCost;
 
   // ─── STEP VALIDATION HANDLERS ───
   const validateStep1 = () => {
@@ -170,12 +202,6 @@ export default function CheckoutPage() {
       return;
     }
 
-    // If guest clicks place order, prompt for authentication
-    if (!customer) {
-      setAuthModalOpen(true);
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -183,13 +209,29 @@ export default function CheckoutPage() {
         ? `${addressLine1.trim()}, ${addressLine2.trim()}`
         : addressLine1.trim();
 
+      const itemsPayload = isBuyNow && buyNowItem
+        ? [
+            {
+              productId: buyNowItem.productId,
+              variantId: buyNowItem.variantId,
+              quantity: buyNowItem.quantity,
+              customizationData: buyNowItem.customizationData,
+            },
+          ]
+        : cart.map((it) => ({
+            productId: it.productId,
+            variantId: it.variantId,
+            quantity: it.quantity,
+            customizationData: it.customizationData,
+          }));
+
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customerName: fullName.trim(),
           customerPhone: phone.trim(),
-          customerEmail: email.trim() || customer.email,
+          customerEmail: email.trim() || (customer ? customer.email : undefined),
           deliveryAddress: fullDeliveryAddress,
           city: city.trim(),
           state: state.trim(),
@@ -201,12 +243,8 @@ export default function CheckoutPage() {
           paymentMethod: 'COD',
           idempotencyKey,
           order_source: 'WHATSAPP',
-          items: cart.map((it) => ({
-            productId: it.productId,
-            variantId: it.variantId,
-            quantity: it.quantity,
-            customizationData: it.customizationData,
-          })),
+          isBuyNow,
+          items: itemsPayload,
         }),
       });
 
@@ -241,7 +279,7 @@ export default function CheckoutPage() {
       const orderForDisplay: Order = {
         id: orderRef,
         createdAt: realOrder.createdAt || new Date().toISOString(),
-        items: [...cart],
+        items: [...activeItems],
         subtotal: realOrder.subtotal,
         shippingCost: realOrder.deliveryCharge || 0,
         total: realOrder.totalAmount,
@@ -275,7 +313,15 @@ export default function CheckoutPage() {
       setCurrentStep(5);
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // Refresh remote cart (now cleared) and orders from D1
+      if (isBuyNow) {
+        try {
+          sessionStorage.removeItem('zaira_buy_now_item');
+        } catch {
+          // ignore
+        }
+      }
+
+      // Refresh remote cart and orders from D1
       await Promise.all([refreshSession(), refreshOrders()]);
     } catch (err) {
       console.error('Checkout error:', err);
@@ -611,7 +657,7 @@ export default function CheckoutPage() {
               </a>
 
               <Link
-                href="/products"
+                href="/categories"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white border border-[#EDE8DE] text-[#78716C] hover:text-[#1C1917] text-[11.5px] uppercase tracking-wider font-semibold transition-all"
               >
                 <span>Continue Shopping</span>
@@ -625,8 +671,8 @@ export default function CheckoutPage() {
     );
   }
 
-  // ─── EMPTY CART FALLBACK ───
-  if (cart.length === 0) {
+  // ─── EMPTY STATE FALLBACK ───
+  if (!isBuyNow && cart.length === 0) {
     return (
       <div className="bg-[#FAF7F2] min-h-screen pt-12 pb-24 text-[#1C1917]">
         <div className="max-w-md mx-auto px-4 text-center">
@@ -640,10 +686,35 @@ export default function CheckoutPage() {
             Your shopping bag is currently empty. Please add your desired bespoke drapes, shades, or furnishings to continue.
           </p>
           <Link
-            href="/products"
+            href="/categories"
             className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-sm"
           >
-            <span>Explore Catalog</span>
+            <span>Explore Categories</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (isBuyNow && !buyNowItem) {
+    return (
+      <div className="bg-[#FAF7F2] min-h-screen pt-12 pb-24 text-[#1C1917]">
+        <div className="max-w-md mx-auto px-4 text-center">
+          <div className="w-16 h-16 rounded-full bg-white border border-[#EDE8DE] flex items-center justify-center mx-auto mb-4 text-[#9A7B56]">
+            <ShoppingBag className="w-7 h-7 stroke-[1.5]" />
+          </div>
+          <h1 className="font-serif text-[24px] text-[#1C1917] font-medium mb-2">
+            No Item Selected for Buy Now
+          </h1>
+          <p className="text-[13.5px] text-[#78716C] leading-relaxed mb-6 font-light">
+            Please select a product from our catalog to proceed with Buy Now checkout.
+          </p>
+          <Link
+            href="/categories"
+            className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-sm"
+          >
+            <span>Explore Categories</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -661,11 +732,23 @@ export default function CheckoutPage() {
             Home
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E]" />
-          <Link href="/cart" className="hover:text-[#1C1917] transition-colors">
-            Shopping Bag
-          </Link>
-          <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E]" />
-          <span className="text-[#1C1917] font-semibold">Checkout</span>
+          {isBuyNow && buyNowItem ? (
+            <>
+              <Link href={`/products/${buyNowItem.slug}`} className="hover:text-[#1C1917] transition-colors truncate max-w-[200px]">
+                {buyNowItem.name}
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E]" />
+              <span className="text-[#1C1917] font-semibold">Buy Now</span>
+            </>
+          ) : (
+            <>
+              <Link href="/cart" className="hover:text-[#1C1917] transition-colors">
+                Shopping Bag
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E]" />
+              <span className="text-[#1C1917] font-semibold">Checkout</span>
+            </>
+          )}
         </nav>
 
         {/* ─── PAGE TITLE & STEP INDICATOR ─── */}
@@ -675,20 +758,20 @@ export default function CheckoutPage() {
               <div className="inline-flex items-center gap-2 mb-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#9A7B56]" />
                 <span className="text-[10px] sm:text-[10.5px] uppercase tracking-[0.25em] text-[#9A7B56] font-semibold">
-                  Secure Showroom Checkout
+                  {isBuyNow ? 'Instant Showroom Checkout' : 'Secure Showroom Checkout'}
                 </span>
               </div>
               <h1 className="font-serif text-[26px] sm:text-[34px] text-[#1C1917] font-medium tracking-tight">
-                Order & Delivery Details
+                {isBuyNow ? 'Buy Now — Order & Delivery Details' : 'Order & Delivery Details'}
               </h1>
             </div>
 
             <Link
-              href="/cart"
+              href={isBuyNow && buyNowItem ? `/products/${buyNowItem.slug}` : '/cart'}
               className="inline-flex items-center gap-1.5 text-[11.5px] sm:text-[12px] uppercase tracking-wider font-semibold text-[#78716C] hover:text-[#1C1917] transition-colors self-start sm:self-auto"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Bag</span>
+              <span>{isBuyNow ? 'Back to Product' : 'Back to Bag'}</span>
             </Link>
           </div>
 
@@ -1184,19 +1267,19 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {/* Unauthenticated Customer Notice */}
+                {/* Customer Account Notice */}
                 {!customer && (
-                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[12px] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="p-4 rounded-xl bg-[#FAF7F2] border border-[#E8DCCB] text-[#78716C] text-[12px] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                      <strong className="block font-semibold">Account Sign-In Required:</strong>
-                      <span>Please sign in or create an account to record this order securely in your customer profile.</span>
+                      <strong className="block text-[#1C1917] font-semibold">Guest Ordering Enabled</strong>
+                      <span>You can place your order directly. An account will automatically be created to track your order.</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setAuthModalOpen(true)}
-                      className="px-4 py-2 bg-[#1E3A2F] text-white text-[11px] uppercase tracking-wider font-semibold rounded-lg hover:bg-[#152B23] transition-colors shrink-0 cursor-pointer"
+                      className="px-4 py-2 bg-white border border-[#D8CFBF] hover:bg-[#FAF7F2] text-[#1E3A2F] text-[11px] uppercase tracking-wider font-semibold rounded-lg transition-colors shrink-0 cursor-pointer"
                     >
-                      Sign In / Register
+                      Sign In If Existing
                     </button>
                   </div>
                 )}
@@ -1240,9 +1323,7 @@ export default function CheckoutPage() {
                     ) : (
                       <>
                         <span>
-                          {!customer
-                            ? 'Sign In & Place Order (COD)'
-                            : `Place Order (COD · ₹${totalPayable.toLocaleString('en-IN')})`}
+                          Place Order (COD · ₹{totalPayable.toLocaleString('en-IN')})
                         </span>
                         <Check className="w-4 h-4" />
                       </>
@@ -1257,19 +1338,19 @@ export default function CheckoutPage() {
           <div className="lg:col-span-5 bg-white rounded-xl sm:rounded-2xl border border-[#EDE8DE] p-5 sm:p-6 shadow-[0_2px_12px_rgba(28,25,23,0.03)] lg:sticky lg:top-24 space-y-4">
             <div className="flex items-center justify-between pb-3.5 border-b border-[#F2ECE1]">
               <h3 className="font-serif text-[18px] sm:text-[20px] text-[#1C1917] font-semibold">
-                Order Items ({cartCount})
+                {isBuyNow ? 'Selected Product (1)' : `Order Items (${activeCount})`}
               </h3>
               <Link
-                href="/cart"
+                href={isBuyNow && buyNowItem ? `/products/${buyNowItem.slug}` : '/cart'}
                 className="text-[11px] font-semibold uppercase text-[#9A7B56] hover:text-[#866945]"
               >
-                Modify Bag
+                {isBuyNow ? 'Change Options' : 'Modify Bag'}
               </Link>
             </div>
 
-            {/* Cart Items List */}
+            {/* Items List */}
             <div className="space-y-3.5 max-h-80 overflow-y-auto pr-1">
-              {cart.map((item) => (
+              {activeItems.map((item) => (
                 <div key={item.id} className="flex gap-3 text-[12.5px] pb-3 border-b border-[#F8F5EE] last:border-b-0">
                   <div className="relative w-14 h-16 sm:w-16 sm:h-18 rounded-lg overflow-hidden bg-gradient-to-b from-[#F7F4EE] to-[#EDE7DC] shrink-0 border border-[#EDE8DE]">
                     <Image src={item.image} alt={item.name} fill className="object-cover object-center" />
@@ -1305,8 +1386,8 @@ export default function CheckoutPage() {
             {/* Calculations Breakdown */}
             <div className="pt-3 border-t border-[#F2ECE1] space-y-2 text-[12.5px] sm:text-[13px]">
               <div className="flex justify-between text-[#78716C]">
-                <span>Subtotal ({cartCount} {cartCount === 1 ? 'item' : 'items'})</span>
-                <span className="font-medium text-[#1C1917]">₹{cartTotal.toLocaleString('en-IN')}</span>
+                <span>Subtotal ({activeCount} {activeCount === 1 ? 'item' : 'items'})</span>
+                <span className="font-medium text-[#1C1917]">₹{activeTotal.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between text-[#78716C]">
                 <span>Delivery & Sizing Visit</span>

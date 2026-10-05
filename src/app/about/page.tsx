@@ -118,10 +118,10 @@ export default function AboutPage() {
               Book In-Home Visit
             </Link>
             <Link
-              href="/products"
+              href="/categories"
               className="px-8 py-3.5 border border-[#1C1917] text-[#1C1917] text-[12px] uppercase tracking-widest font-medium hover:bg-[#FAF7F2] transition-colors"
             >
-              View Catalog
+              View Categories
             </Link>
           </div>
         </div>

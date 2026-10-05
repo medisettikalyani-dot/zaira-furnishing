@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
 
     const resolvedPhone = customerPhone || phone;
     const resolvedEmail = customerEmail || email;
+    const resolvedNotes = (customerNotes || body.notes || body.requirements || body.message || '').trim() || null;
     const isConsultation = Boolean(body.serviceRequested || !productId);
 
     // 1. Validate customer name
@@ -168,7 +169,7 @@ export async function POST(req: NextRequest) {
         resolvedDate,
         resolvedTimeSlot,
         dimensions?.trim() || null,
-        customerNotes?.trim() || null,
+        resolvedNotes,
         idempotencyKey?.trim() || null,
       ]
     );
@@ -249,16 +250,22 @@ export async function GET(req: NextRequest) {
         'SELECT status, COUNT(*) as cnt FROM measurement_requests GROUP BY status'
       );
       const countsMap: Record<string, number> = {
-        ALL: total,
+        ALL: 0,
         NEW: 0,
         CONTACTED: 0,
         SCHEDULED: 0,
         COMPLETED: 0,
         CANCELLED: 0,
       };
+      let totalAll = 0;
       for (const row of statusCounts) {
-        countsMap[row.status] = row.cnt;
+        const key = row.status ? row.status.toUpperCase() : '';
+        if (key && key in countsMap) {
+          countsMap[key] = row.cnt;
+        }
+        totalAll += row.cnt;
       }
+      countsMap.ALL = totalAll;
 
       const querySql = `
         SELECT *

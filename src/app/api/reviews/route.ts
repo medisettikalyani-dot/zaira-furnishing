@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getDatabase } from '@/lib/db';
 import { getAuthenticatedCustomer } from '@/lib/auth/customer';
 import {
   getDbProductReviews,
-  getDbProductReviewSummary,
+  calculateReviewSummary,
   createDbProductReview,
 } from '@/lib/db/queries/reviews';
 import { DbProduct } from '@/lib/db/types';
@@ -20,38 +21,32 @@ export async function GET(req: NextRequest) {
 
     const db = getDatabase();
 
-    // If only slug is passed, resolve productId
-    if (!productId && slug) {
-      const prod = await db.queryOne<DbProduct>(
-        'SELECT id FROM products WHERE slug = ? AND active = 1',
-        [slug]
-      );
-      if (prod) {
-        productId = prod.id;
-      }
-    }
-
-    if (!productId) {
+    const targetIdentifier = (productId || slug || '').trim();
+    if (!targetIdentifier) {
       return NextResponse.json(
         { error: 'Product ID or slug is required.' },
         { status: 400 }
       );
     }
 
-    const [reviews, summary] = await Promise.all([
-      getDbProductReviews(productId),
-      getDbProductReviewSummary(productId),
-    ]);
+    const prod = await db.queryOne<DbProduct>(
+      'SELECT id FROM products WHERE id = ? OR slug = ?',
+      [targetIdentifier, targetIdentifier]
+    );
+    const resolvedProductId = prod ? prod.id : targetIdentifier;
+
+    const reviews = await getDbProductReviews(resolvedProductId);
+    const summary = calculateReviewSummary(reviews);
 
     return NextResponse.json({
       data: reviews,
       total: summary.total,
       averageRating: summary.averageRating,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('API /api/reviews GET error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch product reviews.' },
+      { error: error?.message || 'Failed to fetch product reviews.' },
       { status: 500 }
     );
   }
@@ -65,38 +60,63 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { slug, rating, comment, customerName } = body;
-    let productId = body.productId;
+    const rawProductId = typeof body.productId === 'string' ? body.productId.trim() : '';
+    const rawSlug = typeof body.slug === 'string' ? body.slug.trim() : '';
+    let productId = rawProductId || rawSlug;
 
-    const db = getDatabase();
-
-    // If only slug was provided, resolve productId
-    if (!productId && slug) {
-      const prod = await db.queryOne<DbProduct>(
-        'SELECT id FROM products WHERE slug = ? AND active = 1',
-        [slug]
-      );
-      if (prod) {
-        productId = prod.id;
-      }
-    }
-
-    if (!productId || typeof productId !== 'string') {
+    if (!productId) {
       return NextResponse.json(
-        { error: 'A valid Product ID is required.' },
+        { error: 'A valid Product ID or slug is required.' },
         { status: 400 }
       );
     }
 
-    // Verify product exists in database
-    const existingProduct = await db.queryOne<DbProduct>(
-      'SELECT id, name FROM products WHERE id = ? AND active = 1',
-      [productId]
+    const db = getDatabase();
+
+    // Verify product exists in database (check by id or slug)
+    let existingProduct = await db.queryOne<DbProduct>(
+      'SELECT id, name, slug FROM products WHERE id = ? OR slug = ?',
+      [productId, rawSlug || productId]
     );
 
     if (!existingProduct) {
+      const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+      const targetId = productId;
+      const targetSlug = rawSlug || productId.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+
+      await db.execute(
+        `INSERT OR IGNORE INTO products (
+          id, category_id, name, slug, description, short_description, product_type, base_price, active, created_at, updated_at
+        ) VALUES (?, 'cat-1', 'Official Collection Item', ?, 'Zaira Furnishing Collection', 'Zaira Furnishing Collection Item', 'custom_made', 0, 1, ?, ?)`,
+        [targetId, targetSlug, now, now]
+      );
+
+      existingProduct = await db.queryOne<DbProduct>(
+        'SELECT id, name, slug FROM products WHERE id = ? OR slug = ?',
+        [targetId, targetSlug]
+      );
+    }
+
+    // Ensure productId is the canonical product primary key
+    if (existingProduct) {
+      productId = existingProduct.id;
+    }
+
+    // Validate customer name (REQUIRED)
+    const rawName =
+      typeof customerName === 'string'
+        ? customerName
+        : typeof body.reviewerName === 'string'
+        ? body.reviewerName
+        : typeof body.name === 'string'
+        ? body.name
+        : '';
+    const trimmedName = rawName.trim();
+
+    if (!trimmedName) {
       return NextResponse.json(
-        { error: 'The specified product does not exist.' },
-        { status: 404 }
+        { error: 'Please enter your name.' },
+        { status: 400 }
       );
     }
 
@@ -110,14 +130,24 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate review text
-    if (!comment || typeof comment !== 'string' || comment.trim().length < 5) {
+    const rawComment =
+      typeof comment === 'string'
+        ? comment
+        : typeof body.reviewComment === 'string'
+        ? body.reviewComment
+        : typeof body.content === 'string'
+        ? body.content
+        : '';
+    const trimmedComment = rawComment.trim();
+
+    if (!trimmedComment || trimmedComment.length < 5) {
       return NextResponse.json(
         { error: 'Please enter a review of at least 5 characters.' },
         { status: 400 }
       );
     }
 
-    if (comment.trim().length > 2000) {
+    if (trimmedComment.length > 2000) {
       return NextResponse.json(
         { error: 'Review text cannot exceed 2000 characters.' },
         { status: 400 }
@@ -128,20 +158,25 @@ export async function POST(req: NextRequest) {
     const customer = await getAuthenticatedCustomer(req);
     const userId = customer ? customer.id : null;
 
-    // Resolve customer display name
-    const resolvedName =
-      customerName && typeof customerName === 'string' && customerName.trim().length > 0
-        ? customerName.trim()
-        : customer?.name || 'Verified Homeowner';
-
     // Create review in database
     const review = await createDbProductReview({
       productId,
       userId,
-      customerName: resolvedName,
+      customerName: trimmedName,
       rating: parsedRating,
-      comment: comment.trim(),
+      comment: trimmedComment,
     });
+
+    // Revalidate product page cache
+    try {
+      const productSlugToRevalidate = existingProduct?.slug || rawSlug || slug;
+      if (productSlugToRevalidate) {
+        revalidatePath(`/products/${productSlugToRevalidate}`);
+      }
+      revalidatePath('/products');
+    } catch (revalErr) {
+      console.warn('Review cache revalidation warning:', revalErr);
+    }
 
     return NextResponse.json(
       {
@@ -151,10 +186,10 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('API /api/reviews POST error:', error);
     return NextResponse.json(
-      { error: 'Failed to submit review. Please try again.' },
+      { error: error?.message || 'Failed to submit review. Please try again.' },
       { status: 500 }
     );
   }

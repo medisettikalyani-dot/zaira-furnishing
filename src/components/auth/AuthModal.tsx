@@ -78,7 +78,7 @@ export function AuthModal() {
 
         {/* Modal Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#1E3A2F]/10 text-[#1E3A2F] mb-3">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#9A7B56]/10 text-[#9A7B56] mb-3">
             <Heart className="w-6 h-6 stroke-[1.8]" />
           </div>
           <h2 className="font-serif text-[24px] sm:text-[26px] font-medium text-[#1C1917]">
@@ -101,7 +101,7 @@ export function AuthModal() {
             }}
             className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all cursor-pointer ${
               mode === 'login'
-                ? 'bg-[#1E3A2F] text-white shadow-xs'
+                ? 'bg-[#1C1714] text-white shadow-xs'
                 : 'text-[#78716C] hover:text-[#1C1917]'
             }`}
           >
@@ -115,7 +115,7 @@ export function AuthModal() {
             }}
             className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all cursor-pointer ${
               mode === 'register'
-                ? 'bg-[#1E3A2F] text-white shadow-xs'
+                ? 'bg-[#1C1714] text-white shadow-xs'
                 : 'text-[#78716C] hover:text-[#1C1917]'
             }`}
           >
@@ -145,7 +145,7 @@ export function AuthModal() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Rohini Sharma"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-white text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-white text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
             </div>
@@ -163,7 +163,7 @@ export function AuthModal() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="client@zairafurnishing.com"
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-white text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-white text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
               />
             </div>
           </div>
@@ -180,7 +180,7 @@ export function AuthModal() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+91 98765 43210"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-white text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-white text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
             </div>
@@ -198,7 +198,7 @@ export function AuthModal() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-white text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-white text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
               />
             </div>
           </div>
@@ -216,7 +216,7 @@ export function AuthModal() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-white text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F]"
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D8CFBF] bg-white text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#9A7B56]"
                 />
               </div>
             </div>
@@ -225,7 +225,7 @@ export function AuthModal() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl text-center text-[12px] uppercase tracking-widest font-semibold bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all shadow-xs cursor-pointer disabled:opacity-50 mt-2"
+            className="w-full py-3 rounded-xl text-center text-[12px] uppercase tracking-widest font-semibold bg-[#1C1714] hover:bg-[#9A7B56] text-white transition-all shadow-xs cursor-pointer disabled:opacity-50 mt-2"
           >
             {loading ? 'Processing...' : mode === 'login' ? 'Sign In to Account' : 'Create Customer Account'}
           </button>
@@ -235,7 +235,7 @@ export function AuthModal() {
           <Link
             href="/account"
             onClick={() => setAuthModalOpen(false)}
-            className="text-[12px] text-[#9A7B56] hover:text-[#1E3A2F] underline font-medium"
+            className="text-[12px] text-[#9A7B56] hover:text-[#9A7B56] underline font-medium"
           >
             Go to Full Account Portal &rarr;
           </Link>

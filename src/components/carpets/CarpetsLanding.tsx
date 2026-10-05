@@ -94,7 +94,7 @@ export function CarpetsLanding({ subcategories }: CarpetsLandingProps) {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <a
-              href="https://wa.me/916300145763?text=Hello%20Zaira%20Furnishing%2C%20I%20would%20like%20to%20consult%20about%20custom%20carpets%20and%20rugs."
+              href="https://wa.me/917947415666?text=Hello%20Zaira%20Furnishing%2C%20I%20would%20like%20to%20consult%20about%20custom%20carpets%20and%20rugs."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#1C1917] hover:bg-[#9A7B56] text-white text-[12px] uppercase tracking-wider font-semibold transition-all duration-200 shadow-xs"

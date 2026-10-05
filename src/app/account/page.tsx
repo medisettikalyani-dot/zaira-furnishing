@@ -423,10 +423,10 @@ export default function AccountPage() {
                     </p>
                   </div>
                   <Link
-                    href="/products"
+                    href="/categories"
                     className="text-[11.5px] uppercase tracking-wider font-semibold text-[#1E3A2F] hover:underline"
                   >
-                    Browse More Products &rarr;
+                    Browse Categories &rarr;
                   </Link>
                 </div>
 
@@ -444,10 +444,10 @@ export default function AccountPage() {
                       Explore our handcrafted curtains, blinds, and wallpapers to save your favorite selections.
                     </p>
                     <Link
-                      href="/products"
+                      href="/categories"
                       className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1E3A2F] text-white text-[12px] font-semibold uppercase tracking-wider hover:bg-[#152B23] transition-colors"
                     >
-                      <span>Explore Catalog</span>
+                      <span>Explore Categories</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>

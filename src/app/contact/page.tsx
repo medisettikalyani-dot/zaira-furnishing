@@ -1,6 +1,7 @@
 import React from 'react';
 import { MapPin, Phone, Mail, Clock, Sparkles } from 'lucide-react';
 import { ContactForm } from '@/components/forms/ContactForm';
+import { ZAIRA_WHATSAPP_DISPLAY, ZAIRA_WHATSAPP_URL } from '@/lib/whatsapp';
 
 export const metadata = {
   title: 'Contact & Showroom | Zaira Furnishing',
@@ -55,8 +56,14 @@ export default function ContactPage() {
                     <span className="block font-semibold text-[#1C1917] mb-0.5 uppercase tracking-wider text-[11px]">
                       Client Inquiries & Bookings
                     </span>
-                    <a href="tel:+916300145763" className="text-[#1E3A2F] font-semibold hover:underline">
-                      +91 63001 45763
+                    <a
+                      href={ZAIRA_WHATSAPP_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Chat with Zaira Furnishing on WhatsApp"
+                      className="text-[#1E3A2F] font-semibold hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#9A7B56] rounded-xs"
+                    >
+                      {ZAIRA_WHATSAPP_DISPLAY}
                     </a>
                     <p className="text-[#78716C] text-[12px] mt-0.5">
                       Mon – Sat from 10:30 AM to 8:30 PM

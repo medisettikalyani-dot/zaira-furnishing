@@ -131,10 +131,10 @@ export default function MyOrdersPage() {
 
           {orders.length > 0 && (
             <Link
-              href="/products"
+              href="/categories"
               className="inline-flex items-center gap-1.5 text-[12px] uppercase tracking-wider font-semibold text-[#1E3A2F] hover:text-[#9A7B56] transition-colors"
             >
-              <span>Explore More Designs</span>
+              <span>Explore Categories</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           )}
@@ -156,10 +156,10 @@ export default function MyOrdersPage() {
             </p>
 
             <Link
-              href="/products"
+              href="/categories"
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-xs"
             >
-              <span>Start Shopping</span>
+              <span>Explore Categories</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

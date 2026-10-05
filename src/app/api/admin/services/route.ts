@@ -154,15 +154,20 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
+    const permanent = searchParams.get('permanent') === 'true';
 
     if (!id) {
       return NextResponse.json({ error: 'Service ID is required' }, { status: 400 });
     }
 
     const db = getDatabase();
-    await db.execute('UPDATE services SET active = 0, updated_at = datetime("now") WHERE id = ?', [id]);
-
-    return NextResponse.json({ success: true, deactivated: true });
+    if (permanent) {
+      await db.execute('DELETE FROM services WHERE id = ?', [id]);
+      return NextResponse.json({ success: true, deleted: true });
+    } else {
+      await db.execute('UPDATE services SET active = 0, updated_at = datetime("now") WHERE id = ?', [id]);
+      return NextResponse.json({ success: true, deactivated: true });
+    }
   } catch (error) {
     console.error('Admin DELETE service error:', error);
     return NextResponse.json({ error: 'Failed to delete service' }, { status: 500 });

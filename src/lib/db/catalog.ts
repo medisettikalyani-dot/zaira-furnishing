@@ -9,7 +9,7 @@ import {
   DbService,
   DbCmsContent,
 } from './types';
-import { Product, ProductVariation, ProductSpecification, Category, Service } from '@/lib/data/types';
+import { Product, ProductImage, ProductVariation, ProductSpecification, Category, Service } from '@/lib/data/types';
 import { normalizeCategorySlug } from '@/lib/data/categories';
 
 /**
@@ -68,6 +68,13 @@ export function mapDbProductToFrontend(
   const sortedImages = [...images].sort((a, b) => a.display_order - b.display_order);
   const mainImg = sortedImages.find((img) => img.is_main === 1) || sortedImages[0];
   const gallery = sortedImages.map((img) => img.image_url);
+  const mappedImages: ProductImage[] = sortedImages.map((img) => ({
+    id: img.id,
+    url: img.image_url,
+    altText: img.alt_text || null,
+    displayOrder: img.display_order,
+    isMain: img.is_main === 1,
+  }));
 
   let parsedSpaces: string[] = [];
   if (p.space_slugs) {
@@ -132,8 +139,10 @@ export function mapDbProductToFrontend(
     startingPrice: p.starting_price === 1,
     image: mainImg?.image_url || '/images/hero/living_room.jpg',
     mainImage: mainImg?.image_url || '/images/hero/living_room.jpg',
+    imageAlt: mainImg?.alt_text || p.display_name || p.name,
     additionalImages: sortedImages.filter((img) => img.image_url !== mainImg?.image_url).map((img) => img.image_url),
     galleryImages: gallery.length > 0 ? gallery : [mainImg?.image_url || '/images/hero/living_room.jpg'],
+    images: mappedImages,
     variations: mappedVariants,
     specifications: mappedSpecs,
     spaceSlugs: parsedSpaces,

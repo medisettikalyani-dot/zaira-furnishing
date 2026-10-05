@@ -184,11 +184,11 @@ export function BrowseByCategories({
             </button>
           )}
 
-          {/* Horizontally Scrollable Categories Tab Row */}
+          {/* Horizontally Scrollable Categories Tab Row (Right-aligned on desktop) */}
           <div
             ref={tabsRef}
             onScroll={checkTabsScrollState}
-            className="flex items-center gap-6 sm:gap-8 overflow-x-auto no-scrollbar scroll-smooth py-1 px-1"
+            className="flex items-center gap-6 sm:gap-8 overflow-x-auto no-scrollbar scroll-smooth py-1 px-1 justify-start lg:justify-end"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {categories.map((cat) => {
@@ -235,7 +235,7 @@ export function BrowseByCategories({
               type="button"
               onClick={handlePrev}
               disabled={!canScrollLeft}
-              className={`absolute -left-3 sm:-left-5 top-[40%] -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all bg-white/95 backdrop-blur-md border border-[#EAE2D5] shadow-[0_8px_20px_rgba(28,25,23,0.08)] text-[#1C1917] hover:bg-[#1C1917] hover:text-white hover:border-[#1C1917] hover:scale-105 cursor-pointer ${
+              className={`hidden sm:flex absolute -left-3 sm:-left-5 top-[40%] -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full items-center justify-center transition-all bg-white/95 backdrop-blur-md border border-[#EAE2D5] shadow-[0_8px_20px_rgba(28,25,23,0.08)] text-[#1C1917] hover:bg-[#1C1917] hover:text-white hover:border-[#1C1917] hover:scale-105 cursor-pointer ${
                 !canScrollLeft ? 'opacity-0 pointer-events-none' : 'opacity-100'
               }`}
               aria-label="Previous items"
@@ -250,7 +250,7 @@ export function BrowseByCategories({
               type="button"
               onClick={handleNext}
               disabled={!canScrollRight}
-              className={`absolute -right-3 sm:-right-5 top-[40%] -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all bg-white/95 backdrop-blur-md border border-[#EAE2D5] shadow-[0_8px_20px_rgba(28,25,23,0.08)] text-[#1C1917] hover:bg-[#1C1917] hover:text-white hover:border-[#1C1917] hover:scale-105 cursor-pointer ${
+              className={`hidden sm:flex absolute -right-3 sm:-right-5 top-[40%] -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full items-center justify-center transition-all bg-white/95 backdrop-blur-md border border-[#EAE2D5] shadow-[0_8px_20px_rgba(28,25,23,0.08)] text-[#1C1917] hover:bg-[#1C1917] hover:text-white hover:border-[#1C1917] hover:scale-105 cursor-pointer ${
                 !canScrollRight ? 'opacity-0 pointer-events-none' : 'opacity-100'
               }`}
               aria-label="Next items"

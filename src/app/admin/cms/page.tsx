@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Save,
   Upload,
-  Sparkles,
   Home,
   Star,
   BookOpen,
@@ -27,6 +26,7 @@ export default function AdminCmsPage() {
 
   // Form states per section
   const [formData, setFormData] = useState<any>({});
+  const [featuredSlugsText, setFeaturedSlugsText] = useState('');
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -61,6 +61,12 @@ export default function AdminCmsPage() {
         };
       }
       setFormData(initialForm);
+
+      // Initialize featured slugs text if available
+      const featuredSec = initialForm['home_featured_furnishings'];
+      if (featuredSec?.content?.featured_slugs && Array.isArray(featuredSec.content.featured_slugs)) {
+        setFeaturedSlugsText(featuredSec.content.featured_slugs.join(', '));
+      }
     } catch (err: any) {
       showToast(err.message, 'error');
     } finally {
@@ -99,13 +105,16 @@ export default function AdminCmsPage() {
     });
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, targetField: 'image_url' | 'secondary_image_url') => {
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    targetField: 'image_url' | 'secondary_image_url'
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const fd = new FormData();
     fd.append('file', file);
-    fd.append('folder', 'cms');
+    fd.append('category', 'cms');
 
     try {
       const res = await fetch('/api/admin/upload', {
@@ -116,7 +125,7 @@ export default function AdminCmsPage() {
       if (!res.ok) throw new Error(data.error || 'Upload failed');
 
       handleFieldChange(targetField, data.url);
-      showToast('Image uploaded successfully to R2');
+      showToast('Image uploaded successfully to Cloudflare R2');
     } catch (err: any) {
       showToast(err.message, 'error');
     }
@@ -125,8 +134,21 @@ export default function AdminCmsPage() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const currentData = formData[activeTab];
+      const currentData = { ...(formData[activeTab] || {}) };
       if (!currentData) return;
+
+      // Special handling for featured slugs array in home_featured_furnishings tab
+      if (activeTab === 'home_featured_furnishings') {
+        const slugsArray = featuredSlugsText
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+
+        currentData.content = {
+          ...(currentData.content || {}),
+          featured_slugs: slugsArray,
+        };
+      }
 
       const payload = {
         section_key: activeTab,
@@ -188,18 +210,18 @@ export default function AdminCmsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1B3022]"></div>
+        <div className="w-8 h-8 border-2 border-[#1E3A2F] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg shadow-xl text-sm flex items-center space-x-2 ${
-            toast.type === 'success' ? 'bg-[#1B3022] text-white' : 'bg-red-600 text-white'
+          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-xl text-xs font-semibold flex items-center space-x-2 ${
+            toast.type === 'success' ? 'bg-[#1E3A2F] text-white' : 'bg-red-600 text-white'
           }`}
         >
           {toast.type === 'success' ? <Check className="w-4 h-4 text-emerald-400" /> : <AlertCircle className="w-4 h-4" />}
@@ -207,34 +229,52 @@ export default function AdminCmsPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* ─── Header ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-[#EDE8DE] shadow-2xs">
         <div>
-          <h1 className="text-2xl font-serif text-slate-900 tracking-tight">Homepage CMS & Content</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#9A7B56] block mb-1">
+            Live Content & Brand Copy
+          </span>
+          <h1 className="font-serif text-[24px] sm:text-[28px] text-[#1C1917] font-medium">
+            Homepage CMS & Content
+          </h1>
+          <p className="text-[13px] text-[#78716C]">
             Manage live copy, images, and presentation blocks stored directly in Cloudflare D1.
           </p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="inline-flex items-center justify-center space-x-2 px-5 py-2.5 bg-[#1B3022] hover:bg-[#254130] text-white text-sm font-medium rounded-lg shadow transition disabled:opacity-50"
-        >
-          {saving ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white"></div>
-              <span>Saving Changes...</span>
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4 text-amber-300" />
-              <span>Save {tabInfo[activeTab].label}</span>
-            </>
-          )}
-        </button>
+
+        <div className="flex items-center gap-3">
+          <a
+            href="/"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-[#EDE8DE] hover:border-[#1E3A2F] text-[12.5px] font-medium text-[#1C1917] transition-all cursor-pointer"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>View Live Site</span>
+          </a>
+
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[12.5px] font-semibold transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+          >
+            {saving ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 text-[#D5CDBF]" />
+                <span>Save {tabInfo[activeTab].label}</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Section Selector Tabs */}
+      {/* ─── Section Selector Tabs ─── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {(Object.keys(tabInfo) as CmsTab[]).map((tabKey) => {
           const info = tabInfo[tabKey];
@@ -244,37 +284,37 @@ export default function AdminCmsPage() {
             <button
               key={tabKey}
               onClick={() => setActiveTab(tabKey)}
-              className={`p-3.5 rounded-xl text-left border transition-all ${
+              className={`p-4 rounded-2xl text-left border transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-white border-[#1B3022] shadow-sm ring-1 ring-[#1B3022]'
-                  : 'bg-white/60 hover:bg-white border-slate-200 text-slate-600 hover:text-slate-900'
+                  ? 'bg-white border-[#1E3A2F] shadow-sm ring-1 ring-[#1E3A2F]'
+                  : 'bg-white/80 hover:bg-white border-[#EDE8DE] text-[#78716C] hover:text-[#1C1917]'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div
-                  className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                    isActive ? 'bg-[#1B3022] text-amber-300' : 'bg-slate-100 text-slate-500'
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+                    isActive ? 'bg-[#1E3A2F] text-[#FAF7F2]' : 'bg-[#FAF7F2] text-[#8C827A]'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className="w-4 h-4" />
                 </div>
-                {isActive && <div className="w-2 h-2 rounded-full bg-emerald-500"></div>}
+                {isActive && <div className="w-2 h-2 rounded-full bg-[#15803D]"></div>}
               </div>
-              <div className="text-xs font-medium text-slate-900 truncate">{info.label}</div>
-              <div className="text-[10px] text-slate-400 mt-0.5 truncate">{tabKey}</div>
+              <div className="text-[13px] font-semibold text-[#1C1917] truncate">{info.label}</div>
+              <div className="text-[10.5px] font-mono text-[#8C827A] mt-0.5 truncate">{tabKey}</div>
             </button>
           );
         })}
       </div>
 
-      {/* Active Tab Editor Form */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-        <div className="border-b border-slate-100 pb-4">
-          <h2 className="text-base font-medium text-slate-900 flex items-center space-x-2">
+      {/* ─── Active Tab Editor Form ─── */}
+      <div className="bg-white rounded-2xl border border-[#EDE8DE] shadow-2xs p-6 space-y-6">
+        <div className="border-b border-[#F2ECE1] pb-4">
+          <h2 className="font-serif text-[18px] text-[#1C1917] font-medium flex items-center gap-2">
             <span>{tabInfo[activeTab].label}</span>
-            <span className="text-xs text-slate-400 font-mono">({activeTab})</span>
+            <span className="text-[12px] text-[#8C827A] font-mono">({activeTab})</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">{tabInfo[activeTab].desc}</p>
+          <p className="text-[12.5px] text-[#78716C] mt-0.5">{tabInfo[activeTab].desc}</p>
         </div>
 
         {/* 1. HERO SECTION */}
@@ -282,82 +322,92 @@ export default function AdminCmsPage() {
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Eyebrow / Badge Text</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Eyebrow / Badge Text
+                </label>
                 <input
                   type="text"
                   value={currentSectionData.content?.eyebrow || ''}
                   onChange={(e) => handleContentChange('eyebrow', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#1B3022] outline-none"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                   placeholder="e.g. ZAIRA FURNISHING"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Main Heading (Title)</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Main Heading (Title)
+                </label>
                 <input
                   type="text"
                   value={currentSectionData.title || ''}
                   onChange={(e) => handleFieldChange('title', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#1B3022] outline-none font-serif"
+                  className="w-full px-3.5 py-2 text-[14px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F] font-serif"
                   placeholder="e.g. Beautiful Furnishings for Your Home"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Subtitle / Supporting Description</label>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                Subtitle / Supporting Description
+              </label>
               <textarea
                 rows={2}
                 value={currentSectionData.subtitle || ''}
                 onChange={(e) => handleFieldChange('subtitle', e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#1B3022] outline-none"
+                className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                 placeholder="Curtains, blinds, wallpapers, rugs, flooring and more for your home."
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50/70 rounded-xl border border-slate-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 bg-[#FAF7F2] rounded-2xl border border-[#EDE8DE]">
               <div className="space-y-3">
-                <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider">Primary Call to Action</span>
+                <span className="text-[11px] font-semibold text-[#1C1917] uppercase tracking-wider block">
+                  Primary Call to Action
+                </span>
                 <div>
-                  <label className="block text-[11px] text-slate-500 mb-1">Button Label</label>
+                  <label className="block text-[11px] text-[#78716C] mb-1">Button Label</label>
                   <input
                     type="text"
                     value={currentSectionData.content?.primary_cta_text || ''}
                     onChange={(e) => handleContentChange('primary_cta_text', e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-md bg-white outline-none"
+                    className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl bg-white outline-none focus:border-[#1E3A2F]"
                     placeholder="Shop Now"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-slate-500 mb-1">Target Link</label>
+                  <label className="block text-[11px] text-[#78716C] mb-1">Target Link</label>
                   <input
                     type="text"
                     value={currentSectionData.content?.primary_cta_link || ''}
                     onChange={(e) => handleContentChange('primary_cta_link', e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-md bg-white outline-none"
+                    className="w-full px-3.5 py-2 text-[12.5px] font-mono border border-[#D5CDBF] rounded-xl bg-white outline-none focus:border-[#1E3A2F]"
                     placeholder="/products"
                   />
                 </div>
               </div>
 
               <div className="space-y-3">
-                <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider">Secondary Call to Action</span>
+                <span className="text-[11px] font-semibold text-[#1C1917] uppercase tracking-wider block">
+                  Secondary Call to Action
+                </span>
                 <div>
-                  <label className="block text-[11px] text-slate-500 mb-1">Button Label</label>
+                  <label className="block text-[11px] text-[#78716C] mb-1">Button Label</label>
                   <input
                     type="text"
                     value={currentSectionData.content?.secondary_cta_text || ''}
                     onChange={(e) => handleContentChange('secondary_cta_text', e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-md bg-white outline-none"
+                    className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl bg-white outline-none focus:border-[#1E3A2F]"
                     placeholder="Book a Free Visit"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-slate-500 mb-1">Target Link</label>
+                  <label className="block text-[11px] text-[#78716C] mb-1">Target Link</label>
                   <input
                     type="text"
                     value={currentSectionData.content?.secondary_cta_link || ''}
                     onChange={(e) => handleContentChange('secondary_cta_link', e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-md bg-white outline-none"
+                    className="w-full px-3.5 py-2 text-[12.5px] font-mono border border-[#D5CDBF] rounded-xl bg-white outline-none focus:border-[#1E3A2F]"
                     placeholder="/services"
                   />
                 </div>
@@ -366,17 +416,22 @@ export default function AdminCmsPage() {
 
             {/* Primary Hero Image */}
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-2">Hero Background / Showcase Image</label>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-2">
+                Hero Background / Showcase Image
+              </label>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="w-40 h-24 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden flex-shrink-0 relative">
+                <div className="w-44 h-28 rounded-xl border border-[#EDE8DE] bg-[#FAF7F2] overflow-hidden shrink-0 relative">
                   {currentSectionData.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={currentSectionData.image_url}
                       alt="Hero preview"
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">No image</div>
+                    <div className="w-full h-full flex items-center justify-center text-[#8C827A] text-[11px]">
+                      No image
+                    </div>
                   )}
                 </div>
                 <div className="flex-1 w-full space-y-2">
@@ -384,11 +439,11 @@ export default function AdminCmsPage() {
                     type="text"
                     value={currentSectionData.image_url || ''}
                     onChange={(e) => handleFieldChange('image_url', e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none font-mono"
+                    className="w-full px-3.5 py-2 text-[12.5px] border border-[#D5CDBF] rounded-xl font-mono focus:outline-hidden focus:border-[#1E3A2F]"
                     placeholder="/images/hero/living_room.jpg or R2 URL"
                   />
-                  <div className="flex items-center space-x-2">
-                    <label className="cursor-pointer inline-flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-md transition">
+                  <div className="flex items-center gap-2">
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#FAF7F2] hover:bg-[#F2ECE1] border border-[#D5CDBF] text-[#1C1917] text-[12px] font-semibold rounded-xl transition">
                       <Upload className="w-3.5 h-3.5" />
                       <span>Upload New Image (R2)</span>
                       <input
@@ -398,7 +453,7 @@ export default function AdminCmsPage() {
                         onChange={(e) => handleImageUpload(e, 'image_url')}
                       />
                     </label>
-                    <span className="text-[11px] text-slate-400">Validated server-side to Cloudflare R2</span>
+                    <span className="text-[11px] text-[#8C827A]">Uploaded directly to Cloudflare R2 bucket</span>
                   </div>
                 </div>
               </div>
@@ -411,50 +466,44 @@ export default function AdminCmsPage() {
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Section Title</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Section Title
+                </label>
                 <input
                   type="text"
                   value={currentSectionData.title || ''}
                   onChange={(e) => handleFieldChange('title', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#1B3022] outline-none font-serif"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F] font-serif"
                   placeholder="Featured Furnishings"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Subtitle</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Subtitle
+                </label>
                 <input
                   type="text"
                   value={currentSectionData.subtitle || ''}
                   onChange={(e) => handleFieldChange('subtitle', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#1B3022] outline-none"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                   placeholder="Explore selected furnishings from Zaira."
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
                 Featured Product Slugs (Comma-separated)
               </label>
               <textarea
                 rows={3}
-                value={
-                  Array.isArray(currentSectionData.content?.featured_slugs)
-                    ? currentSectionData.content.featured_slugs.join(', ')
-                    : ''
-                }
-                onChange={(e) => {
-                  const slugs = e.target.value
-                    .split(',')
-                    .map((s) => s.trim())
-                    .filter(Boolean);
-                  handleContentChange('featured_slugs', slugs);
-                }}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg outline-none font-mono"
+                value={featuredSlugsText}
+                onChange={(e) => setFeaturedSlugsText(e.target.value)}
+                className="w-full px-3.5 py-2 text-[12.5px] border border-[#D5CDBF] rounded-xl font-mono focus:outline-hidden focus:border-[#1E3A2F]"
                 placeholder="blackout-curtains, roma-textured-boucle-upholstery, roller-blinds, solis-hand-tufted-wool-silk-rug, monaco-crush-resistant-matte-velvet"
               />
-              <p className="text-[11px] text-slate-400 mt-1">
-                These product slugs match products in D1 that appear in the approved homepage featured showcase.
+              <p className="text-[11px] text-[#8C827A] mt-1">
+                Enter product slugs separated by commas. Matches active products in Cloudflare D1.
               </p>
             </div>
           </div>
@@ -465,22 +514,26 @@ export default function AdminCmsPage() {
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Title</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Title
+                </label>
                 <input
                   type="text"
                   value={currentSectionData.title || ''}
                   onChange={(e) => handleFieldChange('title', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#1B3022] outline-none font-serif"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F] font-serif"
                   placeholder="About Zaira Furnishing"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Subtitle / Category Label</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Subtitle / Category Label
+                </label>
                 <input
                   type="text"
                   value={currentSectionData.subtitle || ''}
                   onChange={(e) => handleFieldChange('subtitle', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#1B3022] outline-none"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                   placeholder="Furnishings & Services"
                 />
               </div>
@@ -488,67 +541,82 @@ export default function AdminCmsPage() {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Paragraph 1 (Introduction)</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Paragraph 1 (Introduction)
+                </label>
                 <textarea
                   rows={2}
                   value={currentSectionData.content?.paragraph1 || ''}
                   onChange={(e) => handleContentChange('paragraph1', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg outline-none"
+                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Paragraph 2 (Catalog Scope)</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Paragraph 2 (Catalog Scope)
+                </label>
                 <textarea
                   rows={2}
                   value={currentSectionData.content?.paragraph2 || ''}
                   onChange={(e) => handleContentChange('paragraph2', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg outline-none"
+                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Paragraph 3 (Services & Support)</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Paragraph 3 (Services & Support)
+                </label>
                 <textarea
                   rows={2}
                   value={currentSectionData.content?.paragraph3 || ''}
                   onChange={(e) => handleContentChange('paragraph3', e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg outline-none"
+                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">CTA Button Text</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  CTA Button Text
+                </label>
                 <input
                   type="text"
                   value={currentSectionData.content?.cta_text || ''}
                   onChange={(e) => handleContentChange('cta_text', e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-md outline-none"
+                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                   placeholder="Learn More"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">CTA Target Link</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  CTA Target Link
+                </label>
                 <input
                   type="text"
                   value={currentSectionData.content?.cta_link || ''}
                   onChange={(e) => handleContentChange('cta_link', e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-md outline-none"
+                  className="w-full px-3.5 py-2 text-[12.5px] font-mono border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                   placeholder="/about"
                 />
               </div>
             </div>
 
             {/* Dual Images for Brand Story */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-slate-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-[#F2ECE1]">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-2">Primary Showcase Image</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-2">
+                  Primary Showcase Image
+                </label>
                 <div className="flex items-center gap-3">
-                  <div className="w-24 h-20 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden flex-shrink-0">
+                  <div className="w-24 h-20 rounded-xl border border-[#EDE8DE] bg-[#FAF7F2] overflow-hidden shrink-0 relative">
                     {currentSectionData.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={currentSectionData.image_url} alt="Main" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-400 text-[10px]">No image</div>
+                      <div className="w-full h-full flex items-center justify-center text-[#8C827A] text-[10px]">
+                        No image
+                      </div>
                     )}
                   </div>
                   <div className="flex-1 space-y-1.5">
@@ -556,9 +624,9 @@ export default function AdminCmsPage() {
                       type="text"
                       value={currentSectionData.image_url || ''}
                       onChange={(e) => handleFieldChange('image_url', e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-slate-200 rounded font-mono"
+                      className="w-full px-3 py-1.5 text-[12px] border border-[#D5CDBF] rounded-lg font-mono focus:outline-hidden focus:border-[#1E3A2F]"
                     />
-                    <label className="cursor-pointer inline-flex items-center space-x-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-medium rounded">
+                    <label className="cursor-pointer inline-flex items-center gap-1 px-3 py-1.5 bg-[#FAF7F2] hover:bg-[#F2ECE1] border border-[#D5CDBF] text-[#1C1917] text-[11.5px] font-semibold rounded-lg">
                       <Upload className="w-3 h-3" />
                       <span>Upload (R2)</span>
                       <input
@@ -573,13 +641,18 @@ export default function AdminCmsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-2">Secondary Interior Image</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-2">
+                  Secondary Interior Image
+                </label>
                 <div className="flex items-center gap-3">
-                  <div className="w-24 h-20 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden flex-shrink-0">
+                  <div className="w-24 h-20 rounded-xl border border-[#EDE8DE] bg-[#FAF7F2] overflow-hidden shrink-0 relative">
                     {currentSectionData.secondary_image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={currentSectionData.secondary_image_url} alt="Secondary" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-400 text-[10px]">No image</div>
+                      <div className="w-full h-full flex items-center justify-center text-[#8C827A] text-[10px]">
+                        No image
+                      </div>
                     )}
                   </div>
                   <div className="flex-1 space-y-1.5">
@@ -587,9 +660,9 @@ export default function AdminCmsPage() {
                       type="text"
                       value={currentSectionData.secondary_image_url || ''}
                       onChange={(e) => handleFieldChange('secondary_image_url', e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-slate-200 rounded font-mono"
+                      className="w-full px-3 py-1.5 text-[12px] border border-[#D5CDBF] rounded-lg font-mono focus:outline-hidden focus:border-[#1E3A2F]"
                     />
-                    <label className="cursor-pointer inline-flex items-center space-x-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-medium rounded">
+                    <label className="cursor-pointer inline-flex items-center gap-1 px-3 py-1.5 bg-[#FAF7F2] hover:bg-[#F2ECE1] border border-[#D5CDBF] text-[#1C1917] text-[11.5px] font-semibold rounded-lg">
                       <Upload className="w-3 h-3" />
                       <span>Upload (R2)</span>
                       <input
@@ -611,22 +684,26 @@ export default function AdminCmsPage() {
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Section Title</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Section Title
+                </label>
                 <input
                   type="text"
                   value={currentSectionData.title || ''}
                   onChange={(e) => handleFieldChange('title', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none font-serif"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl font-serif focus:outline-hidden focus:border-[#1E3A2F]"
                   placeholder="Visit the Zaira Showroom"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Subtitle</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Subtitle
+                </label>
                 <input
                   type="text"
                   value={currentSectionData.subtitle || ''}
                   onChange={(e) => handleFieldChange('subtitle', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                   placeholder="See fabrics, furnishings and finishes in person..."
                 />
               </div>
@@ -634,42 +711,50 @@ export default function AdminCmsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Address</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Showroom Address
+                </label>
                 <textarea
-                  rows={2}
+                  rows={3}
                   value={currentSectionData.content?.address || ''}
                   onChange={(e) => handleContentChange('address', e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none"
+                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                 />
               </div>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Operating Hours</label>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                    Operating Hours
+                  </label>
                   <input
                     type="text"
                     value={currentSectionData.content?.hours || ''}
                     onChange={(e) => handleContentChange('hours', e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-md outline-none"
+                    className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                     placeholder="Mon–Sat 10:30 AM–8:30 PM · Sunday by appointment"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Phone</label>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                      Phone
+                    </label>
                     <input
                       type="text"
                       value={currentSectionData.content?.phone || ''}
                       onChange={(e) => handleContentChange('phone', e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-md outline-none"
+                      className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Email</label>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                      Email
+                    </label>
                     <input
                       type="email"
                       value={currentSectionData.content?.email || ''}
                       onChange={(e) => handleContentChange('email', e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-md outline-none"
+                      className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                     />
                   </div>
                 </div>
@@ -677,12 +762,14 @@ export default function AdminCmsPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Google Maps Direction URL</label>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                Google Maps Direction URL
+              </label>
               <input
                 type="text"
                 value={currentSectionData.content?.maps_query || ''}
                 onChange={(e) => handleContentChange('maps_query', e.target.value)}
-                className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none font-mono"
+                className="w-full px-3.5 py-2 text-[12.5px] border border-[#D5CDBF] rounded-xl font-mono focus:outline-hidden focus:border-[#1E3A2F]"
               />
             </div>
           </div>
@@ -693,22 +780,26 @@ export default function AdminCmsPage() {
           <div className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Brand Name / Headline</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Brand Name / Headline
+                </label>
                 <input
                   type="text"
                   value={currentSectionData.title || ''}
                   onChange={(e) => handleFieldChange('title', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none font-serif"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl font-serif focus:outline-hidden focus:border-[#1E3A2F]"
                   placeholder="Zaira Furnishing"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Tagline</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Tagline
+                </label>
                 <input
                   type="text"
                   value={currentSectionData.subtitle || ''}
                   onChange={(e) => handleFieldChange('subtitle', e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none"
+                  className="w-full px-3.5 py-2 text-[13.5px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                   placeholder="Curtains, blinds, fabrics and furnishings for thoughtfully designed spaces."
                 />
               </div>
@@ -716,21 +807,25 @@ export default function AdminCmsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Showroom Address</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Showroom Address
+                </label>
                 <textarea
                   rows={2}
                   value={currentSectionData.content?.address || ''}
                   onChange={(e) => handleContentChange('address', e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg outline-none"
+                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Copyright Notice</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Copyright Notice
+                </label>
                 <input
                   type="text"
                   value={currentSectionData.content?.copyright || ''}
                   onChange={(e) => handleContentChange('copyright', e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-md outline-none"
+                  className="w-full px-3.5 py-2 text-[13px] border border-[#D5CDBF] rounded-xl focus:outline-hidden focus:border-[#1E3A2F]"
                   placeholder="© 2026 Zaira Furnishing. All rights reserved."
                 />
               </div>
@@ -741,3 +836,4 @@ export default function AdminCmsPage() {
     </div>
   );
 }
+

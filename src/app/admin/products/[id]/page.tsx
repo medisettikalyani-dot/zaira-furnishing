@@ -68,6 +68,7 @@ export default function AdminProductEditPage({ params }: { params: Promise<{ id:
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingVariantImage, setUploadingVariantImage] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'details' | 'images' | 'variants' | 'specs' | 'customization'>('details');
 
   useEffect(() => {
@@ -197,6 +198,32 @@ export default function AdminProductEditPage({ params }: { params: Promise<{ id:
     }));
   };
 
+  // Upload variant thumbnail or preview image
+  const handleUploadVariantImage = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    idx: number,
+    field: 'thumbnail_image' | 'preview_image'
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingVariantImage(idx);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', 'products');
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      const updated = [...(product.variants || [])];
+      updated[idx] = { ...updated[idx], [field]: data.url };
+      setProduct((prev) => ({ ...prev, variants: updated }));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Image upload failed');
+    } finally {
+      setUploadingVariantImage(null);
+    }
+  };
+
   // Specification operations
   const handleAddSpec = () => {
     const newSpec: DbProductSpecification = {
@@ -219,15 +246,29 @@ export default function AdminProductEditPage({ params }: { params: Promise<{ id:
     }));
   };
 
-  // Customization rules operations
+// Helper to format stored JSON options into clean comma-separated text for input field
+const formatOptionsForInput = (raw: string | null | undefined): string => {
+  if (!raw) return '';
+  if (typeof raw === 'string' && raw.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.join(', ');
+    } catch {
+      // Ignore parse error and fallback to raw
+    }
+  }
+  return raw;
+};
+
+// Customization rules operations
   const handleAddCustomConfig = () => {
     const newCfg: DbCustomizationConfig = {
       id: `cfg-${Date.now()}`,
       product_id: product.id || '',
-      field_key: 'custom_field',
+      field_key: 'custom_option',
       field_label: 'Custom Option',
       field_type: 'select',
-      options: JSON.stringify(['Option 1', 'Option 2']),
+      options: 'Option 1, Option 2',
       default_value: 'Option 1',
       unit: null,
       is_required: 1,
@@ -265,6 +306,27 @@ export default function AdminProductEditPage({ params }: { params: Promise<{ id:
         ...product,
         main_image: mainImg,
         gallery_images: product.images?.map((img) => img.image_url),
+        customization_configs: (product.customization_configs || []).map((cfg) => {
+          let opts = cfg.options;
+          if (opts && typeof opts === 'string') {
+            const trimmed = opts.trim();
+            if (trimmed.startsWith('[')) {
+              try {
+                const parsed = JSON.parse(trimmed);
+                if (Array.isArray(parsed)) {
+                  opts = JSON.stringify(parsed);
+                } else {
+                  opts = JSON.stringify(trimmed.split(',').map((s) => s.trim()).filter(Boolean));
+                }
+              } catch {
+                opts = JSON.stringify(trimmed.split(',').map((s) => s.trim()).filter(Boolean));
+              }
+            } else {
+              opts = JSON.stringify(trimmed.split(',').map((s) => s.trim()).filter(Boolean));
+            }
+          }
+          return { ...cfg, options: opts };
+        }),
       };
 
       const res = await fetch(endpoint, {
@@ -627,29 +689,41 @@ export default function AdminProductEditPage({ params }: { params: Promise<{ id:
                   )}
                 </div>
 
-                <div className="pt-2 flex items-center justify-between text-[11.5px]">
-                  {img.is_main !== 1 ? (
+                <div className="pt-2 space-y-1.5">
+                  <input
+                    type="text"
+                    placeholder="Alt text (SEO description)"
+                    value={img.alt_text || ''}
+                    onChange={(e) => {
+                      const updated = [...(product.images || [])];
+                      updated[idx] = { ...updated[idx], alt_text: e.target.value };
+                      setProduct((prev) => ({ ...prev, images: updated }));
+                    }}
+                    className="w-full px-2 py-1 rounded-lg border border-[#D5CDBF] text-[11px] bg-white placeholder:text-[#A8A29E]"
+                  />
+                  <div className="flex items-center justify-between text-[11.5px]">
+                    {img.is_main !== 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => handleSetMainImage(idx)}
+                        className="text-[#1E3A2F] hover:underline font-medium cursor-pointer"
+                      >
+                        Set Main
+                      </button>
+                    ) : (
+                      <span className="text-[#15803D] font-bold flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Primary
+                      </span>
+                    )}
                     <button
                       type="button"
-                      onClick={() => handleSetMainImage(idx)}
-                      className="text-[#1E3A2F] hover:underline font-medium cursor-pointer"
+                      onClick={() => handleRemoveImage(idx)}
+                      className="text-rose-600 hover:text-rose-800 p-1 cursor-pointer"
+                      title="Remove image"
                     >
-                      Set Main
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
-                  ) : (
-                    <span className="text-[#15803D] font-bold flex items-center gap-1">
-                      <Check className="w-3 h-3" /> Primary
-                    </span>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveImage(idx)}
-                    className="text-rose-600 hover:text-rose-800 p-1 cursor-pointer"
-                    title="Remove image"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -677,89 +751,174 @@ export default function AdminProductEditPage({ params }: { params: Promise<{ id:
             </button>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {(product.variants || []).map((v, idx) => (
               <div
                 key={v.id || idx}
-                className="p-4 rounded-xl border border-[#EDE8DE] bg-[#FAF7F2]/50 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center"
+                className="p-4 rounded-xl border border-[#EDE8DE] bg-[#FAF7F2]/50 space-y-3"
               >
-                {/* Color Hex & Preview */}
-                <div className="sm:col-span-3 flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={v.color_hex || '#D6D3D1'}
-                    onChange={(e) => {
-                      const updated = [...(product.variants || [])];
-                      updated[idx].color_hex = e.target.value;
-                      setProduct({ ...product, variants: updated });
-                    }}
-                    className="w-8 h-8 rounded-lg border border-black/10 cursor-pointer"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Variant Name"
-                    value={v.name || ''}
-                    onChange={(e) => {
-                      const updated = [...(product.variants || [])];
-                      updated[idx].name = e.target.value;
-                      setProduct({ ...product, variants: updated });
-                    }}
-                    className="flex-1 px-3 py-1.5 rounded-lg border border-[#D5CDBF] text-[13px] bg-white"
-                  />
-                </div>
-
-                {/* SKU */}
-                <div className="sm:col-span-3">
-                  <input
-                    type="text"
-                    placeholder="SKU Code"
-                    value={v.sku || ''}
-                    onChange={(e) => {
-                      const updated = [...(product.variants || [])];
-                      updated[idx].sku = e.target.value;
-                      setProduct({ ...product, variants: updated });
-                    }}
-                    className="w-full px-3 py-1.5 rounded-lg border border-[#D5CDBF] text-[12.5px] font-mono bg-white"
-                  />
-                </div>
-
-                {/* Price Adjustment */}
-                <div className="sm:col-span-2">
-                  <input
-                    type="number"
-                    placeholder="Price Adj (₹)"
-                    value={v.price_adjustment ?? 0}
-                    onChange={(e) => {
-                      const updated = [...(product.variants || [])];
-                      updated[idx].price_adjustment = Number(e.target.value);
-                      setProduct({ ...product, variants: updated });
-                    }}
-                    className="w-full px-3 py-1.5 rounded-lg border border-[#D5CDBF] text-[12.5px] bg-white"
-                  />
-                </div>
-
-                {/* In Stock Toggle */}
-                <div className="sm:col-span-3 flex items-center gap-3">
-                  <label className="flex items-center gap-1.5 text-[12px] cursor-pointer">
+                {/* Row 1: Color + Name + SKU + Price + Stock + Delete */}
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                  {/* Color Hex & Name */}
+                  <div className="sm:col-span-4 flex items-center gap-2">
                     <input
-                      type="checkbox"
-                      checked={v.in_stock === 1}
+                      type="color"
+                      value={v.color_hex || '#D6D3D1'}
                       onChange={(e) => {
                         const updated = [...(product.variants || [])];
-                        updated[idx].in_stock = e.target.checked ? 1 : 0;
+                        updated[idx].color_hex = e.target.value;
                         setProduct({ ...product, variants: updated });
                       }}
-                      className="rounded text-[#1E3A2F]"
+                      className="w-8 h-8 rounded-lg border border-black/10 cursor-pointer shrink-0"
+                      title="Color swatch"
                     />
-                    <span>In Stock</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveVariant(idx)}
-                    className="text-rose-600 hover:text-rose-800 p-1 ml-auto cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                    <input
+                      type="text"
+                      placeholder="Variant Name (e.g. Ivory White)"
+                      value={v.name || ''}
+                      onChange={(e) => {
+                        const updated = [...(product.variants || [])];
+                        updated[idx].name = e.target.value;
+                        setProduct({ ...product, variants: updated });
+                      }}
+                      className="flex-1 px-3 py-1.5 rounded-lg border border-[#D5CDBF] text-[13px] bg-white"
+                    />
+                  </div>
+
+                  {/* SKU */}
+                  <div className="sm:col-span-3">
+                    <input
+                      type="text"
+                      placeholder="SKU Code"
+                      value={v.sku || ''}
+                      onChange={(e) => {
+                        const updated = [...(product.variants || [])];
+                        updated[idx].sku = e.target.value;
+                        setProduct({ ...product, variants: updated });
+                      }}
+                      className="w-full px-3 py-1.5 rounded-lg border border-[#D5CDBF] text-[12.5px] font-mono bg-white"
+                    />
+                  </div>
+
+                  {/* Price Adjustment */}
+                  <div className="sm:col-span-2">
+                    <input
+                      type="number"
+                      placeholder="Price Adj (₹)"
+                      value={v.price_adjustment ?? 0}
+                      onChange={(e) => {
+                        const updated = [...(product.variants || [])];
+                        updated[idx].price_adjustment = Number(e.target.value);
+                        setProduct({ ...product, variants: updated });
+                      }}
+                      className="w-full px-3 py-1.5 rounded-lg border border-[#D5CDBF] text-[12.5px] bg-white"
+                    />
+                  </div>
+
+                  {/* In Stock + Delete */}
+                  <div className="sm:col-span-3 flex items-center gap-3">
+                    <label className="flex items-center gap-1.5 text-[12px] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={v.in_stock === 1}
+                        onChange={(e) => {
+                          const updated = [...(product.variants || [])];
+                          updated[idx].in_stock = e.target.checked ? 1 : 0;
+                          setProduct({ ...product, variants: updated });
+                        }}
+                        className="rounded text-[#1E3A2F]"
+                      />
+                      <span>In Stock</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveVariant(idx)}
+                      className="text-rose-600 hover:text-rose-800 p-1 ml-auto cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Row 2: Thumbnail Image + Preview Image */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#EDE8DE]">
+                  {/* Thumbnail Image (small color swatch icon) */}
+                  <div>
+                    <p className="text-[10.5px] uppercase font-bold tracking-wider text-[#8C827A] mb-1.5">
+                      Swatch Thumbnail (small icon shown in color selector)
+                    </p>
+                    <div className="flex items-center gap-2">
+                      {v.thumbnail_image && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={v.thumbnail_image}
+                          alt="Thumbnail"
+                          className="w-10 h-10 rounded-lg object-cover border border-[#EDE8DE] shrink-0"
+                        />
+                      )}
+                      <input
+                        type="text"
+                        placeholder="/images/... or R2 URL"
+                        value={v.thumbnail_image || ''}
+                        onChange={(e) => {
+                          const updated = [...(product.variants || [])];
+                          updated[idx].thumbnail_image = e.target.value || null;
+                          setProduct({ ...product, variants: updated });
+                        }}
+                        className="flex-1 px-2.5 py-1.5 rounded-lg border border-[#D5CDBF] text-[11.5px] font-mono bg-white"
+                      />
+                      <label className="px-2.5 py-1.5 rounded-lg border border-[#D5CDBF] bg-[#FAF7F2] hover:bg-[#F2ECE1] text-[11px] font-semibold text-[#1C1917] cursor-pointer flex items-center gap-1 shrink-0">
+                        <Upload className="w-3 h-3" />
+                        <span>{uploadingVariantImage === idx ? '…' : 'Upload'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleUploadVariantImage(e, idx, 'thumbnail_image')}
+                          disabled={uploadingVariantImage !== null}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Preview Image (full-size gallery swap) */}
+                  <div>
+                    <p className="text-[10.5px] uppercase font-bold tracking-wider text-[#8C827A] mb-1.5">
+                      Preview Image (gallery swaps to this when variant selected)
+                    </p>
+                    <div className="flex items-center gap-2">
+                      {v.preview_image && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={v.preview_image}
+                          alt="Preview"
+                          className="w-10 h-10 rounded-lg object-cover border border-[#EDE8DE] shrink-0"
+                        />
+                      )}
+                      <input
+                        type="text"
+                        placeholder="/images/... or R2 URL"
+                        value={v.preview_image || ''}
+                        onChange={(e) => {
+                          const updated = [...(product.variants || [])];
+                          updated[idx].preview_image = e.target.value || null;
+                          setProduct({ ...product, variants: updated });
+                        }}
+                        className="flex-1 px-2.5 py-1.5 rounded-lg border border-[#D5CDBF] text-[11.5px] font-mono bg-white"
+                      />
+                      <label className="px-2.5 py-1.5 rounded-lg border border-[#D5CDBF] bg-[#FAF7F2] hover:bg-[#F2ECE1] text-[11px] font-semibold text-[#1C1917] cursor-pointer flex items-center gap-1 shrink-0">
+                        <Upload className="w-3 h-3" />
+                        <span>{uploadingVariantImage === idx ? '…' : 'Upload'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleUploadVariantImage(e, idx, 'preview_image')}
+                          disabled={uploadingVariantImage !== null}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -904,11 +1063,10 @@ export default function AdminProductEditPage({ params }: { params: Promise<{ id:
                     <input
                       type="text"
                       placeholder="Eyelet, Pinch Pleat, American Pleat, Ripple Fold..."
-                      value={cfg.options || ''}
+                      value={formatOptionsForInput(cfg.options)}
                       onChange={(e) => {
                         const updated = [...(product.customization_configs || [])];
-                        const items = e.target.value.split(',').map((s) => s.trim()).filter(Boolean);
-                        updated[idx].options = JSON.stringify(items);
+                        updated[idx].options = e.target.value;
                         setProduct({ ...product, customization_configs: updated });
                       }}
                       className="w-full px-3 py-1.5 rounded-lg border border-[#D5CDBF] text-[12.5px] bg-white"

@@ -144,7 +144,7 @@ export default async function CategoryDetailPage({
         )}
 
         {/* ─── 4. SHOWROOM & VISIT BANNER ─── */}
-        <div className="p-6 sm:p-8 bg-[#233F33] rounded-2xl text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
+        <div className="p-6 sm:p-8 bg-[#1C1714] border border-[#9A7B56]/30 rounded-2xl text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
           <div>
             <span className="text-[10px] uppercase tracking-[0.22em] text-[#C4B9A1] font-semibold block mb-1.5">
               HYDERABAD SHOWROOM & IN-HOME VISITS

@@ -246,6 +246,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, id, slug: cleanSlug });
   } catch (error) {
     console.error('Admin POST product error:', error);
-    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to create product' },
+      { status: 500 }
+    );
   }
 }

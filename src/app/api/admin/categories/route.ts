@@ -183,6 +183,12 @@ export async function DELETE(req: NextRequest) {
     }
 
     const db = getDatabase();
+    const permanent = searchParams.get('permanent') === 'true';
+
+    if (permanent) {
+      await db.execute('DELETE FROM categories WHERE id = ?', [id]);
+      return NextResponse.json({ success: true, deleted: true });
+    }
 
     // Check if category has associated products
     const prodCount = await db.queryOne<{ count: number }>(

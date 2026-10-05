@@ -1,11 +1,12 @@
 /**
  * Zaira Furnishing — Centralized WhatsApp Utilities & Message Builder
  *
- * Official WhatsApp Line: +91 63001 45763
+ * Official WhatsApp Line: 07947415666
  */
 
-export const ZAIRA_WHATSAPP_NUMBER = '916300145763';
-export const ZAIRA_WHATSAPP_DISPLAY = '+91 63001 45763';
+export const ZAIRA_WHATSAPP_NUMBER = '917947415666';
+export const ZAIRA_WHATSAPP_DISPLAY = '07947415666';
+export const ZAIRA_WHATSAPP_URL = 'https://wa.me/917947415666';
 
 export interface WhatsAppOrderItem {
   productId?: string;
@@ -250,5 +251,151 @@ export function buildOrderWhatsAppMessage(order: WhatsAppOrderData): string {
  */
 export function buildOrderWhatsAppUrl(order: WhatsAppOrderData): string {
   const message = buildOrderWhatsAppMessage(order);
+  return `https://wa.me/${ZAIRA_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+
+export interface WhatsAppQuoteData {
+  productName: string;
+  categoryName: string;
+  variantName?: string | null;
+  sizeLabel?: string | null;
+  quantity: number | string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string | null;
+  requirements?: string | null;
+  requestReference: string;
+  productUrl?: string | null;
+}
+
+/**
+ * Standardized WhatsApp Message Builder for Customer Quote Request
+ */
+export function buildQuoteWhatsAppMessage(data: WhatsAppQuoteData): string {
+  const lines: string[] = [
+    'ZAIRA FURNISHING — QUOTE REQUEST',
+    '',
+    `Product: ${data.productName}`,
+    `Category: ${data.categoryName}`,
+  ];
+
+  if (data.variantName) {
+    lines.push(`Variant: ${data.variantName}`);
+  }
+  if (data.sizeLabel) {
+    lines.push(`Size: ${data.sizeLabel}`);
+  }
+  lines.push(`Quantity: ${data.quantity}`);
+
+  lines.push('');
+  lines.push('Customer Details:');
+  lines.push(`Name: ${data.customerName}`);
+  lines.push(`Phone: ${data.customerPhone}`);
+  if (data.customerEmail) {
+    lines.push(`Email: ${data.customerEmail}`);
+  }
+
+  if (data.requirements) {
+    lines.push('');
+    lines.push('Requirements:');
+    lines.push(data.requirements);
+  }
+
+  lines.push('');
+  lines.push('Request Reference:');
+  lines.push(data.requestReference);
+
+  if (data.productUrl) {
+    lines.push('');
+    lines.push('Product Link:');
+    lines.push(data.productUrl);
+  }
+
+  lines.push('');
+  lines.push('Please provide a quotation for this requirement.');
+
+  return lines.join('\n');
+}
+
+/**
+ * Builds direct WhatsApp URL for quote request
+ */
+export function buildQuoteWhatsAppUrl(data: WhatsAppQuoteData): string {
+  const message = buildQuoteWhatsAppMessage(data);
+  return `https://wa.me/${ZAIRA_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+
+export interface WhatsAppMeasurementData {
+  productName: string;
+  categoryName: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string | null;
+  address: string;
+  preferredDate?: string | null;
+  preferredTime?: string | null;
+  requirements?: string | null;
+  requestReference: string;
+  productUrl?: string | null;
+}
+
+/**
+ * Standardized WhatsApp Message Builder for Free Measurement Request
+ */
+export function buildMeasurementWhatsAppMessage(data: WhatsAppMeasurementData): string {
+  const lines: string[] = [
+    'ZAIRA FURNISHING — FREE MEASUREMENT REQUEST',
+    '',
+    `Product: ${data.productName}`,
+    `Category: ${data.categoryName}`,
+    '',
+    'Customer Details:',
+    `Name: ${data.customerName}`,
+    `Phone: ${data.customerPhone}`,
+  ];
+
+  if (data.customerEmail) {
+    lines.push(`Email: ${data.customerEmail}`);
+  }
+
+  lines.push('');
+  lines.push('Address:');
+  lines.push(data.address);
+
+  if (data.preferredDate) {
+    lines.push('');
+    lines.push(`Preferred Date: ${data.preferredDate}`);
+  }
+  if (data.preferredTime) {
+    lines.push(`Preferred Time: ${data.preferredTime}`);
+  }
+
+  if (data.requirements) {
+    lines.push('');
+    lines.push('Requirements:');
+    lines.push(data.requirements);
+  }
+
+  lines.push('');
+  lines.push('Request Reference:');
+  lines.push(data.requestReference);
+
+  if (data.productUrl) {
+    lines.push('');
+    lines.push('Product Link:');
+    lines.push(data.productUrl);
+  }
+
+  lines.push('');
+  lines.push('Please confirm the free measurement visit.');
+
+  return lines.join('\n');
+}
+
+/**
+ * Builds direct WhatsApp URL for free measurement visit request
+ */
+export function buildMeasurementWhatsAppUrl(data: WhatsAppMeasurementData): string {
+  const message = buildMeasurementWhatsAppMessage(data);
   return `https://wa.me/${ZAIRA_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }

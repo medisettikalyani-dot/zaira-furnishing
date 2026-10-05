@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Star, Edit3, X, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { useStore } from '@/lib/context/StoreContext';
 
 export interface CustomerReviewItem {
   id: string;
@@ -17,6 +18,12 @@ interface ProductCustomerReviewsProps {
   productId: string;
   productSlug?: string;
   productName: string;
+  initialReviews?: CustomerReviewItem[];
+  initialSummary?: {
+    total: number;
+    averageRating: string | null;
+  };
+  onSummaryChange?: (summary: { total: number; averageRating: string | null }) => void;
 }
 
 const RATING_LABELS: Record<number, string> = {
@@ -27,7 +34,7 @@ const RATING_LABELS: Record<number, string> = {
   5: 'Excellent',
 };
 
-function formatReviewDate(dateString: string): string {
+export function formatReviewDate(dateString: string): string {
   try {
     const d = new Date(dateString.includes('T') ? dateString : dateString.replace(' ', 'T') + 'Z');
     if (isNaN(d.getTime())) return dateString;
@@ -58,11 +65,20 @@ export function ProductCustomerReviews({
   productId,
   productSlug,
   productName,
+  initialReviews,
+  initialSummary,
+  onSummaryChange,
 }: ProductCustomerReviewsProps) {
-  const [reviews, setReviews] = useState<CustomerReviewItem[]>([]);
-  const [totalReviews, setTotalReviews] = useState<number>(0);
-  const [averageRating, setAverageRating] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { customer } = useStore();
+
+  const [reviews, setReviews] = useState<CustomerReviewItem[]>(initialReviews || []);
+  const [totalReviews, setTotalReviews] = useState<number>(
+    initialSummary ? initialSummary.total : (initialReviews?.length || 0)
+  );
+  const [averageRating, setAverageRating] = useState<string | null>(
+    initialSummary ? initialSummary.averageRating : null
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(!initialReviews);
 
   // Form State
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -74,14 +90,35 @@ export function ProductCustomerReviews({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successNotice, setSuccessNotice] = useState(false);
 
+  // Pre-fill customer name if logged in
+  useEffect(() => {
+    if (customer?.name && !authorName) {
+      setAuthorName(customer.name);
+    }
+  }, [customer?.name, authorName]);
+
+  // Keep reviews & summary synced when product changes
+  useEffect(() => {
+    if (initialReviews) {
+      setReviews(initialReviews);
+    }
+    if (initialSummary) {
+      setTotalReviews(initialSummary.total);
+      setAverageRating(initialSummary.averageRating);
+    }
+    setValidationError(null);
+  }, [productId, productSlug, initialReviews, initialSummary]);
+
   // Fetch reviews for THIS specific product only
-  const fetchReviews = useCallback(async () => {
+  const fetchReviews = useCallback(async (showLoadingSpinner = true) => {
     if (!productId && !productSlug) return;
     try {
-      setIsLoading(true);
-      const queryParam = productId
-        ? `productId=${encodeURIComponent(productId)}`
-        : `slug=${encodeURIComponent(productSlug || '')}`;
+      if (showLoadingSpinner) {
+        setIsLoading(true);
+      }
+      const queryParam = productSlug
+        ? `slug=${encodeURIComponent(productSlug)}`
+        : `productId=${encodeURIComponent(productId)}`;
 
       const res = await fetch(`/api/reviews?${queryParam}`);
       if (!res.ok) {
@@ -101,31 +138,48 @@ export function ProductCustomerReviews({
         comment: r.comment,
       }));
 
+      const newTotal = typeof data.total === 'number' ? data.total : formatted.length;
+      const newAvg = data.averageRating || null;
+
       setReviews(formatted);
-      setTotalReviews(typeof data.total === 'number' ? data.total : formatted.length);
-      setAverageRating(data.averageRating || null);
+      setTotalReviews(newTotal);
+      setAverageRating(newAvg);
+      onSummaryChange?.({ total: newTotal, averageRating: newAvg });
     } catch (err) {
       console.error('Error fetching product reviews:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [productId, productSlug]);
+  }, [productId, productSlug, onSummaryChange]);
 
   useEffect(() => {
-    fetchReviews();
-  }, [fetchReviews]);
+    // Only fetch on mount if initialReviews were not passed from server
+    if (!initialReviews) {
+      fetchReviews(true);
+    }
+  }, [fetchReviews, initialReviews]);
 
   // Handle Review Submission
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
 
+    // 1. Validate customer name (REQUIRED)
+    const trimmedName = authorName.trim();
+    if (!trimmedName) {
+      setValidationError('Please enter your name.');
+      return;
+    }
+
+    // 2. Validate star rating (1-5)
     if (selectedRating === 0) {
       setValidationError('Please select a star rating between 1 and 5.');
       return;
     }
 
-    if (comment.trim().length < 5) {
+    // 3. Validate review text (min 5 chars)
+    const trimmedComment = comment.trim();
+    if (trimmedComment.length < 5) {
       setValidationError('Please enter a review of at least 5 characters.');
       return;
     }
@@ -140,34 +194,64 @@ export function ProductCustomerReviews({
           productId,
           slug: productSlug,
           rating: selectedRating,
-          comment: comment.trim(),
-          customerName: authorName.trim() || undefined,
+          comment: trimmedComment,
+          customerName: trimmedName,
         }),
       });
 
-      const result = await res.json();
+      let result: any = null;
+      try {
+        result = await res.json();
+      } catch {
+        result = null;
+      }
 
       if (!res.ok) {
-        setValidationError(result.error || 'Failed to submit your review. Please try again.');
+        const errorMsg =
+          result?.error ||
+          (res.status === 400
+            ? 'Invalid review submission. Please check all fields and try again.'
+            : res.status === 404
+            ? 'The product was not found. Please refresh the page.'
+            : res.status === 401 || res.status === 403
+            ? 'Authentication required to submit this review.'
+            : 'Unable to submit your review at this time. Please try again.');
+        setValidationError(errorMsg);
         setIsSubmitting(false);
         return;
+      }
+
+      // Optimistically insert newly created review into state immediately
+      if (result?.data) {
+        const newReview: CustomerReviewItem = {
+          id: result.data.id,
+          productId: result.data.product_id,
+          rating: result.data.rating,
+          authorName: result.data.customer_name || trimmedName,
+          isVerifiedPurchase: Boolean(result.data.is_verified_purchase === 1),
+          date: 'Just now',
+          comment: result.data.comment,
+        };
+        setReviews((prev) => [newReview, ...prev.filter((r) => r.id !== newReview.id)]);
       }
 
       // Reset form on success
       setSelectedRating(0);
       setHoverRating(0);
-      setAuthorName('');
+      if (!customer?.name) {
+        setAuthorName('');
+      }
       setComment('');
       setIsFormOpen(false);
       setValidationError(null);
       setSuccessNotice(true);
 
-      // Re-fetch reviews to update average rating and count automatically
-      await fetchReviews();
+      // Re-fetch reviews to update average rating and count automatically in background
+      await fetchReviews(false);
 
       setTimeout(() => {
         setSuccessNotice(false);
-      }, 6000);
+      }, 5000);
     } catch (err) {
       console.error('Submit review error:', err);
       setValidationError('A network error occurred. Please try again.');
@@ -178,8 +262,9 @@ export function ProductCustomerReviews({
 
   return (
     <section
+      id="reviews"
       aria-label="Customer Reviews"
-      className="mt-8 sm:mt-10 rounded-xl bg-white border border-[#EDE8DE] p-4 sm:p-5 lg:p-6 shadow-[0_2px_8px_rgba(28,25,23,0.02)]"
+      className="scroll-mt-24 mt-8 sm:mt-10 rounded-xl bg-white border border-[#EDE8DE] p-4 sm:p-5 lg:p-6 shadow-[0_2px_8px_rgba(28,25,23,0.02)]"
     >
       {/* ─── 1. TOP HEADER WITH RATING SUMMARY & ACTION ─── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-[#EAE4D8]">
@@ -292,7 +377,10 @@ export function ProductCustomerReviews({
                     <button
                       key={star}
                       type="button"
-                      onClick={() => setSelectedRating(star)}
+                      onClick={() => {
+                        setSelectedRating(star);
+                        if (validationError) setValidationError(null);
+                      }}
                       onMouseEnter={() => setHoverRating(star)}
                       onMouseLeave={() => setHoverRating(0)}
                       className="p-0.5 text-[#C4B9A1] hover:text-[#9A7B56] transition-colors cursor-pointer focus:outline-none"
@@ -318,13 +406,24 @@ export function ProductCustomerReviews({
 
             {/* Reviewer Name */}
             <div>
-              <label className="block text-[10.5px] font-semibold text-[#44403C] uppercase tracking-wider mb-1">
-                Your Name <span className="text-[#8C827A] font-normal normal-case">(Optional)</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[10.5px] font-semibold text-[#44403C] uppercase tracking-wider">
+                  Your Name <span className="text-rose-600">*</span>
+                </label>
+                {customer && (
+                  <span className="text-[10px] text-emerald-700 font-medium flex items-center gap-1">
+                    <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" /> Logged In
+                  </span>
+                )}
+              </div>
               <input
                 type="text"
+                required
                 value={authorName}
-                onChange={(e) => setAuthorName(e.target.value)}
+                onChange={(e) => {
+                  setAuthorName(e.target.value);
+                  if (validationError) setValidationError(null);
+                }}
                 placeholder="e.g. Priya Sharma"
                 className="w-full h-8.5 px-3 rounded-lg border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12px] text-[#1C1917] outline-none transition-colors"
               />
@@ -338,7 +437,10 @@ export function ProductCustomerReviews({
               <textarea
                 rows={3}
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                onChange={(e) => {
+                  setComment(e.target.value);
+                  if (validationError) setValidationError(null);
+                }}
                 placeholder="Share your experience with this product... (e.g. fabric texture, drape, blackout performance, stitching quality)"
                 className="w-full p-2.5 rounded-lg border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white text-[12px] text-[#1C1917] outline-none resize-none transition-colors"
               />

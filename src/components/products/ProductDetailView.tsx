@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import {
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   Heart,
   Check,
   ShoppingBag,
@@ -27,23 +26,88 @@ import {
   Send,
   AlertCircle,
   Maximize2,
+  Star,
+  Sparkles,
+  ShieldCheck,
   Scissors,
 } from 'lucide-react';
 import { Product } from '@/lib/data/types';
 import { useStore } from '@/lib/context/StoreContext';
 import { ProductCard } from '@/components/ui/ProductCard';
-import { ProductTrustBenefits } from './ProductTrustBenefits';
-import { ProductCustomerReviews } from './ProductCustomerReviews';
-import { ZAIRA_WHATSAPP_NUMBER } from '@/lib/whatsapp';
+import { ProductCustomerReviews, CustomerReviewItem } from './ProductCustomerReviews';
+import {
+  ZAIRA_WHATSAPP_NUMBER,
+  buildQuoteWhatsAppUrl,
+  buildMeasurementWhatsAppUrl,
+} from '@/lib/whatsapp';
 
 interface ProductDetailViewProps {
   product: Product;
   relatedProducts: Product[];
+  initialReviews?: CustomerReviewItem[];
+  initialReviewSummary?: {
+    total: number;
+    averageRating: string | null;
+  };
 }
 
-export function ProductDetailView({ product, relatedProducts }: ProductDetailViewProps) {
+const COLOR_NAME_HEX_MAP: Record<string, string> = {
+  'midnight navy': '#1B263B',
+  'navy': '#1B263B',
+  'navy blue': '#1B263B',
+  'warm beige': '#C8BEB2',
+  'beige': '#C8BEB2',
+  'dove grey': '#9E9D99',
+  'dove gray': '#9E9D99',
+  'grey': '#9E9D99',
+  'gray': '#8D99AE',
+  'oatmeal slub': '#D2C6B5',
+  'oatmeal': '#D2C6B5',
+  'forest green': '#1E3A2F',
+  'emerald green': '#154734',
+  'emerald': '#154734',
+  'olive': '#556B2F',
+  'olive green': '#556B2F',
+  'sage': '#9CAF88',
+  'sage green': '#9CAF88',
+  'ivory': '#FDFBF7',
+  'cream': '#F5F5DC',
+  'linen': '#E9DCC9',
+  'charcoal': '#333333',
+  'black': '#1A1A1A',
+  'white': '#FFFFFF',
+  'pure white': '#FFFFFF',
+  'terracotta': '#C86D51',
+  'rust': '#B7410E',
+  'mustard': '#E1A95F',
+  'gold': '#D4AF37',
+  'taupe': '#B38B6D',
+  'blush': '#DE5D83',
+  'rose': '#C08081',
+};
+
+function resolveColorHex(variant: { name: string; colorHex?: string }): string {
+  if (variant.colorHex) return variant.colorHex;
+  const normalized = variant.name.toLowerCase().trim();
+  if (COLOR_NAME_HEX_MAP[normalized]) return COLOR_NAME_HEX_MAP[normalized];
+  for (const [key, hex] of Object.entries(COLOR_NAME_HEX_MAP)) {
+    if (normalized.includes(key)) return hex;
+  }
+  return '#C8BEB2';
+}
+
+export function ProductDetailView({
+  product,
+  relatedProducts,
+  initialReviews,
+  initialReviewSummary,
+}: ProductDetailViewProps) {
   const router = useRouter();
   const { addToCart, isWishlisted, toggleWishlist, customer, setIsCartOpen } = useStore();
+
+  const [reviewSummary, setReviewSummary] = useState(
+    initialReviewSummary || { total: 0, averageRating: null }
+  );
 
   // ─── DATA-DRIVEN PRODUCT PROPERTIES ───
   const isCustom = product.productType === 'custom_made';
@@ -143,6 +207,19 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
     return list.length > 0 ? list : [primaryImg];
   }, [product]);
 
+  // Helper to resolve alt text for any image according to: image.alt_text || product.name
+  const getImageAlt = useCallback(
+    (imgUrl: string, fallbackSuffix?: string) => {
+      const match = product.images?.find((img) => img.url === imgUrl);
+      if (match?.altText && match.altText.trim()) {
+        return match.altText.trim();
+      }
+      const fallbackBase = product.displayName || product.name;
+      return fallbackSuffix ? `${fallbackBase} ${fallbackSuffix}` : fallbackBase;
+    },
+    [product]
+  );
+
   const currentImgIdx = useMemo(() => {
     const idx = galleryImages.indexOf(activeImage);
     return idx >= 0 ? idx : 0;
@@ -175,7 +252,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
   };
 
   // ─── REAL CUSTOMIZATION OPTIONS (CURTAINS / BLINDS) ───
-  const [sizeType, setSizeType] = useState<'standard' | 'custom'>('standard');
+  const [sizeType, setSizeType] = useState<'standard' | 'door' | 'long-door' | 'custom'>('standard');
   const [customWidth, setCustomWidth] = useState('60');
   const [customHeight, setCustomHeight] = useState('84');
   const activeHeadingStyle = confirmedHeadingStyles[0] || 'French Pinch Pleat';
@@ -185,19 +262,10 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
   const [addedNotice, setAddedNotice] = useState(false);
   const [isBuyingNow, setIsBuyingNow] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // ─── ACCORDIONS STATE (CLEAN DIVIDERS) ───
-  const [openAccordions, setOpenAccordions] = useState<Set<string>>(
-    new Set(['specs', 'details'])
-  );
-
-  const toggleAccordion = useCallback((key: string) => {
-    setOpenAccordions((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+  useEffect(() => {
+    setIsMounted(true);
   }, []);
 
   // ─── MODAL FLOWS STATE (QUOTE & MEASUREMENT) ───
@@ -209,6 +277,8 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [quoteSubmitted, setQuoteSubmitted] = useState(false);
   const [quoteRequestNumber, setQuoteRequestNumber] = useState<string | null>(null);
+  const [quoteWhatsAppUrl, setQuoteWhatsAppUrl] = useState('');
+  const [quoteWhatsAppBlocked, setQuoteWhatsAppBlocked] = useState(false);
   const [isQuoteSubmitting, setIsQuoteSubmitting] = useState(false);
 
   const [isMeasurementModalOpen, setIsMeasurementModalOpen] = useState(false);
@@ -222,6 +292,8 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
   const [measError, setMeasError] = useState<string | null>(null);
   const [measSubmitted, setMeasSubmitted] = useState(false);
   const [measRequestNumber, setMeasRequestNumber] = useState<string | null>(null);
+  const [measWhatsAppUrl, setMeasWhatsAppUrl] = useState('');
+  const [measWhatsAppBlocked, setMeasWhatsAppBlocked] = useState(false);
   const [isMeasSubmitting, setIsMeasSubmitting] = useState(false);
 
   // Subcategory metadata resolution for breadcrumbs directly from dynamic product
@@ -324,8 +396,8 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
     setTimeout(() => setAddedNotice(false), 2600);
   };
 
-  // Buy now handler
-  const handleBuyNow = async () => {
+  // Buy now handler — dedicated single-product checkout flow
+  const handleBuyNow = () => {
     if (isBuyingNow) return;
     setIsBuyingNow(true);
 
@@ -333,9 +405,10 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
       const sizeLabel = getResolvedSizeLabel();
       const customDimensions = getResolvedDimensions();
 
-      await addToCart({
+      const buyNowItem = {
+        id: `bn-${Date.now()}`,
         productId: product.id,
-        variantId: currentVariant?.id,
+        variantId: currentVariant?.id || undefined,
         name: product.displayName || product.name,
         slug: product.slug,
         image: activeImage,
@@ -346,13 +419,26 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
         customDimensions,
         quantity,
         unitPrice: effectivePrice,
+        totalPrice: effectivePrice * quantity,
         productType: product.productType,
-      });
+        customizationData: {
+          sizeLabel,
+          headingStyle: isCurtain && confirmedHeadingStyles.length > 0 ? activeHeadingStyle : undefined,
+          customDimensions,
+          color: currentVariant?.name,
+          productType: product.productType,
+        },
+      };
+
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('zaira_buy_now_item', JSON.stringify(buyNowItem));
+      }
 
       setIsCartOpen(false);
-      router.push('/checkout');
+      router.push('/checkout?buyNow=1');
     } catch (err) {
       console.error('Buy Now navigation failed:', err);
+    } finally {
       setIsBuyingNow(false);
     }
   };
@@ -362,43 +448,46 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
     const phone = ZAIRA_WHATSAPP_NUMBER;
     const productName = product.displayName || product.name;
     const currentUrl =
-      typeof window !== 'undefined'
+      isMounted && typeof window !== 'undefined'
         ? window.location.href
         : `https://zairafurnishing.com/products/${product.slug}`;
-    const qtyText = `${quantity} ${quantityUnit}`;
     const sizeLabel = getResolvedSizeLabel();
 
     const messageLines = [
-      'Hello Zaira Furnishing,',
+      'ZAIRA FURNISHING — ORDER REQUEST',
       '',
-      `I am interested in: ${productName}`,
+      `Product: ${productName}`,
       `Category: ${product.categoryName}`,
     ];
 
     if (currentVariant?.name && product.variations && product.variations.length > 1) {
-      messageLines.push(`Selected Option: ${currentVariant.name}`);
+      messageLines.push(`Variant: ${currentVariant.name}`);
     }
 
-    if (isCurtain || isBlind || currentVariant?.attributes?.Size) {
-      messageLines.push(`Specification: ${sizeLabel}`);
+    if (sizeLabel) {
+      messageLines.push(`Size: ${sizeLabel}`);
     }
 
     if (isCurtain && confirmedHeadingStyles.length > 0 && activeHeadingStyle) {
       messageLines.push(`Heading Style: ${activeHeadingStyle}`);
     }
 
-    messageLines.push(`Quantity: ${qtyText}`);
+    messageLines.push(`Quantity: ${quantity} ${quantityUnit}`);
     messageLines.push(
       `Price: ${product.currency}${effectivePrice.toLocaleString('en-IN')}${pricingUnit ? ` ${pricingUnit}` : ''}`
     );
+    if (quantity > 1) {
+      messageLines.push(`Estimated Subtotal: ₹${(effectivePrice * quantity).toLocaleString('en-IN')}`);
+    }
     messageLines.push(`Product Link: ${currentUrl}`);
+    messageLines.push('');
+    messageLines.push('Please confirm my order.');
 
     return `https://wa.me/${phone}?text=${encodeURIComponent(messageLines.join('\n'))}`;
   }, [
     product,
     currentVariant,
     isCurtain,
-    isBlind,
     confirmedHeadingStyles,
     activeHeadingStyle,
     quantity,
@@ -406,64 +495,14 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
     pricingUnit,
     effectivePrice,
     getResolvedSizeLabel,
+    isMounted,
   ]);
 
-  // Modal WhatsApp URLs
-  const getQuoteWhatsAppUrl = () => {
-    const phone = ZAIRA_WHATSAPP_NUMBER;
-    const productName = product.displayName || product.name;
-    const sizeLabel = getResolvedSizeLabel();
-
-    const lines = [
-      'Hello Zaira Furnishing,',
-      '',
-      'I have submitted a Quote Request:',
-      quoteRequestNumber ? `Request Ref: ${quoteRequestNumber}` : '',
-      `Product: ${productName}`,
-      `Category: ${product.categoryName}`,
-      currentVariant?.name && product.variations && product.variations.length > 1
-        ? `Option: ${currentVariant.name}`
-        : '',
-      sizeLabel ? `Size/Style: ${sizeLabel}` : '',
-      `Quantity: ${quantity} ${quantityUnit}`,
-      `Customer Name: ${quoteName}`,
-      quoteMessage ? `Notes: ${quoteMessage}` : '',
-      '',
-      'Please review and share a quote.',
-    ].filter(Boolean);
-
-    return `https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`;
-  };
-
-  const getMeasurementWhatsAppUrl = () => {
-    const phone = ZAIRA_WHATSAPP_NUMBER;
-    const productName = product.displayName || product.name;
-    const sizeLabel = getResolvedSizeLabel();
-
-    const lines = [
-      'Hello Zaira Furnishing,',
-      '',
-      'I booked an In-Home Measurement Visit:',
-      measRequestNumber ? `Request Ref: ${measRequestNumber}` : '',
-      `Product: ${productName}`,
-      `Category: ${product.categoryName}`,
-      sizeLabel ? `Specification: ${sizeLabel}` : '',
-      `Customer: ${measName}`,
-      `Phone: ${measPhone}`,
-      `Address: ${measAddress}`,
-      measDate ? `Preferred Date: ${measDate} (${measTimeSlot})` : '',
-      measNotes ? `Notes: ${measNotes}` : '',
-      '',
-      'Please confirm the appointment visit.',
-    ].filter(Boolean);
-
-    return `https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`;
-  };
-
-  // Submit quote request
+  // Submit quote request — Database First, then WhatsApp
   const handleSubmitQuote = async (e: React.FormEvent) => {
     e.preventDefault();
     setQuoteError(null);
+    setQuoteWhatsAppBlocked(false);
 
     const cleanPhone = quotePhone.replace(/\D/g, '');
     if (!quoteName.trim()) {
@@ -480,14 +519,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
     try {
       const sizeLabel = getResolvedSizeLabel();
       const idempotencyKey = `quote_${product.id}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-
-      const fullNotes = [
-        quoteMessage.trim(),
-        currentVariant?.name ? `Option: ${currentVariant.name}` : '',
-        `Requested Qty: ${quantity} ${quantityUnit}`,
-      ]
-        .filter(Boolean)
-        .join(' | ');
+      const fullNotes = quoteMessage.trim();
 
       const res = await fetch('/api/quote-requests', {
         method: 'POST',
@@ -498,7 +530,8 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
           customerName: quoteName.trim(),
           phone: cleanPhone,
           email: quoteEmail.trim() || undefined,
-          message: fullNotes,
+          customerNotes: fullNotes || undefined,
+          message: fullNotes || undefined,
           dimensions: sizeLabel,
           quantity,
           idempotencyKey,
@@ -514,7 +547,37 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
 
       const generatedNum = data.quoteRequest?.request_number || data.requestNumber || '';
       setQuoteRequestNumber(generatedNum);
+
+      // Build WhatsApp URL with the actual submitted data and DB reference number
+      const waUrl = buildQuoteWhatsAppUrl({
+        productName: product.displayName || product.name,
+        categoryName: product.categoryName,
+        variantName:
+          currentVariant?.name && product.variations && product.variations.length > 1
+            ? currentVariant.name
+            : undefined,
+        sizeLabel,
+        quantity: `${quantity} ${quantityUnit}`,
+        customerName: quoteName.trim(),
+        customerPhone: cleanPhone,
+        customerEmail: quoteEmail.trim() || undefined,
+        requirements: fullNotes || undefined,
+        requestReference: generatedNum,
+        productUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+      });
+
+      setQuoteWhatsAppUrl(waUrl);
       setQuoteSubmitted(true);
+
+      // Attempt to automatically open WhatsApp
+      try {
+        const win = window.open(waUrl, '_blank', 'noopener,noreferrer');
+        if (!win) {
+          setQuoteWhatsAppBlocked(true);
+        }
+      } catch {
+        setQuoteWhatsAppBlocked(true);
+      }
     } catch (err: any) {
       console.error('Quote request submission error:', err);
       setQuoteError('Network error occurred while submitting your request. Please try again.');
@@ -523,10 +586,11 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
     }
   };
 
-  // Submit measurement request
+  // Submit measurement request — Database First, then WhatsApp
   const handleSubmitMeasurement = async (e: React.FormEvent) => {
     e.preventDefault();
     setMeasError(null);
+    setMeasWhatsAppBlocked(false);
 
     const cleanPhone = measPhone.replace(/\D/g, '');
     if (!measName.trim()) {
@@ -548,6 +612,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
       const sizeLabel = getResolvedSizeLabel();
       const idempotencyKey = `meas_${product.id}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const dimensionsText = sizeLabel || `Approx ${quantity} ${quantityUnit}`;
+      const fullNotes = measNotes.trim();
 
       const res = await fetch('/api/measurement-requests', {
         method: 'POST',
@@ -562,7 +627,8 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
           preferredDate: measDate,
           preferredTimeSlot: measTimeSlot,
           dimensions: dimensionsText,
-          customerNotes: measNotes.trim() || undefined,
+          customerNotes: fullNotes || undefined,
+          notes: fullNotes || undefined,
           idempotencyKey,
         }),
       });
@@ -576,7 +642,34 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
 
       const generatedNum = data.measurementRequest?.request_number || data.requestNumber || '';
       setMeasRequestNumber(generatedNum);
+
+      // Build WhatsApp URL with the actual submitted data and DB reference number
+      const waUrl = buildMeasurementWhatsAppUrl({
+        productName: product.displayName || product.name,
+        categoryName: product.categoryName,
+        customerName: measName.trim(),
+        customerPhone: cleanPhone,
+        customerEmail: measEmail.trim() || undefined,
+        address: measAddress.trim(),
+        preferredDate: measDate || undefined,
+        preferredTime: measTimeSlot || undefined,
+        requirements: fullNotes || undefined,
+        requestReference: generatedNum,
+        productUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+      });
+
+      setMeasWhatsAppUrl(waUrl);
       setMeasSubmitted(true);
+
+      // Attempt to automatically open WhatsApp
+      try {
+        const win = window.open(waUrl, '_blank', 'noopener,noreferrer');
+        if (!win) {
+          setMeasWhatsAppBlocked(true);
+        }
+      } catch {
+        setMeasWhatsAppBlocked(true);
+      }
     } catch (err: any) {
       console.error('Measurement request submission error:', err);
       setMeasError('Network error occurred while submitting your request. Please try again.');
@@ -618,24 +711,32 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
       <nav aria-label="Breadcrumb" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-3">
         <ol className="flex items-center gap-1.5 text-[11.5px] sm:text-[12px] text-[#8C827A] flex-wrap list-none p-0 m-0 font-normal">
           <li>
-            <Link href="/" className="hover:text-[#1E3A2F] transition-colors">
+            <Link href="/" className="hover:text-[#1C1714] transition-colors">
               Home
             </Link>
           </li>
           <li aria-hidden="true" className="text-[#C4B9A1]">/</li>
           <li>
-            {subcategoryUrl ? (
-              <Link href={subcategoryUrl} className="hover:text-[#1E3A2F] transition-colors">
-                {subcategoryName}
-              </Link>
-            ) : (
-              <Link href={`/categories/${product.categorySlug}`} className="hover:text-[#1E3A2F] transition-colors">
-                {product.categoryName}
-              </Link>
-            )}
+            <Link href={`/categories/${product.categorySlug}`} className="hover:text-[#1C1714] transition-colors">
+              {product.categoryName}
+            </Link>
           </li>
+          {subcategoryName && subcategoryName.toLowerCase() !== (product.displayName || product.name).toLowerCase() && (
+            <>
+              <li aria-hidden="true" className="text-[#C4B9A1]">/</li>
+              <li>
+                {subcategoryUrl ? (
+                  <Link href={subcategoryUrl} className="hover:text-[#1C1714] transition-colors">
+                    {subcategoryName}
+                  </Link>
+                ) : (
+                  <span>{subcategoryName}</span>
+                )}
+              </li>
+            </>
+          )}
           <li aria-hidden="true" className="text-[#C4B9A1]">/</li>
-          <li aria-current="page" className="text-[#1E3A2F] font-medium truncate max-w-[220px] sm:max-w-none">
+          <li aria-current="page" className="text-[#1C1714] font-medium truncate max-w-[220px] sm:max-w-none">
             {product.displayName || product.name}
           </li>
         </ol>
@@ -672,7 +773,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                       >
                         <Image
                           src={img}
-                          alt={`${product.displayName || product.name} thumbnail ${idx + 1}`}
+                          alt={getImageAlt(img, `thumbnail ${idx + 1}`)}
                           fill
                           sizes="(max-width: 640px) 70px, (max-width: 1024px) 76px, 82px"
                           className="object-cover object-center"
@@ -696,7 +797,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                 <Image
                   key={activeImage}
                   src={activeImage}
-                  alt={product.displayName || product.name}
+                  alt={getImageAlt(activeImage)}
                   fill
                   priority
                   sizes="(max-width: 1024px) 100vw, 50vw"
@@ -726,7 +827,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                       setIsLightboxOpen(true);
                     }}
                     aria-label="View fullscreen image"
-                    className="w-9 h-9 rounded-full bg-white/90 hover:bg-white text-[#57534E] hover:text-[#1E3A2F] flex items-center justify-center transition-all shadow-xs backdrop-blur-xs border border-white/80 cursor-pointer hover:scale-105 active:scale-95"
+                    className="w-9 h-9 rounded-full bg-white/90 hover:bg-white text-[#57534E] hover:text-[#1C1714] flex items-center justify-center transition-all shadow-xs backdrop-blur-xs border border-white/80 cursor-pointer hover:scale-105 active:scale-95"
                   >
                     <Maximize2 className="w-3.5 h-3.5" />
                   </button>
@@ -756,7 +857,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                       handleShare();
                     }}
                     aria-label="Share product link"
-                    className="w-9 h-9 rounded-full bg-white/90 hover:bg-white text-[#57534E] hover:text-[#1E3A2F] flex items-center justify-center transition-all shadow-xs backdrop-blur-xs border border-white/80 cursor-pointer hover:scale-105 active:scale-95"
+                    className="w-9 h-9 rounded-full bg-white/90 hover:bg-white text-[#57534E] hover:text-[#1C1714] flex items-center justify-center transition-all shadow-xs backdrop-blur-xs border border-white/80 cursor-pointer hover:scale-105 active:scale-95"
                   >
                     <Share2 className="w-3.5 h-3.5" />
                   </button>
@@ -772,7 +873,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                         handlePrevImage();
                       }}
                       aria-label="Previous image"
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-[#1E3A2F] shadow-sm flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 cursor-pointer backdrop-blur-xs"
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-[#1C1714] shadow-sm flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 cursor-pointer backdrop-blur-xs"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
@@ -783,7 +884,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                         handleNextImage();
                       }}
                       aria-label="Next image"
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-[#1E3A2F] shadow-sm flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 cursor-pointer backdrop-blur-xs"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-[#1C1714] shadow-sm flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 cursor-pointer backdrop-blur-xs"
                     >
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -807,41 +908,85 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
             </div>
           </div>
 
-          {/* ─── RIGHT: MODERN E-COMMERCE SHOPPING PANEL (45%) ─── */}
+          {/* ─── RIGHT: PRODUCT INFORMATION & ORDERING PANEL (45%) ─── */}
           <div className="lg:col-span-5 flex flex-col">
 
             {/* 1. Category Eyebrow */}
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <div className="mb-2">
               <span className="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#9A7B56]">
                 {subcategoryName || product.categoryName}
               </span>
             </div>
 
             {/* 2. Product Name */}
-            <h1 className="font-serif text-[28px] sm:text-[32px] lg:text-[36px] font-normal text-[#1E3A2F] tracking-tight leading-[1.15] mb-2.5">
+            <h1 className="font-serif text-[28px] sm:text-[32px] lg:text-[36px] font-normal text-[#1C1714] tracking-tight leading-[1.15] mb-2.5">
               {product.displayName || product.name}
             </h1>
 
-            {/* 3. Short Description */}
+            {/* 3. Rating & Review Link */}
+            <div className="flex items-center gap-2 mb-3">
+              <a
+                href="#reviews"
+                className="group inline-flex items-center gap-1.5 text-[12.5px] text-[#78716C] hover:text-[#1C1714] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#9A7B56] rounded-xs"
+                aria-label={
+                  reviewSummary.total > 0
+                    ? `Rated ${reviewSummary.averageRating} out of 5 stars based on ${reviewSummary.total} ${reviewSummary.total === 1 ? 'review' : 'reviews'}. Click to jump to customer reviews.`
+                    : 'No reviews yet. Click to write the first review.'
+                }
+              >
+                <div className="flex items-center gap-0.5" aria-hidden="true">
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const avgNum = reviewSummary.averageRating
+                      ? parseFloat(reviewSummary.averageRating)
+                      : 0;
+                    const isFilled = reviewSummary.total > 0 && star <= Math.round(avgNum);
+                    return (
+                      <Star
+                        key={star}
+                        className={`w-3.5 h-3.5 transition-colors ${
+                          isFilled
+                            ? 'fill-[#9A7B56] text-[#9A7B56]'
+                            : 'text-[#D8D2C4] group-hover:text-[#C4B9A1]'
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+                {reviewSummary.total > 0 ? (
+                  <span className="font-medium text-[#1C1714] group-hover:underline">
+                    {reviewSummary.averageRating}{' '}
+                    <span className="font-normal text-[#78716C]">
+                      ({reviewSummary.total} {reviewSummary.total === 1 ? 'review' : 'reviews'})
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-[#8C827A] group-hover:underline text-[12px]">
+                    No reviews yet &bull; Be the first to review
+                  </span>
+                )}
+              </a>
+            </div>
+
+            {/* 4. Short Description */}
             {product.shortDescription && (
               <p className="text-[14px] sm:text-[14.5px] text-[#57534E] leading-relaxed mb-4 font-normal">
                 {product.shortDescription}
               </p>
             )}
 
-            {/* 4. Real Price Display (Strictly from Product Data) */}
+            {/* 5. Real Price Display */}
             <div className="pb-4 mb-5 border-b border-[#EAE4D8]">
               <div className="flex items-baseline gap-2 flex-wrap">
-                {product.startingPrice && (
+                {product.startingPrice ? (
                   <span className="text-[11.5px] uppercase tracking-wider font-semibold text-[#8C827A]">
                     From
                   </span>
-                )}
-                <span className="font-serif text-[30px] sm:text-[34px] font-semibold text-[#1E3A2F] tracking-tight leading-none">
+                ) : null}
+                <span className="font-serif text-[28px] sm:text-[32px] font-semibold text-[#1C1714] tracking-tight leading-none">
                   {product.currency}{effectivePrice.toLocaleString('en-IN')}
                 </span>
                 {pricingUnit && (
-                  <span className="text-[14px] text-[#78716C] font-normal">
+                  <span className="text-[13.5px] text-[#78716C] font-normal">
                     {pricingUnit}
                   </span>
                 )}
@@ -852,402 +997,204 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
 
               {quantity > 1 && (
                 <div className="mt-2 text-[12px] text-[#78716C]">
-                  Estimated Subtotal: <strong className="font-semibold text-[#1E3A2F] text-[13px]">₹{(effectivePrice * quantity).toLocaleString('en-IN')}</strong> for {quantity} {quantityUnit}
+                  Estimated Subtotal: <strong className="font-semibold text-[#1C1714] text-[13px]">₹{(effectivePrice * quantity).toLocaleString('en-IN')}</strong> for {quantity} {quantityUnit}
                 </div>
               )}
             </div>
 
-            {/* 5. Real Product Options (Strictly From Product Data) */}
 
-            {/* ─── Curtains: Heading Style (Fixed Product Specification) ─── */}
-            {isCurtain && (
-              <div className="mb-5 space-y-1">
-                <span className="block text-[11px] uppercase tracking-wider font-semibold text-[#8C827A]">
-                  Heading Style
-                </span>
-                <p className="text-[14px] sm:text-[14.5px] font-medium text-[#1E3A2F]">
-                  French Pinch Pleat
-                </p>
-              </div>
-            )}
 
-            {/* ─── Curtains / Blinds: Custom Dimensions (When Made to Measure) ─── */}
-            {(isCurtain || isBlind) && isCustom && (
-              <div className="mb-5 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] uppercase tracking-wider font-semibold text-[#1C1917]">
-                    Dimensions
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSizeType('standard')}
-                      className={`text-[11px] font-medium px-2 py-0.5 rounded cursor-pointer transition-colors ${sizeType === 'standard'
-                        ? 'bg-[#1E3A2F] text-white'
-                        : 'text-[#78716C] hover:text-[#1E3A2F]'
-                        }`}
-                    >
-                      Standard
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSizeType('custom')}
-                      className={`text-[11px] font-medium px-2 py-0.5 rounded cursor-pointer transition-colors ${sizeType === 'custom'
-                        ? 'bg-[#1E3A2F] text-white'
-                        : 'text-[#78716C] hover:text-[#1E3A2F]'
-                        }`}
-                    >
-                      Custom Size
-                    </button>
-                  </div>
-                </div>
+            {/* Quantity */}
+            <div className="flex items-center justify-between mb-6 pb-5 border-b border-[#EAE4D8]">
+              <span className="text-[11px] uppercase tracking-wider font-semibold text-[#1C1917]">
+                Quantity
+              </span>
 
-                {sizeType === 'custom' && (
-                  <div className="grid grid-cols-2 gap-2.5 p-3 rounded-xl bg-white border border-[#E0D7C6] animate-in fade-in duration-150">
-                    <div>
-                      <label className="block text-[10.5px] text-[#78716C] mb-1 font-medium">
-                        Width (inches)
-                      </label>
-                      <input
-                        type="number"
-                        min="10"
-                        max="300"
-                        value={customWidth}
-                        onChange={(e) => setCustomWidth(e.target.value)}
-                        className="w-full h-8.5 text-[12px] px-2.5 rounded-lg border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10.5px] text-[#78716C] mb-1 font-medium">
-                        Height / Drop (inches)
-                      </label>
-                      <input
-                        type="number"
-                        min="10"
-                        max="300"
-                        value={customHeight}
-                        onChange={(e) => setCustomHeight(e.target.value)}
-                        className="w-full h-8.5 text-[12px] px-2.5 rounded-lg border border-[#D5CCBA] focus:border-[#1E3A2F] bg-white outline-none"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ─── Real Color/Pattern/Size Variants From Product Data ─── */}
-            {product.variations && product.variations.length > 1 && (
-              <div className="mb-5">
-                <div className="flex items-baseline justify-between mb-2">
-                  <span className="text-[11px] uppercase tracking-wider font-semibold text-[#1C1917]">
-                    {variantLabel}
-                  </span>
-                  <span className="text-[12px] text-[#9A7B56] font-medium">
-                    {currentVariant?.name}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {product.variations.map((variant, idx) => {
-                    const isSelected = selectedVariantIdx === idx;
-                    const variantImg = variant.thumbnailImage || variant.image;
-
-                    return (
-                      <button
-                        key={variant.id}
-                        type="button"
-                        onClick={() => handleSelectVariant(idx)}
-                        className={`group relative flex items-center gap-2 p-1.5 pr-2.5 rounded-xl border text-left transition-all duration-150 cursor-pointer ${isSelected
-                          ? 'border-[#1E3A2F] bg-white ring-1.5 ring-[#1E3A2F] shadow-2xs font-medium text-[#1E3A2F]'
-                          : 'border-[#EDE8DE] bg-white/70 hover:bg-white hover:border-[#9A7B56] text-[#57534E]'
-                          }`}
-                      >
-                        {variantImg ? (
-                          <div className="relative w-7 h-7 rounded-lg overflow-hidden shrink-0 border border-black/10">
-                            <Image
-                              src={variantImg}
-                              alt={variant.name}
-                              fill
-                              sizes="28px"
-                              className="object-cover"
-                            />
-                          </div>
-                        ) : variant.colorHex ? (
-                          <span
-                            className="w-7 h-7 rounded-lg border border-black/15 shadow-2xs shrink-0"
-                            style={{ backgroundColor: variant.colorHex }}
-                          />
-                        ) : (
-                          <span className="w-7 h-7 rounded-lg bg-[#F5EFE4] border border-[#E5DEC9] flex items-center justify-center text-[10px] font-serif text-[#1E3A2F]">
-                            {idx + 1}
-                          </span>
-                        )}
-                        <span className="text-[11.5px] truncate max-w-[120px]">{variant.name}</span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-[#1E3A2F] shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* 6. Quantity Stepper */}
-            <div className="flex items-center justify-between mb-5 pb-5 border-b border-[#EAE4D8]">
-              <div>
-                <span className="block text-[11px] uppercase tracking-wider font-semibold text-[#1C1917]">
-                  Quantity ({quantityUnit})
-                </span>
-                <span className="text-[11.5px] text-[#78716C]">
-                  {quantity > 1
-                    ? `${quantity} ${quantityUnit} • ₹${(effectivePrice * quantity).toLocaleString('en-IN')}`
-                    : `Single ${quantityUnit}`}
-                </span>
-              </div>
-
-              <div className="inline-flex items-center border border-[#D5CCBA] rounded-xl bg-white overflow-hidden shadow-2xs">
+              <div className="inline-flex items-center border border-[#D5CCBA] rounded-lg bg-white overflow-hidden shadow-2xs">
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   disabled={quantity <= 1}
                   aria-label="Decrease quantity"
-                  className="w-9 h-9 flex items-center justify-center text-[#57534E] hover:text-[#1E3A2F] hover:bg-[#FAF7F2] transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="w-9 h-9 flex items-center justify-center text-[#57534E] hover:text-[#1C1714] hover:bg-[#FAF7F2] transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <Minus className="w-3.5 h-3.5" />
                 </button>
-                <span className="px-3.5 min-w-[50px] text-center text-[13px] font-semibold text-[#1E3A2F] select-none">
+                <span className="px-3.5 min-w-[44px] text-center text-[13px] font-semibold text-[#1C1714] select-none">
                   {quantity}
                 </span>
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => q + 1)}
                   aria-label="Increase quantity"
-                  className="w-9 h-9 flex items-center justify-center text-[#57534E] hover:text-[#1E3A2F] hover:bg-[#FAF7F2] transition-colors cursor-pointer"
+                  className="w-9 h-9 flex items-center justify-center text-[#57534E] hover:text-[#1C1714] hover:bg-[#FAF7F2] transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
 
-            {/* 7. Action Buttons (Strictly by Product Type) */}
+            {/* 7. Action Area: Free Visit + WhatsApp + Cart */}
             <div className="space-y-2.5 mb-6">
-              {!isCustom ? (
-                /* ─── STANDARD PRODUCTS: ADD TO CART & BUY NOW ─── */
-                <>
-                  <button
-                    type="button"
-                    onClick={handleAddToCart}
-                    className={`w-full h-12 rounded-xl font-semibold text-[12px] uppercase tracking-[0.14em] transition-all duration-200 flex items-center justify-center gap-2 shadow-xs active:scale-[0.99] cursor-pointer ${addedNotice
-                      ? 'bg-[#15803D] text-white'
-                      : 'bg-[#1E3A2F] hover:bg-[#152B23] text-white'
-                      }`}
-                  >
-                    {addedNotice ? (
-                      <>
-                        <Check className="w-4 h-4 stroke-[2.5]" />
-                        <span>Added to Cart</span>
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingBag className="w-4 h-4 stroke-[2]" />
-                        <span>Add to Cart</span>
-                      </>
-                    )}
-                  </button>
+              {/* PRIMARY CTA: BOOK FREE HOME VISIT & MEASUREMENT */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMeasurementModalOpen(true);
+                  setMeasSubmitted(false);
+                  setMeasError(null);
+                }}
+                id="cta-book-free-home-visit"
+                className="w-full h-12 rounded-xl font-bold text-[13px] uppercase tracking-wider bg-[#D4AF37] hover:bg-[#E5C378] text-[#1C1714] transition-all duration-200 flex items-center justify-center gap-2.5 shadow-md active:scale-[0.99] cursor-pointer"
+              >
+                <Ruler className="w-4.5 h-4.5 text-[#1C1714]" />
+                <span>Book Free Home Visit &amp; Measurement</span>
+              </button>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={handleBuyNow}
-                      disabled={isBuyingNow}
-                      className="h-10.5 rounded-xl font-semibold text-[11px] uppercase tracking-wider border border-[#1E3A2F] text-[#1E3A2F] bg-white hover:bg-[#FAF7F2] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-75"
-                    >
-                      <ArrowRight className="w-3.5 h-3.5 text-[#1E3A2F]" />
-                      <span>{isBuyingNow ? 'Proceeding...' : 'Buy Now'}</span>
-                    </button>
+              {/* SECONDARY ACTION: ORDER ON WHATSAPP */}
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                id="cta-order-on-whatsapp"
+                className="w-full h-11 rounded-xl font-semibold text-[12px] uppercase tracking-wider bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all duration-200 flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.99] cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4 text-[#25D366] fill-[#25D366]" />
+                <span>Order on WhatsApp</span>
+              </a>
 
-                    <a
-                      href={whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="h-10.5 rounded-xl border border-[#25D366] bg-white hover:bg-[#25D366]/5 text-[#15803D] text-[11px] uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
-                      <span>Order on WhatsApp</span>
-                    </a>
-                  </div>
-                </>
-              ) : (
-                /* ─── CUSTOM / MADE TO MEASURE PRODUCTS: REQUEST QUOTE & MEASUREMENT ─── */
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsQuoteModalOpen(true);
-                      setQuoteSubmitted(false);
-                      setQuoteError(null);
-                    }}
-                    className="w-full h-12 rounded-xl font-semibold text-[12px] uppercase tracking-[0.14em] bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all duration-200 flex items-center justify-center gap-2 shadow-xs active:scale-[0.99] cursor-pointer"
-                  >
-                    <FileText className="w-4 h-4 text-[#C4B9A1]" />
-                    <span>Request a Quote</span>
-                  </button>
+              {/* CART & BUY NOW BUTTONS */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  id="cta-add-to-cart"
+                  className={`h-10 rounded-lg font-semibold text-[11px] uppercase tracking-wider border transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs ${
+                    addedNotice
+                      ? 'border-[#15803D] bg-[#15803D]/10 text-[#15803D]'
+                      : 'border-[#D5CCBA] text-[#57534E] bg-white hover:text-[#1C1714] hover:border-[#1E3A2F] hover:bg-[#FAF7F2]'
+                  }`}
+                >
+                  {addedNotice ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>Added to Bag</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBag className="w-3.5 h-3.5" />
+                      <span>Add to Bag</span>
+                    </>
+                  )}
+                </button>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {product.customMeasurementAvailable && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsMeasurementModalOpen(true);
-                          setMeasSubmitted(false);
-                          setMeasError(null);
-                        }}
-                        className="h-10.5 rounded-xl font-semibold text-[11px] uppercase tracking-wider border border-[#1E3A2F] text-[#1E3A2F] bg-white hover:bg-[#FAF7F2] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs hover:border-[#152B23]"
-                      >
-                        <Ruler className="w-3.5 h-3.5 text-[#9A7B56]" />
-                        <span>Book Free Measurement</span>
-                      </button>
-                    )}
-
-                    <a
-                      href={whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`h-10.5 rounded-xl border border-[#25D366] bg-white hover:bg-[#25D366]/5 text-[#15803D] text-[11px] uppercase tracking-wider font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs ${!product.customMeasurementAvailable ? 'sm:col-span-2' : ''
-                        }`}
-                    >
-                      <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
-                      <span>Order on WhatsApp</span>
-                    </a>
-                  </div>
-                </>
-              )}
+                <button
+                  type="button"
+                  onClick={handleBuyNow}
+                  disabled={isBuyingNow}
+                  id="cta-buy-now"
+                  className="h-10 rounded-lg font-semibold text-[11px] uppercase tracking-wider border border-[#1E3A2F] text-[#1C1714] bg-white hover:bg-[#FAF7F2] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-75"
+                >
+                  <ArrowRight className="w-3.5 h-3.5 text-[#1C1714]" />
+                  <span>{isBuyingNow ? 'Proceeding...' : 'Buy Now'}</span>
+                </button>
+              </div>
             </div>
 
-            {/* 8. Service Reassurance (Strictly Real Supported Services) */}
-            <div className="border-t border-b border-[#EDE8DE] py-3.5 mb-6">
-              <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-[#EDE8DE] text-center">
-                {product.customMeasurementAvailable && (
-                  <div className="px-2">
-                    <Ruler className="w-4 h-4 mx-auto mb-1 text-[#9A7B56]" />
-                    <span className="block text-[11.5px] font-semibold text-[#1E3A2F] leading-tight">Free Measurement</span>
-                    <span className="block text-[10px] text-[#78716C] mt-0.5">In-home visit</span>
+            {/* SHORT SIDEBAR: WHY SHOP FROM ZAIRA */}
+            <div className="p-4 rounded-xl bg-[#FAF7F2] border border-[#EDE8DE] shadow-2xs space-y-3 mb-6">
+              <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#1C1714] flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                Why Shop From Zaira?
+              </h3>
+              <div className="space-y-3 text-[12px]">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#FAF4E7] border border-[#E8D5A0] text-[#9E4733] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                    <ShieldCheck className="w-4 h-4 text-[#9E4733] stroke-[2]" />
                   </div>
-                )}
-                {isCustom && (
-                  <div className="px-2">
-                    <Scissors className="w-4 h-4 mx-auto mb-1 text-[#9A7B56]" />
-                    <span className="block text-[11.5px] font-semibold text-[#1E3A2F] leading-tight">Custom Tailoring</span>
-                    <span className="block text-[10px] text-[#78716C] mt-0.5">Made to measure</span>
+                  <div>
+                    <p className="font-semibold text-[#1C1917] leading-tight text-[12.5px]">100% Premium Quality</p>
+                    <p className="text-[11.5px] text-[#78716C] leading-snug mt-0.5">Handpicked luxury fabrics &amp; high-density weaves.</p>
                   </div>
-                )}
-                <div className="px-2">
-                  <MessageCircle className="w-4 h-4 mx-auto mb-1 text-[#9A7B56]" />
-                  <span className="block text-[11.5px] font-semibold text-[#1E3A2F] leading-tight">WhatsApp Support</span>
-                  <span className="block text-[10px] text-[#78716C] mt-0.5">Direct team assistance</span>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#FAF4E7] border border-[#E8D5A0] text-[#9E4733] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                    <Ruler className="w-4 h-4 text-[#9E4733] stroke-[2]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[#1C1917] leading-tight text-[12.5px]">Free Home Visit &amp; Measurement</p>
+                    <p className="text-[11.5px] text-[#78716C] leading-snug mt-0.5">Stylist brings 500+ swatches &amp; takes laser dimensions.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#FAF4E7] border border-[#E8D5A0] text-[#9E4733] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                    <Scissors className="w-4 h-4 text-[#9E4733] stroke-[2]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[#1C1917] leading-tight text-[12.5px]">Expert Tailoring &amp; Free Installation</p>
+                    <p className="text-[11.5px] text-[#78716C] leading-snug mt-0.5">Precision custom stitching with 5-year warranty.</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* 9. Product Details & Specifications (Strictly Real Data) */}
-            <div className="divide-y divide-[#EAE4D8] border-t border-b border-[#EAE4D8]">
-
-              {/* Quick Specs (Only if specifications exist) */}
+            {/* 8. Product Details & Specifications */}
+            <div className="mt-4 pt-6 border-t border-[#EAE4D8] space-y-6">
               {technicalSpecs.length > 0 && (
                 <div>
-                  <button
-                    type="button"
-                    onClick={() => toggleAccordion('specs')}
-                    className="w-full flex items-center justify-between py-3.5 text-left cursor-pointer hover:text-[#1E3A2F] transition-colors"
-                  >
-                    <span className="text-[12px] font-semibold uppercase tracking-wider text-[#1C1917]">
-                      Specifications
-                    </span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-[#78716C] transition-transform duration-200 ${openAccordions.has('specs') ? 'rotate-180' : ''
-                        }`}
-                    />
-                  </button>
-                  {openAccordions.has('specs') && (
-                    <div className="pb-3.5">
-                      <div className="divide-y divide-[#F2ECE1]">
-                        {technicalSpecs.map((s) => (
-                          <div key={s.label} className="py-1.5 flex justify-between items-baseline gap-2">
-                            <span className="text-[11.5px] text-[#8C827A] font-medium">{s.label}</span>
-                            <span className="text-[12px] text-[#1E3A2F] font-medium text-right">{s.value}</span>
-                          </div>
-                        ))}
+                  <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1C1917] mb-3">
+                    Product Details
+                  </h2>
+                  <div className="divide-y divide-[#EAE4D8] border-y border-[#EAE4D8]">
+                    {technicalSpecs.map((s) => (
+                      <div key={s.label} className="py-2.5 flex justify-between items-baseline gap-4">
+                        <span className="text-[12px] text-[#78716C] font-normal shrink-0">{s.label}</span>
+                        <span className="text-[12.5px] text-[#1C1714] font-medium text-right">{s.value}</span>
                       </div>
-                    </div>
-                  )}
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* Product Details (Only if description exists) */}
               {product.description && (
                 <div>
-                  <button
-                    type="button"
-                    onClick={() => toggleAccordion('details')}
-                    className="w-full flex items-center justify-between py-3.5 text-left cursor-pointer hover:text-[#1E3A2F] transition-colors"
-                  >
-                    <span className="text-[12px] font-semibold uppercase tracking-wider text-[#1C1917]">
-                      Product Details
-                    </span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-[#78716C] transition-transform duration-200 ${openAccordions.has('details') ? 'rotate-180' : ''
-                        }`}
-                    />
-                  </button>
-                  {openAccordions.has('details') && (
-                    <div className="pb-3.5 text-[13px] text-[#57534E] leading-relaxed">
-                      <p>{product.description}</p>
-                    </div>
-                  )}
+                  <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1C1917] mb-2">
+                    About this Product
+                  </h2>
+                  <p className="text-[13px] text-[#57534E] leading-relaxed">
+                    {product.description}
+                  </p>
                 </div>
               )}
 
-              {/* Care & Maintenance (Only if care spec exists) */}
               {careSpec && (
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => toggleAccordion('care')}
-                    className="w-full flex items-center justify-between py-3.5 text-left cursor-pointer hover:text-[#1E3A2F] transition-colors"
-                  >
-                    <span className="text-[12px] font-semibold uppercase tracking-wider text-[#1C1917]">
-                      Care &amp; Maintenance
-                    </span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-[#78716C] transition-transform duration-200 ${openAccordions.has('care') ? 'rotate-180' : ''
-                        }`}
-                    />
-                  </button>
-                  {openAccordions.has('care') && (
-                    <div className="pb-3.5 text-[12.5px] text-[#57534E] leading-relaxed">
-                      <p className="font-medium text-[#1E3A2F] mb-0.5">{careSpec.label}</p>
-                      <p>{careSpec.value}</p>
-                    </div>
-                  )}
+                <div className="pt-1">
+                  <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1C1917] mb-1">
+                    Care &amp; Maintenance
+                  </h2>
+                  <p className="text-[12.5px] text-[#57534E] leading-relaxed">
+                    {careSpec.value}
+                  </p>
                 </div>
               )}
-
             </div>
 
           </div>
         </div>
 
         {/* ──────────────────────────────────────────────────────────
-            9B. COMPACT TRUST & BENEFITS ("WHY SHOP FROM ZAIRA?")
-           ────────────────────────────────────────────────────────── */}
-        <ProductTrustBenefits />
-
-        {/* ──────────────────────────────────────────────────────────
             9C. CUSTOMER REVIEWS
            ────────────────────────────────────────────────────────── */}
         <ProductCustomerReviews
+          key={product.id || product.slug}
           productId={product.id}
           productSlug={product.slug}
           productName={product.displayName || product.name}
+          initialReviews={initialReviews}
+          initialSummary={initialReviewSummary}
+          onSummaryChange={setReviewSummary}
         />
 
         {/* ──────────────────────────────────────────────────────────
@@ -1260,14 +1207,14 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                 <span className="text-[10px] uppercase tracking-[0.2em] text-[#9A7B56] font-semibold block mb-1">
                   Curated Collection
                 </span>
-                <h2 className="font-serif text-[22px] sm:text-[26px] text-[#1E3A2F] font-medium">
+                <h2 className="font-serif text-[22px] sm:text-[26px] text-[#1C1714] font-medium">
                   Complete the Look
                 </h2>
               </div>
               {subcategoryUrl && (
                 <Link
                   href={subcategoryUrl}
-                  className="text-[11.5px] uppercase tracking-wider font-semibold text-[#1E3A2F] hover:text-[#9A7B56] transition-colors inline-flex items-center gap-1"
+                  className="text-[11.5px] uppercase tracking-wider font-semibold text-[#1C1714] hover:text-[#9A7B56] transition-colors inline-flex items-center gap-1"
                 >
                   <span>View All {subcategoryName}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -1288,7 +1235,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
       </main>
 
       {/* ──────────────────────────────────────────────────────────
-          11. MOBILE STICKY PURCHASE BAR
+          11. MOBILE STICKY PURCHASE BAR (WHATSAPP-FIRST)
          ────────────────────────────────────────────────────────── */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EAE4D8] px-4 py-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] flex items-center justify-between gap-3">
         <div className="min-w-0">
@@ -1296,7 +1243,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
             {product.displayName || product.name}
           </span>
           <div className="flex items-baseline gap-1">
-            <span className="font-serif text-[17px] font-bold text-[#1E3A2F]">
+            <span className="font-serif text-[17px] font-bold text-[#1C1714]">
               {product.currency}{effectivePrice.toLocaleString('en-IN')}
             </span>
             {pricingUnit && (
@@ -1306,41 +1253,15 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
         </div>
 
         <div className="shrink-0 flex items-center gap-2">
-          {!isCustom ? (
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              className={`h-10 px-4 rounded-xl font-semibold text-[11.5px] uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer ${addedNotice
-                ? 'bg-[#15803D] text-white'
-                : 'bg-[#1E3A2F] text-white hover:bg-[#152B23]'
-                }`}
-            >
-              {addedNotice ? (
-                <>
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Added</span>
-                </>
-              ) : (
-                <>
-                  <ShoppingBag className="w-3.5 h-3.5" />
-                  <span>Add to Cart</span>
-                </>
-              )}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                setIsQuoteModalOpen(true);
-                setQuoteSubmitted(false);
-                setQuoteError(null);
-              }}
-              className="h-10 px-4 rounded-xl font-semibold text-[11.5px] uppercase tracking-wider bg-[#1E3A2F] text-white hover:bg-[#152B23] transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-            >
-              <FileText className="w-3.5 h-3.5 text-[#C4B9A1]" />
-              <span>Request Quote</span>
-            </button>
-          )}
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-10 px-4 rounded-lg font-semibold text-[11.5px] uppercase tracking-wider bg-[#1E3A2F] hover:bg-[#152B23] text-white transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+          >
+            <MessageCircle className="w-3.5 h-3.5 text-[#25D366] fill-[#25D366]" />
+            <span>Order on WhatsApp</span>
+          </a>
         </div>
       </div>
 
@@ -1392,7 +1313,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
             <div className="relative w-full h-[75vh] flex items-center justify-center">
               <Image
                 src={activeImage}
-                alt={product.displayName || product.name}
+                alt={getImageAlt(activeImage)}
                 fill
                 sizes="90vw"
                 className="object-contain"
@@ -1435,7 +1356,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
             {!quoteSubmitted ? (
               <>
                 <div className="mb-5 pr-6">
-                  <h3 className="font-serif text-[21px] font-medium text-[#1E3A2F]">
+                  <h3 className="font-serif text-[21px] font-medium text-[#1C1714]">
                     Request a Quote
                   </h3>
                   <p className="text-[12.5px] text-[#78716C] mt-1 leading-relaxed">
@@ -1448,13 +1369,13 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                   <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-[#F4EFE6]">
                     <Image
                       src={activeImage}
-                      alt={product.displayName || product.name}
+                      alt={getImageAlt(activeImage)}
                       fill
                       className="object-cover"
                     />
                   </div>
                   <div className="min-w-0">
-                    <span className="block font-medium text-[13px] text-[#1E3A2F] truncate">
+                    <span className="block font-medium text-[13px] text-[#1C1714] truncate">
                       {product.displayName || product.name}
                     </span>
                     <span className="block text-[11px] text-[#78716C]">
@@ -1559,27 +1480,32 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                 <div className="w-12 h-12 rounded-full bg-emerald-100 text-[#15803D] flex items-center justify-center mx-auto mb-3">
                   <Check className="w-6 h-6 stroke-[2.5]" />
                 </div>
-                <h3 className="font-serif text-[22px] font-medium text-[#1E3A2F] mb-1">
+                <h3 className="font-serif text-[22px] font-medium text-[#1C1714] mb-1">
                   Quote Request Received
                 </h3>
-                <p className="text-[13px] text-[#57534E] mb-2">
-                  Thank you, <strong>{quoteName}</strong>. Our team will contact you shortly with your quotation.
+                <p className="text-[13px] text-[#57534E] mb-1.5 font-medium">
+                  Your request has been submitted successfully.
                 </p>
                 {quoteRequestNumber && (
-                  <p className="text-[11.5px] text-[#8C827A] mb-5">
-                    Reference Number: <strong className="font-mono text-[#1E3A2F]">{quoteRequestNumber}</strong>
+                  <p className="text-[12px] text-[#8C827A] mb-2">
+                    Request Reference: <strong className="font-mono text-[#1C1714]">{quoteRequestNumber}</strong>
                   </p>
                 )}
+                <p className="text-[12px] text-[#78716C] mb-5">
+                  {quoteWhatsAppBlocked
+                    ? 'Your request was saved. Please click below to open WhatsApp.'
+                    : 'Opening WhatsApp to confirm your requirement...'}
+                </p>
 
                 <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
                   <a
-                    href={getQuoteWhatsAppUrl()}
+                    href={quoteWhatsAppUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="h-10 px-5 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-[11.5px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <MessageCircle className="w-4 h-4" />
-                    <span>Send on WhatsApp</span>
+                    <span>Continue on WhatsApp</span>
                   </a>
                   <button
                     type="button"
@@ -1587,7 +1513,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                       setIsQuoteModalOpen(false);
                       setQuoteSubmitted(false);
                     }}
-                    className="h-10 px-5 rounded-xl border border-[#D5CCBA] text-[#1E3A2F] hover:bg-[#FAF7F2] text-[11.5px] font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+                    className="h-10 px-5 rounded-xl border border-[#D5CCBA] text-[#1C1714] hover:bg-[#FAF7F2] text-[11.5px] font-semibold uppercase tracking-wider transition-colors cursor-pointer"
                   >
                     Close
                   </button>
@@ -1625,7 +1551,7 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
             {!measSubmitted ? (
               <>
                 <div className="mb-5 pr-6">
-                  <h3 className="font-serif text-[21px] font-medium text-[#1E3A2F]">
+                  <h3 className="font-serif text-[21px] font-medium text-[#1C1714]">
                     Book Free Measurement
                   </h3>
                   <p className="text-[12.5px] text-[#78716C] mt-1 leading-relaxed">
@@ -1778,27 +1704,32 @@ export function ProductDetailView({ product, relatedProducts }: ProductDetailVie
                 <div className="w-12 h-12 rounded-full bg-emerald-100 text-[#15803D] flex items-center justify-center mx-auto mb-3">
                   <Check className="w-6 h-6 stroke-[2.5]" />
                 </div>
-                <h3 className="font-serif text-[22px] font-medium text-[#1E3A2F] mb-1">
+                <h3 className="font-serif text-[22px] font-medium text-[#1C1714] mb-1">
                   Measurement Visit Scheduled
                 </h3>
-                <p className="text-[13px] text-[#57534E] mb-2">
-                  Thank you, <strong>{measName}</strong>. Our team will contact you to confirm the appointment.
+                <p className="text-[13px] text-[#57534E] mb-1.5 font-medium">
+                  Your request has been submitted successfully.
                 </p>
                 {measRequestNumber && (
-                  <p className="text-[11.5px] text-[#8C827A] mb-5">
-                    Appointment Reference: <strong className="font-mono text-[#1E3A2F]">{measRequestNumber}</strong>
+                  <p className="text-[12px] text-[#8C827A] mb-2">
+                    Appointment Reference: <strong className="font-mono text-[#1C1714]">{measRequestNumber}</strong>
                   </p>
                 )}
+                <p className="text-[12px] text-[#78716C] mb-5">
+                  {measWhatsAppBlocked
+                    ? 'Your appointment is recorded. Please click below to open WhatsApp.'
+                    : 'Opening WhatsApp to confirm your appointment visit...'}
+                </p>
 
                 <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
                   <a
-                    href={getMeasurementWhatsAppUrl()}
+                    href={measWhatsAppUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="h-10 px-5 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-[11.5px] font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <MessageCircle className="w-4 h-4" />
-                    <span>Send on WhatsApp</span>
+                    <span>Continue on WhatsApp</span>
                   </a>
                   <button
                     type="button"

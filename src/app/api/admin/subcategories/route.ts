@@ -153,10 +153,27 @@ export async function DELETE(req: NextRequest) {
     }
 
     const db = getDatabase();
-    // Soft deactivate to avoid breaking product links
-    await db.execute('UPDATE subcategories SET active = 0, updated_at = datetime("now") WHERE id = ?', [id]);
+    const permanent = searchParams.get('permanent') === 'true';
 
-    return NextResponse.json({ success: true, deactivated: true });
+    if (permanent) {
+      await db.execute('DELETE FROM subcategories WHERE id = ?', [id]);
+      return NextResponse.json({ success: true, deleted: true });
+    }
+
+    // Check if subcategory has associated products
+    const prodCount = await db.queryOne<{ count: number }>(
+      'SELECT COUNT(*) as count FROM products WHERE subcategory_id = ?',
+      [id]
+    );
+
+    if (prodCount && prodCount.count > 0) {
+      // Soft deactivate to avoid breaking product links
+      await db.execute('UPDATE subcategories SET active = 0, updated_at = datetime("now") WHERE id = ?', [id]);
+      return NextResponse.json({ success: true, deactivated: true });
+    }
+
+    await db.execute('DELETE FROM subcategories WHERE id = ?', [id]);
+    return NextResponse.json({ success: true, deleted: true });
   } catch (error) {
     console.error('Admin DELETE subcategory error:', error);
     return NextResponse.json({ error: 'Failed to delete subcategory' }, { status: 500 });

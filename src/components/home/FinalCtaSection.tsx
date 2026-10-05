@@ -27,10 +27,10 @@ export function FinalCtaSection() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="/products"
+            href="/categories"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-[12px] uppercase tracking-[0.18em] font-medium bg-[#FAF7F2] text-[#1C1917] hover:bg-[#7D5E38] hover:text-white rounded-full transition-all duration-300 shadow-md group"
           >
-            <span>Shop Now</span>
+            <span>Explore Collections</span>
             <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
 

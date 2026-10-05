@@ -97,6 +97,22 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleDeleteProduct = async (product: ExtendedProduct) => {
+    if (!window.confirm(`Are you sure you want to permanently delete product "${product.name}"?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/products/${product.id}?permanent=true`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete product');
+      await fetchProducts();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error deleting product');
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* ─── Header ─── */}
@@ -132,7 +148,7 @@ export default function AdminProductsPage() {
             placeholder="Search by product name, slug, or keywords..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#1E3A2F]"
+            className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] placeholder:text-[#A8A29E] focus:outline-hidden focus:border-[#1E3A2F]"
           />
         </div>
 
@@ -141,7 +157,7 @@ export default function AdminProductsPage() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-[#D5CDBF] text-[13px] bg-white focus:outline-hidden focus:border-[#1E3A2F]"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] font-sans font-medium text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F] cursor-pointer"
           >
             <option value="">All Categories</option>
             {categories.map((c) => (
@@ -157,7 +173,7 @@ export default function AdminProductsPage() {
           <select
             value={selectedActive}
             onChange={(e) => setSelectedActive(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-[#D5CDBF] text-[13px] bg-white focus:outline-hidden focus:border-[#1E3A2F]"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] font-sans font-medium text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F] cursor-pointer"
           >
             <option value="1">Active Only</option>
             <option value="">All Statuses</option>
@@ -223,15 +239,15 @@ export default function AdminProductsPage() {
                 </div>
 
                 {/* Price & Actions */}
-                <div className="flex items-center justify-between md:justify-end gap-5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#F2ECE1]">
+                <div className="flex items-center justify-between md:justify-end gap-4 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#F2ECE1]">
                   <div className="text-right">
-                    <span className="font-serif text-[15px] font-bold text-[#1C1917] block">
+                    <span className="font-sans text-[15px] font-bold text-[#1C1917] block">
                       {p.starting_price === 1 ? 'From ' : ''}₹{p.base_price.toLocaleString('en-IN')}
                     </span>
                     <span className="text-[11px] text-[#8C827A]">/{p.unit || 'piece'}</span>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => handleToggleFeatured(p)}
                       className={`px-2.5 py-1 rounded-lg text-[10.5px] font-semibold border transition-all cursor-pointer ${
@@ -258,7 +274,7 @@ export default function AdminProductsPage() {
                     <Link
                       href={`/admin/products/${p.id}`}
                       className="p-1.5 rounded-lg text-[#57534E] hover:text-[#1E3A2F] hover:bg-black/5 transition-all"
-                      title="Edit product in detail"
+                      title="Edit product"
                     >
                       <Edit2 className="w-4 h-4" />
                     </Link>
@@ -267,10 +283,18 @@ export default function AdminProductsPage() {
                       href={`/products/${p.slug}`}
                       target="_blank"
                       className="p-1.5 rounded-lg text-[#8C827A] hover:text-[#1E3A2F] hover:bg-black/5 transition-all"
-                      title="Preview on customer website"
+                      title="Preview on live site"
                     >
                       <ExternalLink className="w-4 h-4" />
                     </Link>
+
+                    <button
+                      onClick={() => handleDeleteProduct(p)}
+                      className="p-1.5 rounded-lg text-rose-600 hover:text-rose-800 hover:bg-rose-50 transition-all cursor-pointer"
+                      title="Delete product"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>

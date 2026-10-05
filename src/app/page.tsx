@@ -1,15 +1,15 @@
 import React from 'react';
-import { HeroSection } from '@/components/home/HeroSection';
-import { CategoryShowcase } from '@/components/home/CategoryShowcase';
-import { FeaturedCollection } from '@/components/home/FeaturedCollection';
-import { ServicesSection } from '@/components/home/ServicesSection';
-import { BrandStorySection } from '@/components/home/BrandStorySection';
+import { EcommerceHeroBanner } from '@/components/home/EcommerceHeroBanner';
+import { StunningHomeBanner } from '@/components/home/StunningHomeBanner';
+import { DecorStylingSolutions } from '@/components/home/DecorStylingSolutions';
+import { CategoryIconGrid } from '@/components/home/CategoryIconGrid';
+import { WhatYouGetAtZaira } from '@/components/home/WhatYouGetAtZaira';
+import { EcommerceProductGrid } from '@/components/home/EcommerceProductGrid';
+import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { ContactVisitSection } from '@/components/home/ContactVisitSection';
 import {
   getDynamicCmsSection,
   getDynamicProducts,
-  getDynamicServices,
-  getDynamicCategoryDiscovery,
 } from '@/lib/db/catalog';
 
 export const dynamic = 'force-dynamic';
@@ -17,45 +17,37 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   const [
-    heroCms,
-    featuredCms,
     featuredProducts,
-    brandStoryCms,
     showroomCms,
-    discoveryCategories,
-    services,
   ] = await Promise.all([
-    getDynamicCmsSection('home_hero'),
-    getDynamicCmsSection('home_featured_furnishings'),
     getDynamicProducts({ featured: true }),
-    getDynamicCmsSection('home_brand_story'),
     getDynamicCmsSection('home_showroom_contact'),
-    getDynamicCategoryDiscovery(),
-    getDynamicServices(),
   ]);
 
   return (
-    <div className="flex flex-col w-full">
-      {/* 1. Hero Section (Driven by D1 CMS) */}
-      <HeroSection cmsContent={heroCms} />
+    <div className="flex flex-col w-full bg-[#F8F9FA]">
+      {/* 1. Full-Width Promotional Hero Banner Slider & Trust Strip */}
+      <EcommerceHeroBanner />
 
-      {/* 2. Shop by Category (Driven by D1 Categories & Subcategories) */}
-      <CategoryShowcase categories={discoveryCategories} />
+      {/* 2. Curating What Makes Your Home Beautiful Banner */}
+      <StunningHomeBanner />
 
-      {/* 3. Featured Products & Collections (Driven by D1 Products + CMS) */}
-      <FeaturedCollection
-        products={featuredProducts}
-        title={featuredCms?.title || undefined}
-        subtitle={featuredCms?.subtitle || undefined}
-      />
+      {/* 3. Bespoke Home Styling & Atelier Services (6-Card Services Section) */}
+      <DecorStylingSolutions />
 
-      {/* 4. Atelier Furnishing & Value-Added Services Highlight (Driven by D1 Services) */}
-      <ServicesSection services={services} />
+      {/* 4. Top Categories Of This Month */}
+      <CategoryIconGrid />
 
-      {/* 5. Short Brand / Atelier Section (Driven by D1 CMS) */}
-      <BrandStorySection cmsContent={brandStoryCms} />
+      {/* 5. What you get at Zaira (Quality, Advisory, Measuring, Installation, Assistance) */}
+      <WhatYouGetAtZaira />
 
-      {/* 6. Clear Shopping & Showroom Contact CTA (Driven by D1 CMS) */}
+      {/* 6. Product Category Showcase & Concierge */}
+      <EcommerceProductGrid products={featuredProducts} />
+
+      {/* 7. Verified Customer Reviews & Hyderabad Home Transformations */}
+      <TestimonialsSection />
+
+      {/* 8. Showroom Experience Visit & Fast In-Home Consultation Booking */}
       <ContactVisitSection cmsContent={showroomCms} />
     </div>
   );

@@ -1,19 +1,20 @@
 import type { Metadata } from 'next';
-import { Playfair_Display, Plus_Jakarta_Sans } from 'next/font/google';
+import { Cormorant_Garamond, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
+import { StorefrontShell } from '@/components/layout/StorefrontShell';
 import { StoreProvider } from '@/lib/context/StoreContext';
 import { getDynamicCmsSection } from '@/lib/db/catalog';
 
-const playfair = Playfair_Display({
+const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
-  variable: '--font-playfair',
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-cormorant',
   display: 'swap',
 });
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
   variable: '--font-jakarta',
   display: 'swap',
 });
@@ -44,13 +45,11 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${playfair.variable} ${jakarta.variable} h-full antialiased scroll-smooth`}
+      className={`${cormorant.variable} ${jakarta.variable} h-full antialiased scroll-smooth`}
     >
       <body className="min-h-full flex flex-col bg-[#FDFBF7] text-[#1C1917] selection:bg-[#9A7B56] selection:text-white">
         <StoreProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer cmsContent={footerCms} />
+          <StorefrontShell footerCms={footerCms}>{children}</StorefrontShell>
         </StoreProvider>
       </body>
     </html>

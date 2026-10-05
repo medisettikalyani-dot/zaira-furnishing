@@ -126,7 +126,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div>
-            <span className="font-serif text-[32px] font-bold text-[#1C1917] tracking-tight">
+            <span className="font-sans text-[32px] font-bold text-[#1C1917] tracking-tight">
               {loading ? '—' : stats?.ordersCount}
             </span>
             <div className="text-[11.5px] text-[#78716C] mt-0.5">
@@ -153,7 +153,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div>
-            <span className="font-serif text-[32px] font-bold text-[#1C1917] tracking-tight">
+            <span className="font-sans text-[32px] font-bold text-[#1C1917] tracking-tight">
               {loading ? '—' : stats?.productsCount}
             </span>
             <div className="text-[11.5px] text-[#78716C] mt-0.5">
@@ -180,7 +180,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div>
-            <span className="font-serif text-[32px] font-bold text-[#1C1917] tracking-tight">
+            <span className="font-sans text-[32px] font-bold text-[#1C1917] tracking-tight">
               {loading ? '—' : stats?.categoriesCount}
             </span>
             <div className="text-[11.5px] text-[#78716C] mt-0.5">
@@ -207,7 +207,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div>
-            <span className="font-serif text-[32px] font-bold text-[#1C1917] tracking-tight">
+            <span className="font-sans text-[32px] font-bold text-[#1C1917] tracking-tight">
               {loading ? '—' : stats?.servicesCount}
             </span>
             <div className="text-[11.5px] text-[#78716C] mt-0.5">
@@ -234,7 +234,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div>
-            <span className="font-serif text-[32px] font-bold text-[#1C1917] tracking-tight">
+            <span className="font-sans text-[32px] font-bold text-[#1C1917] tracking-tight">
               {loading ? '—' : stats?.cmsBlocksCount}
             </span>
             <div className="text-[11.5px] text-[#78716C] mt-0.5">

@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
 
     const resolvedPhone = customerPhone || phone;
     const resolvedEmail = customerEmail || email;
+    const resolvedNotes = (customerNotes || body.message || body.requirements || '').trim() || null;
 
     // 1. Validate customer name
     if (!customerName || typeof customerName !== 'string' || customerName.trim().length === 0) {
@@ -115,7 +116,7 @@ export async function POST(req: NextRequest) {
         validQty,
         dimensions?.trim() || null,
         customizationDetailsJson,
-        customerNotes?.trim() || null,
+        resolvedNotes,
         product.base_price,
         idempotencyKey?.trim() || null,
       ]
@@ -196,16 +197,22 @@ export async function GET(req: NextRequest) {
         'SELECT status, COUNT(*) as cnt FROM quote_requests GROUP BY status'
       );
       const countsMap: Record<string, number> = {
-        ALL: total,
+        ALL: 0,
         NEW: 0,
         CONTACTED: 0,
         QUOTED: 0,
         CLOSED: 0,
         CANCELLED: 0,
       };
+      let totalAll = 0;
       for (const row of statusCounts) {
-        countsMap[row.status] = row.cnt;
+        const key = row.status ? row.status.toUpperCase() : '';
+        if (key && key in countsMap) {
+          countsMap[key] = row.cnt;
+        }
+        totalAll += row.cnt;
       }
+      countsMap.ALL = totalAll;
 
       const querySql = `
         SELECT *

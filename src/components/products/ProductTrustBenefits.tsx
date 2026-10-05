@@ -40,7 +40,7 @@ export function ProductTrustBenefits() {
     >
       {/* ─── Clean, Moderately Sized Section Heading ─── */}
       <div className="mb-5 sm:mb-6">
-        <h2 className="font-serif text-[19px] sm:text-[21px] lg:text-[22px] font-medium text-[#1E3A2F] tracking-tight">
+        <h2 className="font-serif text-[19px] sm:text-[21px] lg:text-[22px] font-medium text-[#1C1714] tracking-tight">
           Why shop from Zaira?
         </h2>
       </div>

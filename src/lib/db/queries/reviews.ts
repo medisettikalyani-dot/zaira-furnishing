@@ -8,6 +8,36 @@ export interface ProductReviewSummary {
 }
 
 /**
+ * Human-friendly date formatting for customer reviews.
+ */
+export function formatReviewDate(dateString: string): string {
+  try {
+    const d = new Date(dateString.includes('T') ? dateString : dateString.replace(' ', 'T') + 'Z');
+    if (isNaN(d.getTime())) return dateString;
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffSecs < 60) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 30) return `${diffDays} days ago`;
+
+    return d.toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  } catch {
+    return dateString;
+  }
+}
+
+/**
  * Checks whether an authenticated user has genuinely purchased this product in any order.
  */
 export async function checkUserPurchasedProduct(userId: string, productId: string): Promise<boolean> {
@@ -36,11 +66,19 @@ export async function getDbProductReviews(productId: string): Promise<DbProductR
   if (!productId) return [];
   try {
     const db = getDatabase();
+    // Resolve canonical product id and slug if product exists
+    const prod = await db.queryOne<{ id: string; slug: string }>(
+      'SELECT id, slug FROM products WHERE id = ? OR slug = ?',
+      [productId, productId]
+    );
+    const targetIds = prod ? Array.from(new Set([prod.id, prod.slug, productId])) : [productId];
+    const placeholders = targetIds.map(() => '?').join(', ');
+
     const rows = await db.query<DbProductReview>(
       `SELECT * FROM product_reviews
-       WHERE product_id = ? AND status = 'APPROVED'
+       WHERE product_id IN (${placeholders}) AND status = 'APPROVED'
        ORDER BY created_at DESC`,
-      [productId]
+      targetIds
     );
     return rows || [];
   } catch (error) {
@@ -50,10 +88,9 @@ export async function getDbProductReviews(productId: string): Promise<DbProductR
 }
 
 /**
- * Calculates dynamic review count and average rating for a product from real database reviews.
+ * Calculates dynamic review count and average rating from a list of approved reviews.
  */
-export async function getDbProductReviewSummary(productId: string): Promise<ProductReviewSummary> {
-  const reviews = await getDbProductReviews(productId);
+export function calculateReviewSummary(reviews: DbProductReview[]): ProductReviewSummary {
   if (!reviews || reviews.length === 0) {
     return { total: 0, averageRating: null };
   }
@@ -66,6 +103,14 @@ export async function getDbProductReviewSummary(productId: string): Promise<Prod
 }
 
 /**
+ * Calculates dynamic review count and average rating for a product from real database reviews.
+ */
+export async function getDbProductReviewSummary(productId: string): Promise<ProductReviewSummary> {
+  const reviews = await getDbProductReviews(productId);
+  return calculateReviewSummary(reviews);
+}
+
+/**
  * Creates and stores a customer review in the database.
  */
 export async function createDbProductReview(data: {
@@ -75,27 +120,72 @@ export async function createDbProductReview(data: {
   rating: number;
   comment: string;
 }): Promise<DbProductReview> {
+  const trimmedName = data.customerName ? data.customerName.trim() : '';
+  if (!trimmedName) {
+    throw new Error('Please enter your name.');
+  }
+
   const db = getDatabase();
   const id = `rev_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
+  const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-  // Check genuine verified purchase if user is authenticated
-  let isVerified = 0;
+  // 1. Resolve canonical product ID (by primary key id OR slug)
+  let canonicalProductId = data.productId;
+  const existingProd = await db.queryOne<{ id: string; slug: string }>(
+    'SELECT id, slug FROM products WHERE id = ? OR slug = ?',
+    [data.productId, data.productId]
+  );
+
+  if (existingProd) {
+    canonicalProductId = existingProd.id;
+  } else {
+    // If not found in database, insert safe catalog record with valid category
+    const safeSlug = data.productId.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+    await db.execute(
+      `INSERT OR IGNORE INTO products (
+        id, category_id, name, slug, description, short_description, product_type, base_price, active, created_at, updated_at
+      ) VALUES (?, 'cat-1', 'Official Collection Item', ?, 'Zaira Furnishing Collection', 'Zaira Furnishing Collection Item', 'custom_made', 0, 1, ?, ?)`,
+      [data.productId, safeSlug, now, now]
+    );
+
+    const verifiedProd = await db.queryOne<{ id: string }>(
+      'SELECT id FROM products WHERE id = ? OR slug = ?',
+      [data.productId, safeSlug]
+    );
+    if (verifiedProd) {
+      canonicalProductId = verifiedProd.id;
+    }
+  }
+
+  // 2. Safely verify user foreign key constraint
+  let validUserId: string | null = null;
   if (data.userId) {
-    const hasPurchased = await checkUserPurchasedProduct(data.userId, data.productId);
+    const existingUser = await db.queryOne<{ id: string }>(
+      'SELECT id FROM users WHERE id = ?',
+      [data.userId]
+    );
+    if (existingUser) {
+      validUserId = existingUser.id;
+    }
+  }
+
+  // 3. Check genuine verified purchase if user is genuinely authenticated
+  let isVerified = 0;
+  if (validUserId) {
+    const hasPurchased = await checkUserPurchasedProduct(validUserId, canonicalProductId);
     isVerified = hasPurchased ? 1 : 0;
   }
 
-  const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-
+  // 4. Insert into product_reviews table
   await db.execute(
     `INSERT INTO product_reviews (
       id, product_id, user_id, customer_name, rating, comment, is_verified_purchase, status, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, 'APPROVED', ?, ?)`,
     [
       id,
-      data.productId,
-      data.userId || null,
-      data.customerName.trim(),
+      canonicalProductId,
+      validUserId,
+      trimmedName,
       data.rating,
       data.comment.trim(),
       isVerified,

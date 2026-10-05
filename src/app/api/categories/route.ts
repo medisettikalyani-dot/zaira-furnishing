@@ -20,10 +20,19 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const categories = await getDbCategories();
+    const [categories, subcategories] = await Promise.all([
+      getDbCategories(),
+      getDbSubcategories(),
+    ]);
+
+    const data = categories.map((cat) => ({
+      ...cat,
+      subcategories: subcategories.filter((sub) => sub.category_id === cat.id),
+    }));
+
     return NextResponse.json({
-      data: categories,
-      total: categories.length,
+      data,
+      total: data.length,
     });
   } catch (error) {
     console.error('API /api/categories error:', error);

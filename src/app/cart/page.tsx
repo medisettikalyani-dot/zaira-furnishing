@@ -57,8 +57,8 @@ export default function CartPage() {
             Home
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E]" />
-          <Link href="/products" className="hover:text-[#1C1917] transition-colors">
-            Shop
+          <Link href="/categories" className="hover:text-[#1C1917] transition-colors">
+            Categories
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-[#A8A29E]" />
           <span className="text-[#1C1917] font-semibold">Shopping Bag</span>
@@ -114,7 +114,7 @@ export default function CartPage() {
                 <span>Track on WhatsApp</span>
               </a>
               <Link
-                href="/products"
+                href="/categories"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#1C1917] hover:bg-[#9A7B56] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-colors"
               >
                 <span>Continue Shopping</span>
@@ -427,7 +427,7 @@ export default function CartPage() {
                   {/* Refined Continue Shopping Link */}
                   <div className="pt-2">
                     <Link
-                      href="/products"
+                      href="/categories"
                       className="inline-flex items-center gap-2 text-[11.5px] sm:text-[12px] uppercase tracking-wider font-semibold text-[#1E3A2F] hover:text-[#9A7B56] transition-colors group"
                     >
                       <ArrowLeft className="w-3.5 h-3.5 transition-transform duration-200 group-hover:-translate-x-1" />
@@ -529,10 +529,10 @@ export default function CartPage() {
                   Explore our luxury drapery, blinds, wallpapers, and sofa fabrics to begin creating your dream space.
                 </p>
                 <Link
-                  href="/products"
+                  href="/categories"
                   className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-sm"
                 >
-                  <span>Explore Catalog</span>
+                  <span>Explore Categories</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>

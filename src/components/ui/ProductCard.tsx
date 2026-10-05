@@ -14,6 +14,17 @@ interface ProductCardProps {
   showCategory?: boolean;
 }
 
+// Unified Zaira Atelier Luxury Theme Token (consistent across all categories & pages)
+const UNIFIED_ATELIER_CARD_THEME = {
+  bgGradient: 'from-[#FAF8F5] via-[#FAF6F0] to-[#F5EFE6]',
+  borderColor: 'border-[#EDE8DE]',
+  glowColor: 'rgba(154, 123, 86, 0.12)',
+  tagBg: 'bg-white/95',
+  tagText: 'text-[#9A7B56]',
+  btnBg: 'bg-[#1C1714] hover:bg-[#9A7B56]',
+  btnText: 'text-white',
+};
+
 export function ProductCard({
   product,
   aspectRatio = '4/5',
@@ -27,13 +38,8 @@ export function ProductCard({
   const activeImage = product.mainImage;
   const isCustom = product.productType === 'custom_made';
 
-  // Aspect ratio mapping
-  const aspectClass =
-    aspectRatio === '1/1'
-      ? 'aspect-square'
-      : aspectRatio === '3/4'
-        ? 'aspect-[3/4]'
-        : 'aspect-[4/5]';
+  // Unified Zaira Atelier luxury theme for all cards
+  const theme = UNIFIED_ATELIER_CARD_THEME;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -59,10 +65,10 @@ export function ProductCard({
 
   return (
     <div
-      className={`group relative flex flex-col h-full bg-white rounded-xl overflow-hidden border border-[#EDE8DE] hover:border-[#D5CBB9] shadow-2xs hover:shadow-xs transition-all duration-200 ${className}`}
+      className={`group relative flex flex-col h-full rounded-[28px] sm:rounded-[32px] border ${theme.borderColor} bg-gradient-to-b ${theme.bgGradient} p-3.5 sm:p-4 shadow-[0_8px_24px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] transition-all duration-500 overflow-hidden hover:-translate-y-2 ${className}`}
     >
-      {/* ─── 1. Image Container (Main Visual Focus) ─── */}
-      <div className={`relative ${aspectClass} w-full overflow-hidden bg-[#F7F4EE]`}>
+      {/* ─── 1. Staged Product Visual with Ambient Halo ─── */}
+      <div className="relative aspect-[4/4.3] w-full rounded-[22px] sm:rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-xs shadow-[0_6px_20px_rgba(0,0,0,0.04)] mb-3">
         <Link
           href={`/products/${product.slug}`}
           className="absolute inset-0 block w-full h-full"
@@ -70,12 +76,24 @@ export function ProductCard({
         >
           <Image
             src={activeImage}
-            alt={product.displayName || product.name}
+            alt={product.images?.find((img) => img.url === activeImage)?.altText || product.imageAlt || product.displayName || product.name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+            className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-106"
           />
         </Link>
+
+        {/* Ambient Halo */}
+        <div className="absolute inset-0 bg-radial from-transparent via-transparent to-black/10 pointer-events-none" />
+
+        {/* Category Pill Tag */}
+        {showCategory && product.categoryName && (
+          <div className="absolute top-2.5 left-2.5 z-10">
+            <span className={`px-2.5 py-0.5 rounded-full ${theme.tagBg} backdrop-blur-md text-[9px] font-black uppercase tracking-wider shadow-xs ${theme.tagText} border border-white/60`}>
+              {product.categoryName.split('&')[0]}
+            </span>
+          </div>
+        )}
 
         {/* Wishlist Heart — top-right */}
         <button
@@ -88,69 +106,63 @@ export function ProductCard({
           aria-label={isFav ? 'Remove from Wishlist' : 'Add to Wishlist'}
           className={`absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
             isFav
-              ? 'bg-white shadow-xs border border-[#EAE4D8] opacity-100 scale-100'
-              : 'bg-white/90 backdrop-blur-xs border border-white/80 shadow-2xs opacity-90 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-white hover:scale-105 active:scale-95'
+              ? 'bg-white shadow-xs border border-white text-rose-600 scale-105'
+              : 'bg-white/85 backdrop-blur-md border border-white/80 shadow-2xs hover:bg-white hover:scale-110 active:scale-95 text-[#70645A] hover:text-rose-600'
           }`}
         >
           <Heart
             className={`w-3.5 h-3.5 transition-colors ${
-              isFav ? 'fill-[#B43D3D] text-[#B43D3D]' : 'text-[#57534E] hover:text-[#B43D3D]'
+              isFav ? 'fill-current text-rose-600' : ''
             }`}
           />
         </button>
       </div>
 
-      {/* ─── 2. Product Information ─── */}
-      <div className="p-3.5 flex flex-col flex-1">
-        {/* Category */}
-        {showCategory && (
-          <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-[#9A7B56] mb-1 truncate">
-            {product.categoryName}
-          </span>
-        )}
+      {/* ─── 2. Centered Typography & Details (Mirroring User Reference) ─── */}
+      <div className="flex-1 flex flex-col justify-between text-center space-y-2 px-1 pb-0.5">
+        <div>
+          {/* Product Name */}
+          <Link href={`/products/${product.slug}`} className="block group/title">
+            <h3 className="font-serif text-[15.5px] sm:text-[17px] font-medium text-[#1C1714] leading-snug tracking-tight line-clamp-1 group-hover/title:text-[#C5A059] transition-colors">
+              {product.displayName || product.name}
+            </h3>
+          </Link>
 
-        {/* Product Name */}
-        <Link href={`/products/${product.slug}`} className="block mb-2 group/title">
-          <h3 className="font-serif text-[14px] sm:text-[15px] font-medium text-[#1C1917] leading-[1.3] line-clamp-2 min-h-[2.6rem] group-hover/title:text-[#1E3A2F] transition-colors">
-            {product.displayName || product.name}
-          </h3>
-        </Link>
+          {/* Subtitle / Custom Made note */}
+          <p className="text-[11px] text-[#70645A] line-clamp-1 mt-0.5 font-sans">
+            {isCustom ? 'Bespoke Made-to-Measure Atelier Drop' : 'Direct Designer Textile Curation'}
+          </p>
+        </div>
 
-        {/* ─── 3. Footer: Price & Clean Action ─── */}
-        <div className="mt-auto pt-1 flex items-center justify-between gap-2 border-t border-[#F2ECE1]">
+        {/* ─── 3. Bottom: Price & Clean Action ─── */}
+        <div className="pt-2 border-t border-black/5 flex items-center justify-between gap-2">
           {/* Price */}
-          <div className="min-w-0">
-            {isCustom && product.startingPrice ? (
-              <div className="flex items-baseline gap-1 text-[11px] text-[#78716C]">
-                <span>From</span>
-                <span className="font-serif text-[14.5px] sm:text-[15.5px] font-semibold text-[#1E3A2F]">
-                  {product.currency}{product.price.toLocaleString('en-IN')}
-                </span>
-              </div>
-            ) : (
-              <span className="font-serif text-[14.5px] sm:text-[15.5px] font-semibold text-[#1E3A2F]">
-                {product.currency}{product.price.toLocaleString('en-IN')}
-              </span>
-            )}
+          <div className="text-left">
+            <span className="text-[9.5px] text-[#7C7167] uppercase font-bold tracking-wider block leading-none">
+              {isCustom || product.startingPrice ? 'From' : 'Price'}
+            </span>
+            <span className="font-serif font-bold text-[15.5px] sm:text-[16.5px] text-[#1C1714] leading-tight">
+              {product.currency || '₹'}{product.price.toLocaleString('en-IN')}
+            </span>
           </div>
 
-          {/* Quick Action */}
+          {/* Quick Action Pill Button */}
           {isCustom ? (
             <Link
               href={`/products/${product.slug}`}
-              className="inline-flex items-center gap-1 text-[11px] uppercase tracking-wider font-semibold text-[#1E3A2F] hover:text-[#9A7B56] transition-colors py-1"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/90 hover:bg-white text-[#1C1714] text-[10.5px] font-bold uppercase tracking-wider transition-all shadow-2xs border border-black/5 cursor-pointer hover:scale-105"
             >
-              <span>Enquire</span>
-              <ArrowRight className="w-3 h-3" />
+              <span>Explore</span>
+              <ArrowRight className="w-3 h-3 text-[#C5A059]" />
             </Link>
           ) : (
             <button
               type="button"
               onClick={handleAddToCart}
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] uppercase tracking-wider font-semibold transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10.5px] font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer hover:scale-105 ${
                 added
-                  ? 'bg-[#15803D] text-white'
-                  : 'bg-[#1E3A2F]/10 hover:bg-[#1E3A2F] text-[#1E3A2F] hover:text-white'
+                  ? 'bg-emerald-600 text-white'
+                  : `${theme.btnBg} ${theme.btnText}`
               }`}
             >
               {added ? (
@@ -161,7 +173,7 @@ export function ProductCard({
               ) : (
                 <>
                   <ShoppingBag className="w-3 h-3" />
-                  <span>Add</span>
+                  <span>Bag</span>
                 </>
               )}
             </button>

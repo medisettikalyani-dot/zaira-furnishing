@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { BookingModal } from '@/components/forms/BookingModal';
 
 export interface CartItem {
   id: string;
@@ -95,6 +96,12 @@ interface StoreContextType {
   logout: () => Promise<void>;
   authModalOpen: boolean;
   setAuthModalOpen: (open: boolean) => void;
+  // Booking Modal State
+  isBookingModalOpen: boolean;
+  setIsBookingModalOpen: (open: boolean) => void;
+  bookingService: string;
+  setBookingService: (service: string) => void;
+  openBookingModal: (service?: string) => void;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -103,6 +110,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [customer, setCustomer] = useState<CustomerUser | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  // Booking Modal State
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [bookingService, setBookingService] = useState('Free In-Home Measurement');
+
+  const openBookingModal = useCallback((service?: string) => {
+    if (service) {
+      setBookingService(service);
+    }
+    setIsBookingModalOpen(true);
+  }, []);
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<Record<string, boolean>>({});
@@ -544,10 +562,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         logout,
         authModalOpen,
         setAuthModalOpen,
+        isBookingModalOpen,
+        setIsBookingModalOpen,
+        bookingService,
+        setBookingService,
+        openBookingModal,
       }}
     >
       {children}
       <AuthModal />
+      <BookingModal />
     </StoreContext.Provider>
   );
 }

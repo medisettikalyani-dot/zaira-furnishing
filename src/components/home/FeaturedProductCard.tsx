@@ -11,27 +11,41 @@ interface FeaturedProductCardProps {
   product: Product;
 }
 
+// Unified Zaira Atelier Luxury Theme Token (consistent across all categories & pages)
+const UNIFIED_ATELIER_MOOD_THEME = {
+  bgGradient: 'from-[#FAF8F5] via-[#FAF6F0] to-[#F5EFE6]',
+  borderColor: 'border-[#EDE8DE]',
+  tagBg: 'bg-white/95',
+  tagText: 'text-[#9A7B56]',
+};
+
 export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
   const { isWishlisted, toggleWishlist } = useStore();
   const isFav = isWishlisted(product.id);
   const isCustom = product.productType === 'custom_made';
 
+  // Unified Zaira Atelier luxury theme for all featured cards
+  const theme = UNIFIED_ATELIER_MOOD_THEME;
+
   return (
     <div className="group flex flex-col shrink-0 w-[72vw] sm:w-[45vw] md:w-[32vw] lg:w-[calc(25%-15px)] snap-start">
       <Link
         href={`/products/${product.slug}`}
-        className="block flex flex-col group/link text-left"
+        className={`block flex flex-col rounded-[28px] sm:rounded-[32px] border ${theme.borderColor} bg-gradient-to-b ${theme.bgGradient} p-3 sm:p-3.5 shadow-[0_8px_24px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] transition-all duration-500 ease-out group-hover:-translate-y-2 overflow-hidden`}
         aria-label={`View ${product.displayName || product.name}`}
       >
-        {/* ─── 1. Clean, Dominant Product Image (No badges) ─── */}
-        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-[#F7F4EE] border border-[#EAE3D6] shadow-[0_4px_16px_rgba(28,25,23,0.03)] group-hover:shadow-[0_16px_36px_rgba(28,25,23,0.08)] group-hover:border-[#C5A880]/60 transition-all duration-500 ease-out group-hover:-translate-y-1">
+        {/* ─── 1. Staged Product Visual with Ambient Glow ─── */}
+        <div className="relative aspect-[4/4.3] w-full overflow-hidden rounded-[22px] sm:rounded-[24px] bg-white/70 backdrop-blur-xs shadow-[0_6px_20px_rgba(0,0,0,0.04)] mb-3">
           <Image
             src={product.mainImage}
-            alt={product.displayName || product.name}
+            alt={product.images?.find((img) => img.isMain || img.url === product.mainImage)?.altText || product.imageAlt || product.displayName || product.name}
             fill
             sizes="(max-width: 640px) 72vw, (max-width: 1024px) 32vw, 25vw"
-            className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+            className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-106"
           />
+
+          {/* Ambient Studio Lighting Glow */}
+          <div className="absolute inset-0 bg-radial from-transparent via-transparent to-black/10 pointer-events-none" />
 
           {/* Minimal Wishlist Heart Button (Top-Right) */}
           <button
@@ -42,39 +56,33 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
               toggleWishlist(product.id);
             }}
             aria-label={isFav ? 'Remove from Wishlist' : 'Add to Wishlist'}
-            className={`absolute top-3 right-3 sm:top-3.5 sm:right-3.5 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
+            className={`absolute top-2.5 right-2.5 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
               isFav
-                ? 'bg-white shadow-[0_2px_8px_rgba(28,25,23,0.15)] border border-[#EAE4D8] opacity-100 scale-105'
-                : 'bg-white/85 backdrop-blur-md border border-white/70 shadow-[0_2px_6px_rgba(28,25,23,0.06)] opacity-90 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-white hover:scale-110 active:scale-95'
+                ? 'bg-white shadow-xs border border-white text-rose-600 scale-105'
+                : 'bg-white/85 backdrop-blur-md border border-white/80 shadow-2xs hover:bg-white hover:scale-110 active:scale-95 text-[#70645A] hover:text-rose-600'
             }`}
           >
             <Heart
               className={`w-[13.5px] h-[13.5px] transition-colors duration-200 ${
-                isFav ? 'fill-[#B43D3D] text-[#B43D3D]' : 'text-[#44403C] hover:text-[#B43D3D]'
+                isFav ? 'fill-current text-rose-600' : ''
               }`}
             />
           </button>
         </div>
 
-        {/* ─── 2. Clean E-Commerce Details Under Card ─── */}
-        <div className="pt-3.5 px-0.5 flex flex-col">
-          {/* Product Name (Up to 2 lines without single-line truncation, consistent min-height for alignment) */}
-          <h3 className="font-serif text-[14.5px] sm:text-[15.5px] font-medium text-[#1C1917] leading-snug line-clamp-2 min-h-[2.5rem] sm:min-h-[2.75rem] group-hover/link:text-[#9A7B56] transition-colors duration-200">
+        {/* ─── 2. Centered Typography (Matching Reference Image) ─── */}
+        <div className="pt-1 px-1 flex flex-col text-center">
+          {/* Product Name */}
+          <h3 className="font-serif text-[15px] sm:text-[16px] font-medium text-[#1C1714] leading-snug line-clamp-1 group-hover:text-[#C5A059] transition-colors duration-200">
             {product.displayName || product.name}
           </h3>
 
-          {/* Price & Subtle Secondary Custom Made */}
-          <div className="mt-1 flex items-baseline justify-between gap-2">
-            <span className="font-sans text-[13.5px] sm:text-[14.5px] font-bold text-[#1C1917] tracking-tight">
+          {/* Price & Custom indicator */}
+          <div className="mt-1 flex items-center justify-center gap-1.5 text-center">
+            <span className="font-sans text-[13px] sm:text-[14px] font-bold text-[#1C1714] tracking-tight">
               {isCustom || product.startingPrice ? 'From ' : ''}
-              {product.currency}{product.price.toLocaleString('en-IN')}
+              {product.currency || '₹'}{product.price.toLocaleString('en-IN')}
             </span>
-
-            {isCustom && (
-              <span className="text-[11px] sm:text-[11.5px] text-[#78716C] font-normal tracking-tight shrink-0">
-                Custom Made
-              </span>
-            )}
           </div>
         </div>
       </Link>

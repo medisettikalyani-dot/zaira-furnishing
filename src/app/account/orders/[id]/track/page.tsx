@@ -163,10 +163,10 @@ export default function OrderTrackingPage() {
               <span>Back to My Orders</span>
             </Link>
             <Link
-              href="/products"
+              href="/categories"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-[#D8CFBF] text-[#1C1917] hover:border-[#1E3A2F] text-[11.5px] uppercase tracking-wider font-semibold transition-all"
             >
-              <span>Explore Products</span>
+              <span>Explore Categories</span>
             </Link>
           </div>
         </div>
@@ -546,7 +546,7 @@ export default function OrderTrackingPage() {
           </Link>
 
           <Link
-            href="/products"
+            href="/categories"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#1E3A2F] hover:bg-[#152B23] text-white text-[11.5px] uppercase tracking-wider font-semibold transition-all shadow-xs"
           >
             <span>Continue Shopping</span>

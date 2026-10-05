@@ -41,6 +41,14 @@ export interface ProductSpecification {
   value: string;
 }
 
+export interface ProductImage {
+  id?: string;
+  url: string;
+  altText?: string | null;
+  displayOrder?: number;
+  isMain?: boolean;
+}
+
 export interface Product {
   id: string;
   slug: string;
@@ -59,8 +67,10 @@ export interface Product {
   currency?: string;
   image?: string;
   mainImage: string;
+  imageAlt?: string;
   additionalImages?: string[];
   galleryImages: string[];
+  images?: ProductImage[];
   variations: ProductVariation[];
   specifications: ProductSpecification[];
   spaceSlugs: string[];

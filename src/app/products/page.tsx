@@ -1,19 +1,10 @@
-import React from 'react';
-import { Metadata } from 'next';
-import { getDynamicProducts, getDynamicCategories } from '@/lib/db/catalog';
-import ProductsClientView from './ProductsClientView';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'All Furnishings | Zaira Furnishing',
-  description:
-    'Explore handcrafted curtains, architectural blinds, luxury sofa fabrics, wallpapers, carpets, and curated living decor from Zaira Furnishing.',
-};
-
-export default async function ProductsPage() {
-  const [products, categories] = await Promise.all([
-    getDynamicProducts(),
-    getDynamicCategories(),
-  ]);
-
-  return <ProductsClientView initialProducts={products} initialCategories={categories} />;
+/**
+ * The standalone "Shop All Furnishings" catalog page has been removed.
+ * Users navigating to /products are seamlessly redirected to the category directory.
+ * Direct product routes (/products/[slug]) remain active and unaffected.
+ */
+export default function ProductsPage() {
+  redirect('/categories');
 }

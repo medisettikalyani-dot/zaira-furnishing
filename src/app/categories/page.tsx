@@ -117,10 +117,10 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
               Our specialists bring curated fabric books, wooden slat samples, and laser measurement directly to your door in Hyderabad.
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full sm:w-auto">
             <Link
               href="/services"
-              className="inline-flex items-center gap-2 px-6 py-3 text-[11.5px] uppercase tracking-wider font-semibold bg-[#1C1917] text-white hover:bg-[#9A7B56] transition-colors rounded-full shadow-xs"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 text-[11.5px] uppercase tracking-wider font-semibold bg-[#1C1917] text-white hover:bg-[#9A7B56] transition-colors rounded-full shadow-xs text-center"
             >
               <Calendar className="w-4 h-4 text-[#C5A880]" />
               <span>Book In-Home Consultation</span>

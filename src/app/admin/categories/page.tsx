@@ -109,6 +109,33 @@ export default function AdminCategoriesPage() {
     }
   };
 
+  // Image Upload handler for Subcategory
+  const handleSubImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', 'subcategories');
+
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+
+      setEditingSubcategory((prev) => (prev ? { ...prev, image: data.url } : prev));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Image upload failed');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCategory?.name || !editingCategory?.slug) return;
@@ -147,6 +174,58 @@ export default function AdminCategoriesPage() {
       await fetchCategories();
     } catch (err) {
       console.error('Toggle active error:', err);
+    }
+  };
+
+  const generateSlug = (text: string) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-');
+  };
+
+  const handleDeleteCategory = async (catId: string, catName: string) => {
+    if (!window.confirm(`Are you sure you want to delete category "${catName}"?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/categories?id=${catId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete category');
+      if (data.message) {
+        alert(data.message);
+      }
+      setModalOpen(false);
+      setEditingCategory(null);
+      await fetchCategories();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error deleting category');
+    }
+  };
+
+  const handleDeleteSubcategory = async (subId: string, subName: string, catId: string) => {
+    if (!window.confirm(`Are you sure you want to delete subcategory "${subName}"?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/subcategories?id=${subId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete subcategory');
+      
+      setSubModalOpen(false);
+      setEditingSubcategory(null);
+
+      const subRes = await fetch(`/api/admin/subcategories?categoryId=${catId}`);
+      const subData = await subRes.json();
+      setSubcategories((prev) => ({ ...prev, [catId]: subData.data || [] }));
+      await fetchCategories();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error deleting subcategory');
     }
   };
 
@@ -346,6 +425,14 @@ export default function AdminCategoriesPage() {
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
+
+                      <button
+                        onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                        className="p-1.5 rounded-lg text-rose-600 hover:text-rose-800 hover:bg-rose-50 transition-all cursor-pointer"
+                        title="Delete category"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
 
@@ -382,19 +469,37 @@ export default function AdminCategoriesPage() {
                             key={sub.id}
                             className="bg-white p-3 rounded-xl border border-[#EDE8DE] flex items-center justify-between gap-3 shadow-2xs"
                           >
-                            <div className="min-w-0">
-                              <p className="text-[13px] font-medium text-[#1C1917] truncate">{sub.name}</p>
-                              <span className="text-[11px] text-[#8C827A]">/{sub.slug}</span>
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              {sub.image && (
+                                <div className="w-8 h-8 rounded-lg bg-[#FAF7F2] border border-[#EDE8DE] overflow-hidden shrink-0">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={sub.image} alt={sub.name} className="w-full h-full object-cover" />
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <p className="text-[13px] font-medium text-[#1C1917] truncate">{sub.name}</p>
+                                <span className="text-[11px] text-[#8C827A]">/{sub.slug}</span>
+                              </div>
                             </div>
-                            <button
-                              onClick={() => {
-                                setEditingSubcategory(sub);
-                                setSubModalOpen(true);
-                              }}
-                              className="p-1 text-[#8C827A] hover:text-[#1E3A2F] cursor-pointer"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                onClick={() => {
+                                  setEditingSubcategory(sub);
+                                  setSubModalOpen(true);
+                                }}
+                                className="p-1 text-[#8C827A] hover:text-[#1E3A2F] cursor-pointer"
+                                title="Edit subcategory"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteSubcategory(sub.id, sub.name, cat.id)}
+                                className="p-1 text-rose-500 hover:text-rose-700 cursor-pointer"
+                                title="Delete subcategory"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -431,7 +536,14 @@ export default function AdminCategoriesPage() {
                 <input
                   type="text"
                   value={editingCategory.name || ''}
-                  onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                  onChange={(e) => {
+                    const nameVal = e.target.value;
+                    setEditingCategory({
+                      ...editingCategory,
+                      name: nameVal,
+                      slug: editingCategory.id ? editingCategory.slug : generateSlug(nameVal),
+                    });
+                  }}
                   required
                   className="w-full px-3.5 py-2 rounded-xl border border-[#D5CDBF] text-[13.5px] focus:outline-hidden focus:border-[#1E3A2F]"
                 />
@@ -523,21 +635,35 @@ export default function AdminCategoriesPage() {
                 </label>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-[#EDE8DE]">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#D5CDBF] text-[12.5px] font-medium text-[#1C1917] hover:bg-[#FAF7F2]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting || uploadingImage}
-                  className="px-5 py-2 rounded-xl bg-[#1E3A2F] text-white text-[12.5px] font-semibold hover:bg-[#152B23] transition-all disabled:opacity-50"
-                >
-                  {submitting ? 'Saving...' : 'Save to D1'}
-                </button>
+              <div className="flex items-center justify-between gap-3 pt-4 border-t border-[#EDE8DE]">
+                {editingCategory.id ? (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteCategory(editingCategory.id!, editingCategory.name || '')}
+                    className="px-4 py-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-[12.5px] font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Category</span>
+                  </button>
+                ) : (
+                  <div />
+                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-[#D5CDBF] text-[12.5px] font-medium text-[#1C1917] hover:bg-[#FAF7F2]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting || uploadingImage}
+                    className="px-5 py-2 rounded-xl bg-[#1E3A2F] text-white text-[12.5px] font-semibold hover:bg-[#152B23] transition-all disabled:opacity-50"
+                  >
+                    {submitting ? 'Saving...' : 'Save to D1'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -568,7 +694,14 @@ export default function AdminCategoriesPage() {
                 <input
                   type="text"
                   value={editingSubcategory.name || ''}
-                  onChange={(e) => setEditingSubcategory({ ...editingSubcategory, name: e.target.value })}
+                  onChange={(e) => {
+                    const nameVal = e.target.value;
+                    setEditingSubcategory({
+                      ...editingSubcategory,
+                      name: nameVal,
+                      slug: editingSubcategory.id ? editingSubcategory.slug : generateSlug(nameVal),
+                    });
+                  }}
                   required
                   className="w-full px-3 py-2 rounded-xl border border-[#D5CDBF] text-[13px] focus:outline-hidden focus:border-[#1E3A2F]"
                 />
@@ -599,21 +732,62 @@ export default function AdminCategoriesPage() {
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-[#EDE8DE]">
-                <button
-                  type="button"
-                  onClick={() => setSubModalOpen(false)}
-                  className="px-3.5 py-1.5 rounded-xl border border-[#D5CDBF] text-[12px] font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-4 py-1.5 rounded-xl bg-[#1E3A2F] text-white text-[12px] font-semibold hover:bg-[#152B23]"
-                >
-                  Save Subcategory
-                </button>
+              {/* Subcategory Image Input & Upload */}
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#1C1917] mb-1">
+                  Subcategory Image (Cloudflare R2 or Path)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="/images/..."
+                    value={editingSubcategory.image || ''}
+                    onChange={(e) => setEditingSubcategory({ ...editingSubcategory, image: e.target.value })}
+                    className="flex-1 px-3 py-2 rounded-xl border border-[#D5CDBF] text-[12px] font-mono focus:outline-hidden focus:border-[#1E3A2F]"
+                  />
+                  <label className="px-3 py-2 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] hover:bg-[#F2ECE1] text-[11.5px] font-semibold text-[#1C1917] cursor-pointer flex items-center gap-1 shrink-0">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{uploadingImage ? '...' : 'Upload'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleSubImageUpload}
+                      disabled={uploadingImage}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-2.5 pt-3 border-t border-[#EDE8DE]">
+                {editingSubcategory.id ? (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteSubcategory(editingSubcategory.id!, editingSubcategory.name || '', editingSubcategory.category_id!)}
+                    className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-[12px] font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete</span>
+                  </button>
+                ) : (
+                  <div />
+                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSubModalOpen(false)}
+                    className="px-3.5 py-1.5 rounded-xl border border-[#D5CDBF] text-[12px] font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="px-4 py-1.5 rounded-xl bg-[#1E3A2F] text-white text-[12px] font-semibold hover:bg-[#152B23]"
+                  >
+                    Save Subcategory
+                  </button>
+                </div>
               </div>
             </form>
           </div>

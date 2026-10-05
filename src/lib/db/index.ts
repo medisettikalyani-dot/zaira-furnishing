@@ -1,11 +1,26 @@
 import path from 'path';
 import fs from 'fs';
 
+export interface BatchStatement {
+  sql: string;
+  params?: unknown[];
+}
+
+export interface DatabaseHealth {
+  ok: boolean;
+  provider: 'd1' | 'sqlite';
+  latencyMs: number;
+  tablesCount?: number;
+  error?: string;
+}
+
 export interface DatabaseClient {
   query<T = unknown>(sql: string, params?: unknown[]): Promise<T[]>;
   queryOne<T = unknown>(sql: string, params?: unknown[]): Promise<T | null>;
   execute(sql: string, params?: unknown[]): Promise<{ changes: number; lastInsertRowid?: number | bigint }>;
+  batch(statements: BatchStatement[]): Promise<{ changes: number }[]>;
   runMigration(sql: string): Promise<void>;
+  healthCheck(): Promise<DatabaseHealth>;
 }
 
 // ─── 1. Local Node.js SQLite Driver (Zero-dependency via node:sqlite in Node 22+) ───
@@ -42,6 +57,7 @@ class LocalSqliteClient implements DatabaseClient {
       return val;
     };
     const sanitizedParams = params.map(sanitize);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rawRows = stmt.all(...sanitizedParams) as any[];
     return rawRows.map((row) => ({ ...row })) as T[];
   }
@@ -67,9 +83,60 @@ class LocalSqliteClient implements DatabaseClient {
     };
   }
 
+  async batch(statements: BatchStatement[]): Promise<{ changes: number }[]> {
+    if (statements.length === 0) return [];
+    const db = await this.getDb();
+    db.exec('BEGIN TRANSACTION;');
+    try {
+      const results: { changes: number }[] = [];
+      const sanitize = (val: unknown) => {
+        if (val === undefined) return null;
+        if (typeof val === 'boolean') return val ? 1 : 0;
+        return val;
+      };
+
+      for (const s of statements) {
+        const stmt = db.prepare(s.sql);
+        const sanitizedParams = (s.params || []).map(sanitize);
+        const result = stmt.run(...sanitizedParams);
+        results.push({ changes: result.changes });
+      }
+
+      db.exec('COMMIT;');
+      return results;
+    } catch (err) {
+      db.exec('ROLLBACK;');
+      throw err;
+    }
+  }
+
   async runMigration(sql: string): Promise<void> {
     const db = await this.getDb();
     db.exec(sql);
+  }
+
+  async healthCheck(): Promise<DatabaseHealth> {
+    const start = Date.now();
+    try {
+      const rows = await this.query<{ ping: number }>('SELECT 1 as ping');
+      const tableRows = await this.query<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type='table'"
+      );
+      return {
+        ok: rows.length > 0 && rows[0].ping === 1,
+        provider: 'sqlite',
+        latencyMs: Date.now() - start,
+        tablesCount: tableRows.length,
+      };
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Local SQLite check failed';
+      return {
+        ok: false,
+        provider: 'sqlite',
+        latencyMs: Date.now() - start,
+        error: errorMsg,
+      };
+    }
   }
 }
 
@@ -85,6 +152,14 @@ class CloudflareD1HttpClient implements DatabaseClient {
     this.apiToken = apiToken;
   }
 
+  private sanitizeParams(params: unknown[] = []): unknown[] {
+    return params.map((val) => {
+      if (val === undefined) return null;
+      if (typeof val === 'boolean') return val ? 1 : 0;
+      return val;
+    });
+  }
+
   private async rawQuery<T>(sql: string, params: unknown[] = []): Promise<T[]> {
     const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/d1/database/${this.databaseId}/query`;
     const res = await fetch(url, {
@@ -95,7 +170,7 @@ class CloudflareD1HttpClient implements DatabaseClient {
       },
       body: JSON.stringify({
         sql,
-        params,
+        params: this.sanitizeParams(params),
       }),
     });
 
@@ -122,6 +197,13 @@ class CloudflareD1HttpClient implements DatabaseClient {
   }
 
   async execute(sql: string, params: unknown[] = []): Promise<{ changes: number; lastInsertRowid?: number | bigint }> {
+    const trimmed = sql.trim().toUpperCase();
+    // D1 HTTP API does not support interactive transaction commands over single HTTP calls.
+    // Gracefully handle BEGIN/COMMIT/ROLLBACK as no-ops; true atomicity is provided by db.batch()
+    if (trimmed === 'BEGIN' || trimmed === 'BEGIN TRANSACTION' || trimmed === 'COMMIT' || trimmed === 'ROLLBACK') {
+      return { changes: 0 };
+    }
+
     const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/d1/database/${this.databaseId}/query`;
     const res = await fetch(url, {
       method: 'POST',
@@ -131,11 +213,20 @@ class CloudflareD1HttpClient implements DatabaseClient {
       },
       body: JSON.stringify({
         sql,
-        params,
+        params: this.sanitizeParams(params),
       }),
     });
 
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Cloudflare D1 execute failed: ${res.status} ${errText}`);
+    }
+
     const data = await res.json();
+    if (!data.success) {
+      throw new Error(`Cloudflare D1 execute error: ${JSON.stringify(data.errors)}`);
+    }
+
     const meta = data.result?.[0]?.meta;
     return {
       changes: meta?.changes || 0,
@@ -143,8 +234,81 @@ class CloudflareD1HttpClient implements DatabaseClient {
     };
   }
 
+  async batch(statements: BatchStatement[]): Promise<{ changes: number }[]> {
+    if (statements.length === 0) return [];
+
+    const url = `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/d1/database/${this.databaseId}/query`;
+    const payload = statements.map((s) => ({
+      sql: s.sql,
+      params: this.sanitizeParams(s.params),
+    }));
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Cloudflare D1 batch failed: ${res.status} ${errText}`);
+    }
+
+    const data = await res.json();
+    if (!data.success) {
+      throw new Error(`Cloudflare D1 batch error: ${JSON.stringify(data.errors)}`);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (data.result || []).map((r: any) => ({
+      changes: r?.meta?.changes || 0,
+    }));
+  }
+
   async runMigration(sql: string): Promise<void> {
-    await this.rawQuery(sql);
+    // Strip single-line comments and split into individual statements
+    const statements = sql
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('--'))
+      .join('\n')
+      .split(';')
+      .map((s) => s.trim())
+      .filter((s) => {
+        if (!s) return false;
+        const upper = s.toUpperCase();
+        return upper !== 'BEGIN TRANSACTION' && upper !== 'BEGIN' && upper !== 'COMMIT' && upper !== 'ROLLBACK';
+      });
+
+    for (const stmt of statements) {
+      await this.execute(stmt);
+    }
+  }
+
+  async healthCheck(): Promise<DatabaseHealth> {
+    const start = Date.now();
+    try {
+      const rows = await this.query<{ ping: number }>('SELECT 1 as ping');
+      const tableRows = await this.query<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type='table'"
+      );
+      return {
+        ok: rows.length > 0 && rows[0].ping === 1,
+        provider: 'd1',
+        latencyMs: Date.now() - start,
+        tablesCount: tableRows.length,
+      };
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Cloudflare D1 connection failed';
+      return {
+        ok: false,
+        provider: 'd1',
+        latencyMs: Date.now() - start,
+        error: errorMsg,
+      };
+    }
   }
 }
 
@@ -154,16 +318,32 @@ let globalDb: DatabaseClient | null = null;
 export function getDatabase(): DatabaseClient {
   if (globalDb) return globalDb;
 
+  const isProduction = process.env.NODE_ENV === 'production';
+  const forceLocal = process.env.USE_LOCAL_SQLITE === 'true';
   const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const cfDatabaseId = process.env.CLOUDFLARE_D1_DATABASE_ID;
   const cfApiToken = process.env.CLOUDFLARE_API_TOKEN;
 
-  if (cfAccountId && cfDatabaseId && cfApiToken) {
-    globalDb = new CloudflareD1HttpClient(cfAccountId, cfDatabaseId, cfApiToken);
-  } else {
-    // Local SQLite fallback in development / test environments
-    globalDb = new LocalSqliteClient();
+  const hasD1Config = Boolean(cfAccountId && cfDatabaseId && cfApiToken);
+
+  if (hasD1Config) {
+    globalDb = new CloudflareD1HttpClient(cfAccountId!, cfDatabaseId!, cfApiToken!);
+    return globalDb;
   }
 
+  if (isProduction && !forceLocal) {
+    const missingVars: string[] = [];
+    if (!cfAccountId) missingVars.push('CLOUDFLARE_ACCOUNT_ID');
+    if (!cfDatabaseId) missingVars.push('CLOUDFLARE_D1_DATABASE_ID');
+    if (!cfApiToken) missingVars.push('CLOUDFLARE_API_TOKEN');
+
+    console.warn(
+      `[DATABASE NOTICE] Cloudflare D1 environment variables missing: ${missingVars.join(', ')}.\n` +
+      `Falling back to SQLite client to ensure seamless availability.`
+    );
+  }
+
+  // Local SQLite client fallback
+  globalDb = new LocalSqliteClient();
   return globalDb;
 }

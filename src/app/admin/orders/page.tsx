@@ -263,7 +263,7 @@ export default function AdminOrdersPage() {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F] cursor-pointer"
+              className="w-full px-4 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] font-sans font-medium text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F] cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2378716C%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] bg-[right_14px_center] bg-no-repeat pr-9"
             >
               <option value="ALL">All Order Statuses</option>
               <option value="CONFIRMED">Confirmed</option>
@@ -282,7 +282,7 @@ export default function AdminOrdersPage() {
                 setPaymentFilter(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F] cursor-pointer"
+              className="w-full px-4 py-2.5 rounded-xl border border-[#D5CDBF] bg-[#FAF7F2] text-[13px] font-sans font-medium text-[#1C1917] focus:outline-hidden focus:border-[#1E3A2F] cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2378716C%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] bg-[right_14px_center] bg-no-repeat pr-9"
             >
               <option value="ALL">All Payment Statuses</option>
               <option value="PENDING">COD Pending</option>
@@ -459,7 +459,7 @@ export default function AdminOrdersPage() {
 
                       {/* Total & Payment */}
                       <td className="py-4 px-4 align-top">
-                        <div className="font-serif text-[15px] font-bold text-[#1C1917]">
+                        <div className="font-sans text-[15px] font-bold text-[#1C1917]">
                           ₹{o.total_amount.toLocaleString('en-IN')}
                         </div>
                         <div className="flex items-center gap-1 text-[11px] font-medium text-[#1E3A2F] mt-0.5">
