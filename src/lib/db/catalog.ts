@@ -10,7 +10,7 @@ import {
   DbCmsContent,
 } from './types';
 import { Product, ProductImage, ProductVariation, ProductSpecification, Category, Service } from '@/lib/data/types';
-import { normalizeCategorySlug } from '@/lib/data/categories';
+import { normalizeCategorySlug, CATEGORIES } from '@/lib/data/categories';
 
 /**
  * Maps D1 category record to frontend Category model
@@ -157,7 +157,7 @@ export function mapDbProductToFrontend(
 }
 
 /**
- * Fetch all categories from Cloudflare D1
+ * Fetch all categories from Cloudflare D1 (with bulletproof fallback to static catalog)
  */
 export async function getDynamicCategories(): Promise<Category[]> {
   try {
@@ -165,10 +165,13 @@ export async function getDynamicCategories(): Promise<Category[]> {
     const rows = await db.query<DbCategory>(
       'SELECT * FROM categories WHERE active = 1 ORDER BY display_order ASC'
     );
-    return rows.map(mapDbCategoryToFrontend);
+    if (rows && rows.length > 0) {
+      return rows.map(mapDbCategoryToFrontend);
+    }
+    return CATEGORIES;
   } catch (err) {
     console.error('Error fetching categories from D1:', err);
-    return [];
+    return CATEGORIES;
   }
 }
 
@@ -179,14 +182,18 @@ export async function getDynamicCategoryBySlug(slug: string): Promise<Category |
   try {
     const db = getDatabase();
     const row = await db.queryOne<DbCategory>(
-      'SELECT * FROM categories WHERE slug = ? AND active = 1',
-      [slug]
+      'SELECT * FROM categories WHERE (slug = ? OR slug = ?) AND active = 1',
+      [slug, normalizeCategorySlug(slug)]
     );
-    if (!row) return null;
+    if (!row) {
+      const fallback = CATEGORIES.find((c) => c.slug === slug || c.slug === normalizeCategorySlug(slug));
+      return fallback || null;
+    }
     return mapDbCategoryToFrontend(row);
   } catch (err) {
     console.error(`Error fetching category ${slug} from D1:`, err);
-    return null;
+    const fallback = CATEGORIES.find((c) => c.slug === slug || c.slug === normalizeCategorySlug(slug));
+    return fallback || null;
   }
 }
 

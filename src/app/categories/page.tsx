@@ -3,10 +3,13 @@ import Link from 'next/link';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Calendar, ChevronRight, Sparkles } from 'lucide-react';
-import { getDynamicCategories, getDynamicCategoryBySlug } from '@/lib/db/catalog';
-import { getCategoryHref } from '@/lib/data/categories';
+import { getDynamicCategories, getDynamicCategoryBySlug, getDynamicCategoryDiscovery } from '@/lib/db/catalog';
+import { CATEGORIES, getCategoryHref } from '@/lib/data/categories';
 import { CategoryCard } from '@/components/ui/CategoryCard';
 import { BrowseByCategories } from '@/components/home/BrowseByCategories';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface CategoriesPageProps {
   searchParams: Promise<{ slug?: string | string[]; type?: string }>;
@@ -56,7 +59,12 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
     redirect(targetHref);
   }
 
-  const categories = await getDynamicCategories();
+  const [categoriesData, discoveryCategories] = await Promise.all([
+    getDynamicCategories(),
+    getDynamicCategoryDiscovery(),
+  ]);
+
+  const categories = categoriesData && categoriesData.length > 0 ? categoriesData : CATEGORIES;
 
   // ─── MAIN CATEGORIES BROWSING PAGE ───
   return (
@@ -73,11 +81,14 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
         </nav>
 
         {/* ─── 1. Subcategory Visual Carousel (Interactive Discovery) ─── */}
-        <BrowseByCategories
-          id="category-explorer"
-          className="bg-transparent border-0 py-0 pb-16 sm:pb-20"
-          showExploreAllLink={false}
-        />
+        {discoveryCategories && discoveryCategories.length > 0 && (
+          <BrowseByCategories
+            id="category-explorer"
+            className="bg-transparent border-0 py-0 pb-16 sm:pb-20"
+            showExploreAllLink={false}
+            categories={discoveryCategories}
+          />
+        )}
 
         {/* ─── 2. All 9 Disciplines Directory ─── */}
         <section className="pt-10 border-t border-[#EAE4D8] pb-16 sm:pb-24">
@@ -99,7 +110,7 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-5 lg:gap-6">
             {categories.map((category, idx) => (
               <CategoryCard
-                key={category.id}
+                key={category.id || category.slug}
                 category={category}
                 priority={idx < 4}
               />
