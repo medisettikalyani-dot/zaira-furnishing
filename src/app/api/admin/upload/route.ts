@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Admin upload error:', error);
-    return NextResponse.json({ error: 'Failed to process and upload media file' }, { status: 500 });
+    const msg = error instanceof Error ? error.message : 'Failed to process and upload media file';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
